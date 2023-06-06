@@ -14,6 +14,7 @@ ParamStruct SetParam(){
     ValParam.ModeMulti = true; // If use multi-resolution mode
     ValParam.ModeKeyFrame = false; // If use the key-frames mode
 
+    // The map resolution
     ValParam.Sizei = 1500;
     ValParam.Sizej = 1500;
     ValParam.Scale = 0.05;

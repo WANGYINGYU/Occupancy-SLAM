@@ -18,6 +18,8 @@ This paper considers the 2D SLAM problem using 2D laser scans (and odometry) inf
 4. [OpenCV](https://opencv.org)
 5. [libigl](https://libigl.github.io)
 
+
+
 ## Quickstart
 
 ### Compile
@@ -39,6 +41,32 @@ make -j12
 
 and then input `/path/to/your/scan`, `/path/to/your/poses` and `/path/to/your/odometry` (if exists).  
 
+
+
+## Guidance
+
+### Data Format
+
+Preprocess the required data into the following format and store them as txt files.
+
+#### Laser Scan
+
+$m \times n$ matrix, where $m$ is the number of scans and $n$ is the number of beams. The range of the laser beam corresponds to each column of the matrix in the order of the corresponding angle from smallest to largest. 
+
+#### Pose
+
+$m \times 3$ matrix, where $m$ is the number of poses. The three elements of each row of the matrix correspond to x, y and angle.
+
+#### Odometry (Option)
+
+$m \times 3$ matrix with the same format as poses. In addtion, this input must be increments.
+
+### Parameters Setting
+
+Set parameters in `MyStruct.cpp`. Refer to the comments in the file for the effect of each parameter.
+
+
+
 ## Citation
 
 If you find our work useful to your research, please cite fllowing paper:
@@ -55,6 +83,8 @@ If you find our work useful to your research, please cite fllowing paper:
     DOI       = {10.15607/RSS.2022.XVIII.003} 
 } 
 ```
+
+
 
 ## License
 
