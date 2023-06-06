@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.7)
+cmake_minimum_required(VERSION 3.16)
 project(Occupancy_SLAM)
 set(CMAKE_CXX_STANDARD 17)
 # Find Eigen library

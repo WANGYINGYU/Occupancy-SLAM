@@ -13,7 +13,7 @@ This paper considers the 2D SLAM problem using 2D laser scans (and odometry) inf
 ## Dependencies
 
 1. [Eigen >= 3.4.0](https://eigen.tuxfamily.org/index.php?title=Main_Page)
-2. [CMake >= 2.7](https://cmake.org)
+2. [CMake >= 3.16](https://cmake.org)
 3. [OpenMP](https://www.openmp.org)
 4. [OpenCV](https://opencv.org)
 5. [libigl](https://libigl.github.io)
