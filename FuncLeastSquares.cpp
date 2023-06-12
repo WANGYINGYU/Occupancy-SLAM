@@ -35,6 +35,7 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
             FuncEval(Pose, PoseGT, ValParam);
             if (MeanDelta < ValParam.MinMeanDeltaFirst){
                 ValParam.DownTime = Iter;
+                ValParam.MaxIter = ValParam.DownTime + 3;
             }
             FuncSmoothN2(N, HH, ValParam);
         }
@@ -100,6 +101,7 @@ void FuncLeastSquares(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd&
             FuncEval(Pose, PoseGT, ValParam);
             if (FirstMeanDelta < ValParam.MinMeanDeltaFirst || FirstMeanDeltaP < ValParam.MinMeanDeltaPoseFirst){
                 ValParam.DownTime = Iter;
+                ValParam.MaxIter = ValParam.DownTime + 3;
             }
             FuncSmoothN2(N, HH, ValParam);
         }
@@ -165,6 +167,7 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
             FuncUpdateMapN(N, Pose, LowScanXY, ValParam);
             if (MeanDelta < ValParam.MinMeanDeltaFirst){
                 ValParam.DownTime = Iter;
+                ValParam.MaxIter = ValParam.DownTime + 3;
             }
             FuncSmoothN2(N, HH, ValParam);
         }
@@ -228,6 +231,7 @@ void FuncLeastSquares(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd&
             FuncUpdateMapN(N, Pose, LowScanXY, ValParam);
             if (FirstMeanDelta < ValParam.MinMeanDeltaFirst || FirstMeanDeltaP < ValParam.MinMeanDeltaPoseFirst){
                 ValParam.DownTime = Iter;
+                ValParam.MaxIter = ValParam.DownTime + 3;
             }
             FuncSmoothN2(N, HH, ValParam);
         }
@@ -242,12 +246,17 @@ void FuncLeastSquares(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd&
                 FuncCalBound(HighMap, IdSelect, IdSelectVar, ValParam);
                 FuncSelectScan(Map, Pose, ScanXY, ScanOdd, SelectScanXY, SelectScanOdd, IdSelect, ValParam);
                 FuncInitialSelectMap(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, ValParam);
+                std::cout<<'1'<<std::endl;
                 FuncSelectMapConst(SelectMap, IdSelectVar, HHSelect, ValParam);
+                std::cout<<'2'<<std::endl;
                 WeightHHSelect = HHSelect * ValParam.MapSmoothingWeightSecond;
             }
             FuncSmoothSelectN2(SelectN, WeightHHSelect, IdSelectVar, ValParam);
+            std::cout<<'3'<<std::endl;
             auto [JP, JD, IS, ErrorS, SumError, MeanError] = FuncDiffSelectJacobian(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, IdSelectVar, ValParam);
+            std::cout<<'4'<<std::endl;
             auto [DeltaP,DeltaD,SumDelta,SecondMeanDelta,SumDeltaP,SecondMeanDeltaP] = FuncSelectMapDelta(SelectMap, JP, JD, ErrorS, IS, WeightHHSelect, IdSelectVar, ValParam);
+            std::cout<<'5'<<std::endl;
             MeanDelta = SecondMeanDelta;
             MeanDeltaP = SecondMeanDeltaP;
             std::cout<<"Mean Delta is "<< SecondMeanDelta << std::endl;

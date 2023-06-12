@@ -53,12 +53,10 @@ int main() {
         FuncEval(Pose, PoseGT, ValParam);
     }
 
-
     if (ValParam.ModeOdom){
         Eigen::VectorXd VecOdom = VectorToEigenVec(fileData[1]);
         MatrixOdom = VecOdom.reshaped(3,VecOdom.size()/3).transpose();
     }
-
 
 //    FuncNoisePose(Pose);
 //
@@ -98,6 +96,10 @@ int main() {
         Pose.resize(NumSelect, 3);
         Pose = PoseTem;
     }
+    // Shown Initial Map
+    Eigen::MatrixXd ShowMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
+    std::cout << "The Initial Occupancy Map, to continue, press any key." << std::endl;
+    FuncShowMapPress(ShowMap);
 
     std::vector<Eigen::ArrayXd> LowScanXY(ScanXY.size());
     std::vector<Eigen::ArrayXd> LowScanOdd(ScanOdd.size());
@@ -112,7 +114,7 @@ int main() {
         LowScanXY = ScanXY;
         LowScanOdd = ScanOdd;
     }
-    
+
     auto start = std::chrono::high_resolution_clock::now();  // Start
     auto [Map, N] = FuncInitialiseGridMap(Pose,LowScanXY,LowScanOdd,ValParam);
     if (ValParam.ModeShowMap){
@@ -144,6 +146,11 @@ int main() {
     auto end = std::chrono::high_resolution_clock::now();  // End
     double elapsed_time_sec = std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
     std::cout << "Optimization End, Elapsed time: " << elapsed_time_sec << " seconds " << std::endl;
+
+    Eigen::MatrixXd OptimizedMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
+    std::cout << "The Optimized Occupancy Map, to end, press any key." << std::endl;
+    FuncShowMapPress(OptimizedMap);
+
     return 0;
 }
 

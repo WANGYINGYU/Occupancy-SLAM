@@ -39,7 +39,9 @@ make -j12
 ./Occupancy_SLAM
 ```
 
-and then input `/path/to/your/scan`, `/path/to/your/poses` and `/path/to/your/odometry` (if exists).  
+and then input
+
+`../Data/Museum/b0/Range.txt ../Data/Museum/b0/Pose.txt `
 
 
 

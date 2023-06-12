@@ -12,31 +12,37 @@ void FuncConvertObs(Eigen::MatrixXd& Range, std::vector<Eigen::ArrayXd>& ScanXY,
         Eigen::ArrayXd ScanXYj;
         Eigen::ArrayXd ScanOddj;
         for (int j = 0; j < ValParam.NumBeam; ++j) {
-            if (Range(i,j)>=ValParam.MaxRange | Range(i,j)<=ValParam.MinRange){Range(i,j)=0.0;}
-            int NumP = floor((Range(i,j) / ValParam.Scale));
-            Eigen::ArrayXd ScanXYij(2*NumP);
-            Eigen::ArrayXd ScanOddij(NumP);
-            for (int k = 0; k < NumP; ++k) {
-                double HitX = Range(i,j) * cos(Bearing(j));
-                double HitY = Range(i,j) * sin(Bearing(j));
-                if (k==0){
-                    ScanXYij(2*k) = HitX;
-                    ScanXYij(2*k+1) = HitY;
-                    ScanOddij(k) = ValParam.ValOccupied;
-                }
-                else{
-                    double Xk = (HitX/NumP)*(NumP-k);
-                    double Yk = (HitY/NumP)*(NumP-k);
-                    ScanXYij(2*k) = Xk;
-                    ScanXYij(2*k+1) = Yk;
-                    ScanOddij(k) = ValParam.ValFree;
-                }
+            if (Range(i,j)>=ValParam.MaxRange || Range(i,j)<=ValParam.MinRange || std::isnan(Range(i,j)))
+            {
+                Range(i,j) = 0.0;
             }
-            ScanXYj.conservativeResize(ScanXYj.size() + ScanXYij.size());
-            ScanXYj.tail(ScanXYij.size()) = ScanXYij;
 
-            ScanOddj.conservativeResize(ScanOddj.size() + ScanOddij.size());
-            ScanOddj.tail(ScanOddij.size()) = ScanOddij;
+            if (Range(i,j)!=0.0)
+            {
+                int NumP = floor((Range(i, j) / ValParam.Scale));
+                Eigen::ArrayXd ScanXYij(2 * NumP);
+                Eigen::ArrayXd ScanOddij(NumP);
+                for (int k = 0; k < NumP; ++k) {
+                    double HitX = Range(i, j) * cos(Bearing(j));
+                    double HitY = Range(i, j) * sin(Bearing(j));
+                    if (k == 0) {
+                        ScanXYij(2 * k) = HitX;
+                        ScanXYij(2 * k + 1) = HitY;
+                        ScanOddij(k) = ValParam.ValOccupied;
+                    } else {
+                        double Xk = (HitX / NumP) * (NumP - k);
+                        double Yk = (HitY / NumP) * (NumP - k);
+                        ScanXYij(2 * k) = Xk;
+                        ScanXYij(2 * k + 1) = Yk;
+                        ScanOddij(k) = ValParam.ValFree;
+                    }
+                }
+                ScanXYj.conservativeResize(ScanXYj.size() + ScanXYij.size());
+                ScanXYj.tail(ScanXYij.size()) = ScanXYij;
+
+                ScanOddj.conservativeResize(ScanOddj.size() + ScanOddij.size());
+                ScanOddj.tail(ScanOddij.size()) = ScanOddij;
+            }
         }
         ScanXY[i] = ScanXYj;
         ScanOdd[i] = ScanOddj;

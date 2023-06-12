@@ -88,7 +88,6 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> FuncInitialiseGridMap(const Eigen::
         Eigen::MatrixXd Si = (Ri * MatrixXY).colwise() + VectorTrans;
         Eigen::Vector2d Origin(ValParam.OriginX,ValParam.OriginY);
         Eigen::MatrixXd XY3 = ((Si.colwise()-Origin).array() / ValParam.Scale).floor().matrix();
-
         Eigen::MatrixXd TemGlobal = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
         Eigen::MatrixXd TemMapN = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
         for (int j = 0; j < Oddi.size(); ++j) {
@@ -1097,11 +1096,19 @@ void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<doub
 
     Eigen::SparseMatrix<double> II = A1Select.transpose() * A1Select + WeightHHSelect;
     Eigen::SparseMatrix<double> EE = (A1Select.transpose() * Val).sparseView();
-
-    Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> solver;
     II.makeCompressed();
+
+    Eigen::ConjugateGradient <Eigen::SparseMatrix<double>, Eigen::Upper|Eigen::Lower> solver;
+    int MaxNum = ValParam.SolverSecondMaxIter;
+    solver.setMaxIterations(MaxNum);
+    solver.setTolerance(ValParam.SolverSecondTolerance);
     solver.compute(II);
     Eigen::VectorXd SelectDeltaN = solver.solve(EE);
+
+//    Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> solver;
+//    II.makeCompressed();
+//    solver.compute(II);
+//    Eigen::VectorXd SelectDeltaN = solver.solve(EE);
 
     Eigen::ArrayXi ColumnId = Eigen::ArrayXi::Zero(ArraySortSelectId.size());
     Eigen::SparseMatrix<double> DeltaN(ValParam.Sizei*ValParam.Sizej,1);
@@ -1485,12 +1492,8 @@ void FuncSelectMapUpdate(Eigen::MatrixXd& SelectMap, Eigen::MatrixXd& Pose, cons
     ArrSelectMap(ArraySelectId) += DeltaD.array();
     SelectMap = ArrSelectMap.reshaped(Size_j, Size_i).transpose();
 
-    Eigen::MatrixXd ExpMap = Eigen::MatrixXd::Zero(SelectMap.rows(), SelectMap.cols());
-    FuncExpMap(SelectMap, ExpMap);
-
-//    cv::Mat img = cv::Mat(ExpMap.rows(), ExpMap.cols(), CV_64F, ExpMap.data());
-//    cv::imshow("Select Map", img);
-//    cv::waitKey(2000);
+//    Eigen::MatrixXd ExpMap = Eigen::MatrixXd::Zero(SelectMap.rows(), SelectMap.cols());
+//    FuncExpMap(SelectMap, ExpMap);
 }
 
 void FuncUpdateSelectN(Eigen::MatrixXd& SelectN, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& SelectScanXY, const ParamStruct& ValParam){
@@ -2223,7 +2226,60 @@ void FuncKeyFrameSelection(const Eigen::MatrixXd& Pose, Eigen::MatrixXd& PoseTem
 
 
 void FuncShowMap(Eigen::MatrixXd& Map){
-    cv::Mat img = cv::Mat(Map.rows(), Map.cols(), CV_64F, Map.data());
+    Eigen::MatrixXd ab = Map.array().exp().matrix();
+    Eigen::MatrixXd ExpMap = (1 - ab.array() / (ab.array() + 1)).matrix();
+    cv::Mat img = cv::Mat(ExpMap.cols(), ExpMap.rows(), CV_64F, ExpMap.data());
     cv::imshow("Map", img);
-    cv::waitKey(2000);
+    cv::waitKey(1000);
+    cv::destroyWindow("Map");
+    cv::waitKey(1);
+}
+
+
+void FuncShowMapPress(Eigen::MatrixXd& Map){
+    Eigen::MatrixXd ab = Map.array().exp().matrix();
+    Eigen::MatrixXd ExpMap = (1 - ab.array() / (ab.array() + 1)).matrix();
+    cv::Mat img = cv::Mat(ExpMap.cols(), ExpMap.rows(), CV_64F, ExpMap.data());
+    cv::imshow("Map", img);
+    cv::waitKey(0);
+    cv::destroyWindow("Map");
+    cv::waitKey(1);
+}
+
+
+Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
+    Eigen::MatrixXd Map = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
+    int NumPose = Pose.size()/3;
+    #pragma omp parallel for
+    for (int i = 0; i < NumPose; ++i) {
+        Eigen::Rotation2Dd rotation(Pose(i,2));
+        Eigen::Matrix2d Ri = rotation.toRotationMatrix();
+        Eigen::ArrayXd XYi = ScanXY[i];
+        Eigen::ArrayXd Oddi = ScanOdd[i];
+        Eigen::Map<Eigen::MatrixXd> MatrixXY(XYi.data(), 2, XYi.size()/2);
+        Eigen::Vector2d VectorTrans = Pose.block<>(i,0,1,2).transpose();
+        Eigen::MatrixXd Si = (Ri * MatrixXY).colwise() + VectorTrans;
+        Eigen::Vector2d Origin(ValParam.OriginX,ValParam.OriginY);
+        Eigen::MatrixXd XY3 = ((Si.colwise()-Origin).array() / ValParam.Scale).floor().matrix();
+
+        bool hasNegative = XY3.minCoeff() < 0;
+        if (hasNegative){
+                std::cout<<"Incorrect Origin Setting"<<std::endl;
+        }
+        bool hasOverSize = XY3.row(0).maxCoeff() >= ValParam.Sizei || XY3.row(1).maxCoeff() >= ValParam.Sizej;
+        if (hasOverSize){
+                std::cout<<"Incorrect Map Size Setting"<<std::endl;
+        }
+
+        Eigen::MatrixXd TemGlobal = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
+        Eigen::MatrixXd TemMapN = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
+        for (int j = 0; j < Oddi.size(); ++j) {
+            int tem_col = XY3(0,j);
+            int tem_row = XY3(1,j);
+            double tem_val = Oddi[j];
+            TemGlobal(tem_row, tem_col) = TemGlobal(tem_row, tem_col) + tem_val;
+        }
+        Map = Map + TemGlobal;
+    }
+    return Map;
 }

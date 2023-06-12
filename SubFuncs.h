@@ -87,6 +87,6 @@ void FuncKeyFrameSelectionOdom(const Eigen::MatrixXd& Pose, Eigen::MatrixXd& Pos
 void FuncKeyFrameSelection(const Eigen::MatrixXd& Pose, Eigen::MatrixXd& PoseTem, const Eigen::MatrixXd& PoseGT, Eigen::MatrixXd& PoseGTTem, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, std::vector<Eigen::ArrayXd>& ScanXYTem, std::vector<Eigen::ArrayXd>& ScanOddTem, const ParamStruct& ValParam);
 void FuncKeyFrameSelection(const Eigen::MatrixXd& Pose, Eigen::MatrixXd& PoseTem, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, std::vector<Eigen::ArrayXd>& ScanXYTem, std::vector<Eigen::ArrayXd>& ScanOddTem, const ParamStruct& ValParam);
 void FuncShowMap(Eigen::MatrixXd& Map);
+void FuncShowMapPress(Eigen::MatrixXd& Map);
+Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam);
 #endif //FASTOCC_SUBFUNCS_H
-
-

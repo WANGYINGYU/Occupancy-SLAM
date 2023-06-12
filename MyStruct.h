@@ -8,7 +8,6 @@
 #endif //FASTOCC_FUNCS_H
 
 struct ParamStruct{
-    std::string FileDict;
     float WeightO;
     float WeightSmoothN;
     bool EvaluateGT;
@@ -46,8 +45,8 @@ struct ParamStruct{
     int NumBeam;
     double MinAngle;
     double MaxAngle;
-    double ValOccupied;
-    double ValFree;
+    const double ValOccupied = 0.847297860387203;
+    const double ValFree = -0.405465108108164;
     double MaxRange;
     double MinRange;
 
