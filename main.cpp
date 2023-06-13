@@ -8,7 +8,7 @@ ParamStruct SetParam();
 
 int main() {
     ParamStruct ValParam = SetParam();
-    std::cout << "Enter the names of the input files (range of scan, poses, (option: and odometry inputs)), separated by spaces: ";
+    std::cout << "Enter the names of the input files (range of scan (must), initialization poses (option, if not using odometry inputs as initialization), and odometry inputs (option, if exit), separated by spaces: ";
     std::string input;
     std::getline(std::cin, input);
     std::vector<std::string> filenames;
@@ -20,6 +20,22 @@ int main() {
         input.erase(0, pos + delimiter.length());
     }
     filenames.push_back(input);
+
+    if (ValParam.ModeOdom){
+        if (ValParam.PosefromOdom){
+            if (filenames.size() != 2) {
+                std::cout << "The number of input files is not 2 (range and odometry inputs). Please check the input files." << std::endl;
+                return 0;}
+        } else {
+            if (filenames.size() != 3) {
+                std::cout << "The number of input files is not 3 (range, initialization poses, and odometry inputs). Please check the input files." << std::endl;
+                return 0;}
+        }
+    } else {
+        if (filenames.size() != 2) {
+            std::cout << "The number of input files is not 2 (range and initialization poses). Please check the input files." << std::endl;
+            return 0;}
+    }
 
     std::vector<double> VecRange;
     loadTxTData(filenames[0],VecRange,ValParam);
@@ -37,9 +53,31 @@ int main() {
 
     filenames.erase(filenames.begin(), filenames.begin()+1);
     loadFileData(filenames, fileData, ValParam);
-    Eigen::VectorXd VecPose = VectorToEigenVec(fileData[0]);
-    Eigen::MatrixXd Pose = VecPose.reshaped(3,VecPose.size()/3).transpose();
+
     Eigen::MatrixXd MatrixOdom;
+    Eigen::MatrixXd Pose;
+    if (filenames.size()==1){
+        if (ValParam.ModeOdom){
+            Eigen::VectorXd VecOdom = VectorToEigenVec(fileData[0]);
+            MatrixOdom = VecOdom.reshaped(3,VecOdom.size()/3).transpose();
+            FuncPosefromOdom(MatrixOdom, Pose);
+        } else{
+            Eigen::VectorXd VecPose = VectorToEigenVec(fileData[0]);
+            Pose = VecPose.reshaped(3,VecPose.size()/3).transpose();
+        }
+    } else if (filenames.size()==2){
+        Eigen::VectorXd VecPose = VectorToEigenVec(fileData[0]);
+        Pose = VecPose.reshaped(3,VecPose.size()/3).transpose();
+        Eigen::VectorXd VecOdom = VectorToEigenVec(fileData[1]);
+        MatrixOdom = VecOdom.reshaped(3,VecOdom.size()/3).transpose();
+    } else{
+        std::cout << "The number of input files is wrong. Please check the input files." << std::endl;
+        return 0;
+    }
+//    Eigen::VectorXd VecPose = VectorToEigenVec(fileData[0]);
+//    Eigen::MatrixXd Pose = VecPose.reshaped(3,VecPose.size()/3).transpose();
+
+
 
     Eigen::MatrixXd PoseGT;
     if (ValParam.EvaluateGT){
@@ -49,14 +87,10 @@ int main() {
         std::vector<double> PoseGTData;
         loadTxTData(PoseGTInput,PoseGTData,ValParam);
         Eigen::VectorXd VecPoseGT = VectorToEigenVec(PoseGTData);
-        PoseGT = VecPoseGT.reshaped(3,VecPose.size()/3).transpose();
+        PoseGT = VecPoseGT.reshaped(3,VecPoseGT.size()/3).transpose();
         FuncEval(Pose, PoseGT, ValParam);
     }
 
-    if (ValParam.ModeOdom){
-        Eigen::VectorXd VecOdom = VectorToEigenVec(fileData[1]);
-        MatrixOdom = VecOdom.reshaped(3,VecOdom.size()/3).transpose();
-    }
 
 //    FuncNoisePose(Pose);
 //
@@ -117,12 +151,9 @@ int main() {
 
     auto start = std::chrono::high_resolution_clock::now();  // Start
     auto [Map, N] = FuncInitialiseGridMap(Pose,LowScanXY,LowScanOdd,ValParam);
-    if (ValParam.ModeShowMap){
-        FuncShowMap(Map);
-    }
     Eigen::SparseMatrix<double> HH = FuncMapConst(ValParam);
     FuncSmoothN2(N, HH, ValParam);
-    if (ValParam.ModeOdom)
+    if (ValParam.ModeOdom && ValParam.WeightO!=0)
     {
         if (ValParam.EvaluateGT)
         {

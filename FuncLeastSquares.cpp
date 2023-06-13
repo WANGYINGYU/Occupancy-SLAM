@@ -46,7 +46,7 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
                 ValParam.Sizei = ValParam.Sizei * ValParam.DownRate;
                 ValParam.Sizej = ValParam.Sizej * ValParam.DownRate;
                 ValParam.Scale = ValParam.Scale / ValParam.DownRate;
-                auto [HighMap, HighN] = FuncInitialiseGridMap(Pose, ScanXY, ScanOdd, ValParam);
+                Eigen::MatrixXd HighMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
                 FuncCalBound(HighMap, IdSelect, IdSelectVar, ValParam);
                 FuncSelectScan(Map, Pose, ScanXY, ScanOdd, SelectScanXY, SelectScanOdd, IdSelect, ValParam);
                 FuncInitialSelectMap(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, ValParam);
@@ -58,6 +58,8 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
             auto [DeltaP,DeltaD,SumDelta,SecondMeanDelta,SumDeltaP,SecondMeanDeltaP] = FuncSelectMapDelta(SelectMap, Odom, JP, JD, JO, ErrorS, ErrorO, IS, IO, WeightHHSelect, IdSelectVar, ValParam);
             MeanDelta = SecondMeanDelta;
             MeanDeltaP = SecondMeanDeltaP;
+            std::cout<<"Mean Delta is "<< SecondMeanDelta << std::endl;
+            std::cout<<"Mean Delta of Pose is "<< SecondMeanDeltaP << std::endl;
             FuncSelectMapUpdate(SelectMap, Pose, DeltaP, DeltaD, IdSelectVar);
             if (ValParam.ModeShowMap){
                 FuncShowMap(SelectMap);
@@ -112,7 +114,7 @@ void FuncLeastSquares(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd&
                 ValParam.Sizei = ValParam.Sizei * ValParam.DownRate;
                 ValParam.Sizej = ValParam.Sizej * ValParam.DownRate;
                 ValParam.Scale = ValParam.Scale / ValParam.DownRate;
-                auto [HighMap, HighN] = FuncInitialiseGridMap(Pose, ScanXY, ScanOdd, ValParam);
+                Eigen::MatrixXd HighMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
                 FuncCalBound(HighMap, IdSelect, IdSelectVar, ValParam);
                 FuncSelectScan(Map, Pose, ScanXY, ScanOdd, SelectScanXY, SelectScanOdd, IdSelect, ValParam);
                 FuncInitialSelectMap(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, ValParam);
@@ -178,7 +180,7 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
                 ValParam.Sizei = ValParam.Sizei * ValParam.DownRate;
                 ValParam.Sizej = ValParam.Sizej * ValParam.DownRate;
                 ValParam.Scale = ValParam.Scale / ValParam.DownRate;
-                auto [HighMap, HighN] = FuncInitialiseGridMap(Pose, ScanXY, ScanOdd, ValParam);
+                Eigen::MatrixXd HighMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
                 FuncCalBound(HighMap, IdSelect, IdSelectVar, ValParam);
                 FuncSelectScan(Map, Pose, ScanXY, ScanOdd, SelectScanXY, SelectScanOdd, IdSelect, ValParam);
                 FuncInitialSelectMap(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, ValParam);
@@ -190,6 +192,8 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
             auto [DeltaP,DeltaD,SumDelta,SecondMeanDelta,SumDeltaP,SecondMeanDeltaP] = FuncSelectMapDelta(SelectMap, Odom, JP, JD, JO, ErrorS, ErrorO, IS, IO, WeightHHSelect, IdSelectVar, ValParam);
             MeanDelta = SecondMeanDelta;
             MeanDeltaP = SecondMeanDeltaP;
+            std::cout<<"Mean Delta is "<< SecondMeanDelta << std::endl;
+            std::cout<<"Mean Delta of Pose is "<< SecondMeanDeltaP << std::endl;
             FuncSelectMapUpdate(SelectMap, Pose, DeltaP, DeltaD, IdSelectVar);
             if (ValParam.ModeShowMap){
                 FuncShowMap(SelectMap);
@@ -242,21 +246,16 @@ void FuncLeastSquares(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd&
                 ValParam.Sizei = ValParam.Sizei * ValParam.DownRate;
                 ValParam.Sizej = ValParam.Sizej * ValParam.DownRate;
                 ValParam.Scale = ValParam.Scale / ValParam.DownRate;
-                auto [HighMap, HighN] = FuncInitialiseGridMap(Pose, ScanXY, ScanOdd, ValParam);
+                Eigen::MatrixXd HighMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
                 FuncCalBound(HighMap, IdSelect, IdSelectVar, ValParam);
                 FuncSelectScan(Map, Pose, ScanXY, ScanOdd, SelectScanXY, SelectScanOdd, IdSelect, ValParam);
                 FuncInitialSelectMap(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, ValParam);
-                std::cout<<'1'<<std::endl;
                 FuncSelectMapConst(SelectMap, IdSelectVar, HHSelect, ValParam);
-                std::cout<<'2'<<std::endl;
                 WeightHHSelect = HHSelect * ValParam.MapSmoothingWeightSecond;
             }
             FuncSmoothSelectN2(SelectN, WeightHHSelect, IdSelectVar, ValParam);
-            std::cout<<'3'<<std::endl;
             auto [JP, JD, IS, ErrorS, SumError, MeanError] = FuncDiffSelectJacobian(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, IdSelectVar, ValParam);
-            std::cout<<'4'<<std::endl;
             auto [DeltaP,DeltaD,SumDelta,SecondMeanDelta,SumDeltaP,SecondMeanDeltaP] = FuncSelectMapDelta(SelectMap, JP, JD, ErrorS, IS, WeightHHSelect, IdSelectVar, ValParam);
-            std::cout<<'5'<<std::endl;
             MeanDelta = SecondMeanDelta;
             MeanDeltaP = SecondMeanDeltaP;
             std::cout<<"Mean Delta is "<< SecondMeanDelta << std::endl;

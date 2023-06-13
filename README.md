@@ -22,6 +22,10 @@ This paper considers the 2D SLAM problem using 2D laser scans (and odometry) inf
 
 ## Quickstart
 
+### Modify the path of libigl
+
+Specify the path to libigl in `CMakeLists.txt`.
+
 ### Compile
 
 ```bash

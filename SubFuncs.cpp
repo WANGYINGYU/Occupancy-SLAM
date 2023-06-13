@@ -37,7 +37,7 @@ double FuncWrap(double alpha) {
 
 void loadFileData(const std::vector<std::string>& filenames, std::vector<std::vector<double>>& fileData, const ParamStruct& ValParam) {
     // Load the data from each file and store it in the vectors
-    int numFiles = (ValParam.ModeOdom == 0) ? 1 : 2;
+    int numFiles = filenames.size();
     for (int i = 0; i < numFiles; i++) {
         std::ifstream file(filenames[i]);
         if (file.is_open()) {
@@ -654,7 +654,7 @@ void FuncCalBound(const Eigen::MatrixXd& Map, Eigen::MatrixXi& IdSelect,Eigen::M
     Eigen::MatrixXd ConvMap = Eigen::MatrixXd::Zero(Map.rows(), Map.cols());
     Eigen::MatrixXd Block(2*r+1, 2*r+1);
     for (int i = 0; i < Map.rows(); ++i) {
-        for (int j = 0; j < Map.rows(); ++j) {
+        for (int j = 0; j < Map.cols(); ++j) {
             if ((i-r+1)>0 && (j-r+1)>0 && (i+r+1)<=ValParam.Sizei && (j+r+1)<=ValParam.Sizej){
                 Block = ExpMap.block(i-r, j-r, 2*r+1, 2*r+1);
             }
@@ -1097,7 +1097,7 @@ void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<doub
     Eigen::SparseMatrix<double> II = A1Select.transpose() * A1Select + WeightHHSelect;
     Eigen::SparseMatrix<double> EE = (A1Select.transpose() * Val).sparseView();
     II.makeCompressed();
-
+    Eigen::initParallel();
     Eigen::ConjugateGradient <Eigen::SparseMatrix<double>, Eigen::Upper|Eigen::Lower> solver;
     int MaxNum = ValParam.SolverSecondMaxIter;
     solver.setMaxIterations(MaxNum);
@@ -1248,7 +1248,7 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
 
 
         // Calculation of Jacobian of Observation Terms w.r.t. Map
-//        delete UV, u, v, u1, v1;
+        // delete UV, u, v, u1, v1;
         UV =  XY3.array().floor().cast<int>().matrix();
 
         u = XY3.row(0);
@@ -1319,7 +1319,6 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
             JOID1i << Cnti,Cnti,Cnti+1,Cnti+1,Cnti,Cnti,Cnti+1,Cnti+1,Cnti,Cnti+1,Cnti+2,Cnti+2;
             Eigen::ArrayXi JOID2i(12);
             JOID2i << aaa.head(2), aaa.head(2), bbb.head(2), bbb.head(2), aaa(2), aaa(2), aaa(2), bbb(2);
-
 
             Eigen::ArrayXd JOVali(12);
             JOVali.head(2) = dTdT1.row(0);
@@ -2282,4 +2281,15 @@ Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const s
         Map = Map + TemGlobal;
     }
     return Map;
+}
+void FuncPosefromOdom(const Eigen::MatrixXd& Odom, Eigen::MatrixXd& Pose){
+    Pose = Eigen::MatrixXd::Zero(Odom.rows(), 3);
+    for (int i = 0; i < Odom.rows(); ++i) {
+        if (i==0){
+            Pose.row(i) = Odom.row(i);
+        }else{
+            Pose.row(i).segment(0,2) = (FuncTheta2R(Pose(i-1,2)) * Odom.row(i-1).segment(0,2).transpose()).transpose() + Pose.row(i-1).segment(0,2);
+            Pose(i,2) = FuncWrap(Pose(i-1,2) + Odom(i-1,2));
+        }
+    }
 }
