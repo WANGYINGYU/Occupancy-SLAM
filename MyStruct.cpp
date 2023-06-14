@@ -8,8 +8,8 @@ ParamStruct SetParam(){
     ParamStruct ValParam;
     ValParam.WeightO = 0; // Weight for the odometry term
     ValParam.EvaluateGT = false; // If evaluate the ground truth
-    ValParam.PosefromOdom = true; // If use odometry as the initial pose
-    ValParam.ModeOdom = true; // If exists odometry inputs
+    ValParam.PosefromOdom = false; // If use odometry as the initial pose
+    ValParam.ModeOdom = false; // If exists odometry inputs
     ValParam.ModeMulti = true; // If use multi-resolution mode
     ValParam.ModeKeyFrame = false; // If use the key-frames mode
 
@@ -26,17 +26,17 @@ ParamStruct SetParam(){
 //    ValParam.OriginX = -60; // The origin
 //    ValParam.OriginY = -50; // The origin
 
-//    ValParam.Sizei = 1500; // The map size in v(vertical) direction
-//    ValParam.Sizej = 1500; // The map size in u(horizontal) direction
-//    ValParam.Scale = 0.1; // The map resolution
-//    ValParam.OriginX = 80; // The origin of the map in u direction
-//    ValParam.OriginY = -120; // The origin of the map in v direction
-
-    ValParam.Sizei = 1200/2; // The map size
-    ValParam.Sizej = 1000/2; // The map size
+    ValParam.Sizei = 750; // The map size
+    ValParam.Sizej = 850; // The map size
     ValParam.Scale = 0.1; // The map resolution
-    ValParam.OriginX = -15; // The origin
-    ValParam.OriginY = -20; // The origin
+    ValParam.OriginX = 115; // The origin
+    ValParam.OriginY = -100; // The origin
+
+//    ValParam.Sizei = 1200/2; // The map size
+//    ValParam.Sizej = 1000/2; // The map size
+//    ValParam.Scale = 0.1; // The map resolution
+//    ValParam.OriginX = -15; // The origin
+//    ValParam.OriginY = -20; // The origin
 
     // Multi-resolution mode
     ValParam.DownTime = 15; // The maximum times of first stage
@@ -58,12 +58,12 @@ ParamStruct SetParam(){
     ValParam.MapSmoothingWeightSecond = 1e-7; // Weight for the smoothing term of Occupancy Map for the second stage
 
     //
-    ValParam.NumBeam = 1081;
-    ValParam.MinAngle = -135.0/180.0*M_PI;
-    ValParam.MaxAngle = 135.0/180.0*M_PI;
-//    ValParam.NumBeam = 1079; // The number of beams
-//    ValParam.MinAngle = -2.35183119774; // The minimum angle of beams
-//    ValParam.MaxAngle = 2.35183119774; // The maximum angle of beams
+//    ValParam.NumBeam = 1081;
+//    ValParam.MinAngle = -135.0/180.0*M_PI;
+//    ValParam.MaxAngle = 135.0/180.0*M_PI;
+    ValParam.NumBeam = 1079; // The number of beams
+    ValParam.MinAngle = -2.35183119774; // The minimum angle of beams
+    ValParam.MaxAngle = 2.35183119774; // The maximum angle of beams
 
     ValParam.MaxRange = 30.0; // The maximum range of beams
     ValParam.MinRange = 0.023; // The minimum range of beams

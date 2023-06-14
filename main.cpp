@@ -74,10 +74,6 @@ int main() {
         std::cout << "The number of input files is wrong. Please check the input files." << std::endl;
         return 0;
     }
-//    Eigen::VectorXd VecPose = VectorToEigenVec(fileData[0]);
-//    Eigen::MatrixXd Pose = VecPose.reshaped(3,VecPose.size()/3).transpose();
-
-
 
     Eigen::MatrixXd PoseGT;
     if (ValParam.EvaluateGT){
@@ -91,9 +87,6 @@ int main() {
         FuncEval(Pose, PoseGT, ValParam);
     }
 
-
-//    FuncNoisePose(Pose);
-//
     if (ValParam.ModeKeyFrame){
         int NumPose = Pose.rows();
         int NumSelect = floor((NumPose/ValParam.KeyframeRate)) + 1;

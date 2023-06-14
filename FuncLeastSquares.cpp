@@ -46,7 +46,7 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
                 ValParam.Sizei = ValParam.Sizei * ValParam.DownRate;
                 ValParam.Sizej = ValParam.Sizej * ValParam.DownRate;
                 ValParam.Scale = ValParam.Scale / ValParam.DownRate;
-                Eigen::MatrixXd HighMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
+                auto [HighMap, HighN] = FuncInitialiseGridMap(Pose,ScanXY,ScanOdd,ValParam);
                 FuncCalBound(HighMap, IdSelect, IdSelectVar, ValParam);
                 FuncSelectScan(Map, Pose, ScanXY, ScanOdd, SelectScanXY, SelectScanOdd, IdSelect, ValParam);
                 FuncInitialSelectMap(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, ValParam);
@@ -114,7 +114,7 @@ void FuncLeastSquares(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd&
                 ValParam.Sizei = ValParam.Sizei * ValParam.DownRate;
                 ValParam.Sizej = ValParam.Sizej * ValParam.DownRate;
                 ValParam.Scale = ValParam.Scale / ValParam.DownRate;
-                Eigen::MatrixXd HighMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
+                auto [HighMap, HighN] = FuncInitialiseGridMap(Pose,ScanXY,ScanOdd,ValParam);
                 FuncCalBound(HighMap, IdSelect, IdSelectVar, ValParam);
                 FuncSelectScan(Map, Pose, ScanXY, ScanOdd, SelectScanXY, SelectScanOdd, IdSelect, ValParam);
                 FuncInitialSelectMap(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, ValParam);
@@ -180,7 +180,7 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
                 ValParam.Sizei = ValParam.Sizei * ValParam.DownRate;
                 ValParam.Sizej = ValParam.Sizej * ValParam.DownRate;
                 ValParam.Scale = ValParam.Scale / ValParam.DownRate;
-                Eigen::MatrixXd HighMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
+                auto [HighMap, HighN] = FuncInitialiseGridMap(Pose,ScanXY,ScanOdd,ValParam);
                 FuncCalBound(HighMap, IdSelect, IdSelectVar, ValParam);
                 FuncSelectScan(Map, Pose, ScanXY, ScanOdd, SelectScanXY, SelectScanOdd, IdSelect, ValParam);
                 FuncInitialSelectMap(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, ValParam);
@@ -246,7 +246,7 @@ void FuncLeastSquares(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd&
                 ValParam.Sizei = ValParam.Sizei * ValParam.DownRate;
                 ValParam.Sizej = ValParam.Sizej * ValParam.DownRate;
                 ValParam.Scale = ValParam.Scale / ValParam.DownRate;
-                Eigen::MatrixXd HighMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
+                auto [HighMap, HighN] = FuncInitialiseGridMap(Pose,ScanXY,ScanOdd,ValParam);
                 FuncCalBound(HighMap, IdSelect, IdSelectVar, ValParam);
                 FuncSelectScan(Map, Pose, ScanXY, ScanOdd, SelectScanXY, SelectScanOdd, IdSelect, ValParam);
                 FuncInitialSelectMap(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, ValParam);
