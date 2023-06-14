@@ -22,6 +22,10 @@ This paper considers the 2D SLAM problem using 2D laser scans (and odometry) inf
 
 ## Quickstart
 
+### Download datasets
+
+Download datasets at https://drive.google.com/file/d/1EDZfsOru4z0j2OEq57DIKOyvudecWrkM/view?usp=share_link, and place the file under the main folder. 
+
 ### Modify the path of libigl
 
 Specify the path to libigl in `CMakeLists.txt`.
