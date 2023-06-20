@@ -98,5 +98,5 @@ If you find our work useful to your research, please cite fllowing paper:
 
 ## License
 
-Our code is under [Apache 2.0](https://github.com/apache/.github/blob/main/LICENSE) license. 
+Our code is under [MIT](./LICENSE.txt) License. 
 
