@@ -2288,8 +2288,8 @@ void FuncPosefromOdom(const Eigen::MatrixXd& Odom, Eigen::MatrixXd& Pose){
         if (i==0){
             Pose.row(i) = Odom.row(i);
         }else{
-            Pose.row(i).segment(0,2) = (FuncTheta2R(Pose(i-1,2)) * Odom.row(i-1).segment(0,2).transpose()).transpose() + Pose.row(i-1).segment(0,2);
-            Pose(i,2) = FuncWrap(Pose(i-1,2) + Odom(i-1,2));
+            Pose.row(i).segment(0,2) = (FuncTheta2R(Pose(i-1,2)) * Odom.row(i).segment(0,2).transpose()).transpose() + Pose.row(i-1).segment(0,2);
+            Pose(i,2) = FuncWrap(Pose(i-1,2) + Odom(i,2));
         }
     }
 }

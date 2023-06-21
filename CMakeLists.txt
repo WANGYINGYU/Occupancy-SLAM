@@ -11,7 +11,7 @@ if(OPENMP_FOUND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -O3 -march=native")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3 -march=native -mavx -mfma -fopenmp-simd -fopenmp=libomp -DNDEBUG")
 endif()
-#find_package(LIBIGL REQUIRED)
+# Find libigl library
 set(LIBIGL_INCLUDE_DIR /Users/yingyuwang/Documents/libigl/include)
 include_directories(${LIBIGL_INCLUDE_DIR})
 # Add include directories for Eigen library
