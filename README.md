@@ -106,8 +106,4 @@ Our code is under [MIT](./LICENSE.txt) License.
 
 ## Our Results of Map
 
-<center>
-<figure>
 <img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true" width="200" /><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true" width="200" />
-</figure>
-</center>
