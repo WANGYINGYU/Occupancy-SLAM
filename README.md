@@ -106,17 +106,8 @@ Our code is under [MIT](./LICENSE.txt) License.
 
 ## Our Results of Map
 
-<style>
-table th:first-of-type {
-    width: 10%;
-}
-table th:nth-of-type(2) {
-    width: 40%;
-}
-table th:nth-of-type(3) {
-    width: 50%;
-}
-</style>
+
+
 
 |  Dataset  |                        Initialization                        | Ours                                                         |
 | :-------: | :----------------------------------------------------------: | ------------------------------------------------------------ |
@@ -127,3 +118,20 @@ table th:nth-of-type(3) {
 |           |                                                              |                                                              |
 |  Simu 2   | ![Simu2 Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu2_Ini.jpg?raw=true 'Simu2 Initialization') | ![Simu2 Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu2_Our.jpg?raw=true 'Simu2 Our') |
 
+<table style="width:100%">
+  <tr>
+    <th>Firstname</th>
+    <th>Lastname</th> 
+    <th>Age</th>
+  </tr>
+  <tr>
+    <td>Jill</td>
+    <td>Smith</td> 
+    <td>50</td>
+  </tr>
+  <tr>
+    <td>Eve</td>
+    <td>Jackson</td> 
+    <td>94</td>
+  </tr>
+</table>
