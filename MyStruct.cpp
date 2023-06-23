@@ -6,7 +6,7 @@
 
 ParamStruct SetParam(){
     ParamStruct ValParam;
-    ValParam.WeightO = 1; // Weight for the odometry term
+    ValParam.WeightO = 0.5; // Weight for the odometry term
     ValParam.EvaluateGT = false; // If evaluate the ground truth
     ValParam.PosefromOdom = true; // If use odometry as the initial pose
     ValParam.ModeOdom = true; // If exists odometry inputs
@@ -46,7 +46,7 @@ ParamStruct SetParam(){
 
 
     // Multi-resolution mode
-    ValParam.DownTime = 10; // The maximum times of first stage
+    ValParam.DownTime = 15; // The maximum times of first stage
     ValParam.DownRate = 10; // The downsample rate between two stages
     ValParam.SelectDistance = 0.5; // The selection distance from objects' boundary
     ValParam.SelectKernelSize = 3; // The selection kernel size
@@ -61,7 +61,7 @@ ParamStruct SetParam(){
     ValParam.MinDelta = 100; // The threshold of minimum delta
     ValParam.MinDeltaPose = 0.0002; // The threshold of minimum delta w.r.t. poses
     ValParam.WeightSmoothN = 1; // Weight for the smoothing term of Hit Map N
-    ValParam.MapSmoothingWeightFirst = 1e-8; // Weight for the smoothing term of Occupancy Map for the first stage
+    ValParam.MapSmoothingWeightFirst = 1e-7; // Weight for the smoothing term of Occupancy Map for the first stage
     ValParam.MapSmoothingWeightSecond = 1e-7; // Weight for the smoothing term of Occupancy Map for the second stage
 
     //
