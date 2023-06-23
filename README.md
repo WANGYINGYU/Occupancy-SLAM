@@ -111,4 +111,5 @@ Our code is under [MIT](./LICENSE.txt) License.
 |   ACES    | ![ACES Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true 'ACES Initialization') | ![ACES Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true 'ACES Our') |
 | Intel Lab | ![Intel Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Intel_Ini.jpg?raw=true 'Intel Initialization') | ![Intel Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Intel_Our.jpg?raw=true 'Intel Our') |
 |    C5     | ![C5 Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/C5_Ini.jpg?raw=true 'C5 Initialization') | ![C5 Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/C5_Our.jpg?raw=true 'C5 Our') |
+| Museum b0 | ![b0 Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/b0_Ini.jpg?raw=true 'b0 Initialization') | ![b0 Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/b0_Our.jpg?raw=true 'b0 Our') |
 

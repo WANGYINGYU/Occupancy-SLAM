@@ -6,10 +6,10 @@
 
 ParamStruct SetParam(){
     ParamStruct ValParam;
-    ValParam.WeightO = 1.0; // Weight for the odometry term
+    ValParam.WeightO = 0.0; // Weight for the odometry term
     ValParam.EvaluateGT = false; // If evaluate the ground truth
-    ValParam.PosefromOdom = true; // If use odometry as the initial pose
-    ValParam.ModeOdom = true; // If exists odometry inputs
+    ValParam.PosefromOdom = false; // If use odometry as the initial pose
+    ValParam.ModeOdom = false; // If exists odometry inputs
     ValParam.ModeMulti = true; // If use multi-resolution mode
     ValParam.ModeKeyFrame = false; // If use the key-frames mode
 
@@ -26,11 +26,11 @@ ParamStruct SetParam(){
 //    ValParam.OriginX = -18;
 //    ValParam.OriginY = -32;
 
-//    ValParam.Sizei = 900; // The map size
-//    ValParam.Sizej = 900; // The map size
-//    ValParam.Scale = 0.1; // The map resolution
-//    ValParam.OriginX = -60; // The origin
-//    ValParam.OriginY = -50; // The origin
+    ValParam.Sizei = 900; // The map size
+    ValParam.Sizej = 900; // The map size
+    ValParam.Scale = 0.1; // The map resolution
+    ValParam.OriginX = -60; // The origin
+    ValParam.OriginY = -50; // The origin
 
 //    ValParam.Sizei = 750; // The map size
 //    ValParam.Sizej = 850; // The map size
@@ -38,16 +38,16 @@ ParamStruct SetParam(){
 //    ValParam.OriginX = 115; // The origin
 //    ValParam.OriginY = -100; // The origin
 
-    ValParam.Sizei = 600; // The map size
-    ValParam.Sizej = 500; // The map size
-    ValParam.Scale = 0.1; // The map resolution
-    ValParam.OriginX = -15; // The origin
-    ValParam.OriginY = -20; // The origin
+//    ValParam.Sizei = 1200; // The map size
+//    ValParam.Sizej = 1000; // The map size
+//    ValParam.Scale = 0.05; // The map resolution
+//    ValParam.OriginX = -15; // The origin
+//    ValParam.OriginY = -20; // The origin
 
 
     // Multi-resolution mode
     ValParam.DownTime = 10; // The maximum times of first stage
-    ValParam.DownRate = 5; // The downsample rate between two stages
+    ValParam.DownRate = 10; // The downsample rate between two stages
     ValParam.SelectDistance = 0.5; // The selection distance from objects' boundary
     ValParam.SelectKernelSize = 3; // The selection kernel size
 
@@ -62,20 +62,20 @@ ParamStruct SetParam(){
     ValParam.MinDeltaPose = 0.0002; // The threshold of minimum delta w.r.t. poses
     ValParam.WeightSmoothN = 1; // Weight for the smoothing term of Hit Map N
     ValParam.MapSmoothingWeightFirst = 1e-7; // Weight for the smoothing term of Occupancy Map for the first stage
-    ValParam.MapSmoothingWeightSecond = 1e-7; // Weight for the smoothing term of Occupancy Map for the second stage
+    ValParam.MapSmoothingWeightSecond = 1e-6; // Weight for the smoothing term of Occupancy Map for the second stage
 
     //
-    ValParam.NumBeam = 1081;
-    ValParam.MinAngle = -135.0/180.0*M_PI;
-    ValParam.MaxAngle = 135.0/180.0*M_PI;
+//    ValParam.NumBeam = 1081;
+//    ValParam.MinAngle = -135.0/180.0*M_PI;
+//    ValParam.MaxAngle = 135.0/180.0*M_PI;
 
 //    ValParam.NumBeam = 180;
 //    ValParam.MinAngle = -1.5707964;
 //    ValParam.MaxAngle = 1.5533431;
 
-//    ValParam.NumBeam = 1079; // The number of beams
-//    ValParam.MinAngle = -2.35183119774; // The minimum angle of beams
-//    ValParam.MaxAngle = 2.35183119774; // The maximum angle of beams
+    ValParam.NumBeam = 1079; // The number of beams
+    ValParam.MinAngle = -2.35183119774; // The minimum angle of beams
+    ValParam.MaxAngle = 2.35183119774; // The maximum angle of beams
 
 
     ValParam.MaxRange = 30.0; // The maximum range of beams

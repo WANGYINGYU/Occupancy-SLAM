@@ -192,8 +192,6 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
             auto [DeltaP,DeltaD,SumDelta,SecondMeanDelta,SumDeltaP,SecondMeanDeltaP] = FuncSelectMapDelta(SelectMap, Odom, JP, JD, JO, ErrorS, ErrorO, IS, IO, WeightHHSelect, IdSelectVar, ValParam);
             MeanDelta = SecondMeanDelta;
             MeanDeltaP = SecondMeanDeltaP;
-            std::cout<<"Mean Delta is "<< SecondMeanDelta << std::endl;
-            std::cout<<"Mean Delta of Pose is "<< SecondMeanDeltaP << std::endl;
             FuncSelectMapUpdate(SelectMap, Pose, DeltaP, DeltaD, IdSelectVar);
             if (ValParam.ModeShowMap){
                 FuncShowMap(SelectMap);
