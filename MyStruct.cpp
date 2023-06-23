@@ -6,7 +6,7 @@
 
 ParamStruct SetParam(){
     ParamStruct ValParam;
-    ValParam.WeightO = 0.1; // Weight for the odometry term
+    ValParam.WeightO = 0.5; // Weight for the odometry term
     ValParam.EvaluateGT = false; // If evaluate the ground truth
     ValParam.PosefromOdom = false; // If use odometry as the initial pose
     ValParam.ModeOdom = true; // If exists odometry inputs
@@ -20,11 +20,11 @@ ParamStruct SetParam(){
 //    ValParam.OriginX = -25;
 //    ValParam.OriginY = -25;
 
-    ValParam.Sizei = 600;
-    ValParam.Sizej = 600;
+    ValParam.Sizei = 500;
+    ValParam.Sizej = 500;
     ValParam.Scale = 0.1;
-    ValParam.OriginX = -29;
-    ValParam.OriginY = -49;
+    ValParam.OriginX = -18;
+    ValParam.OriginY = -32;
 
 //    ValParam.Sizei = 900; // The map size
 //    ValParam.Sizej = 900; // The map size

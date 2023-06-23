@@ -106,7 +106,8 @@ Our code is under [MIT](./LICENSE.txt) License.
 
 ## Our Results of Map
 
-| Dataset |                        Initialization                        | Ours                                                         |
-| :-----: | :----------------------------------------------------------: | ------------------------------------------------------------ |
-|  ACES   | ![ACES Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true 'ACES Initialization') | ![ACES Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true 'ACES Our') |
+|  Dataset  |                        Initialization                        | Ours                                                         |
+| :-------: | :----------------------------------------------------------: | ------------------------------------------------------------ |
+|   ACES    | ![ACES Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true 'ACES Initialization') | ![ACES Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true 'ACES Our') |
+| Intel Lab | ![Intel Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Intel_Ini.jpg?raw=true 'Intel Initialization') | ![Intel Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Intel_Our.jpg?raw=true 'Intel Our') |
 
