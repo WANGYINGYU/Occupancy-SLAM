@@ -127,11 +127,23 @@ Our code is under [MIT](./LICENSE.txt) License.
   <tr>
     <td>ACES</td>
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true"></td> 
-    <td>![ACES Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true 'ACES Our')</td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true"></td>
   </tr>
   <tr>
     <td>Intel Lab</td>
-    <td>Jackson</td> 
-    <td>94</td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Intel_Ini.jpg?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Intel_Our.jpg?raw=true"></td>
+  </tr>
+  	<td>C5</td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/C5_Ini.jpg?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/C5_Our.jpg?raw=true"></td>
+  </tr>
+    <td>Museum b0</td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/b0_Ini.jpg?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/b0_Our.jpg?raw=true"></td>
+  </tr>
+    <td>Simu 2</td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu2_Ini.jpg?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu2_Our.jpg?raw=true"></td>
   </tr>
 </table>
