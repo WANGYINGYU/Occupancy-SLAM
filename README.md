@@ -132,18 +132,19 @@ Our code is under [MIT](./LICENSE.txt) License.
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/b0_Ini.jpg?raw=true"></td> 
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/b0_Our.jpg?raw=true"></td>
 	</tr>
+    <td>Freiburg Building 079</td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/fr079_Ini.jpg?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/fr079_Our.jpg?raw=true"></td>
+	</tr>
     <td>Simu 1</td>
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu1_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu1_Our.jpg?raw=true"></td>
-  </tr>  
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu1_Our.jpg?raw=true"></td> 
 	</tr>
     <td>Simu 2</td>
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu2_Ini.jpg?raw=true"></td> 
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu2_Our.jpg?raw=true"></td>
-  </tr>
 	</tr>
     <td>Simu 3</td>
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu3_Ini.jpg?raw=true"></td> 
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu3_Our.jpg?raw=true"></td>
-  </tr>
 </table>
