@@ -112,6 +112,6 @@ Our code is under [MIT](./LICENSE.txt) License.
 ·
 ·
 ·
-<img src="https://img2018.cnblogs.com/blog/1735896/202001/1735896-20200116162140471-237299356.png" />
+<img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true" />
 </figure>
 </center>
