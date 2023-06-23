@@ -115,9 +115,9 @@ Our code is under [MIT](./LICENSE.txt) License.
     <th>Ours</th>
   </tr>
   <tr>
-    <td width="5">ACES</td>
-    <td width="45"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true"></td> 
-    <td width="50"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true"></td>
+    <td width="1">ACES</td>
+    <td width="40"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true"></td> 
+    <td width="59"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true"></td>
   </tr>
   <tr>
     <td>Intel Lab</td>
