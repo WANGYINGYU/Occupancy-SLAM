@@ -6,19 +6,25 @@
 
 ParamStruct SetParam(){
     ParamStruct ValParam;
-    ValParam.WeightO = 0; // Weight for the odometry term
+    ValParam.WeightO = 0.1; // Weight for the odometry term
     ValParam.EvaluateGT = false; // If evaluate the ground truth
-    ValParam.PosefromOdom = true; // If use odometry as the initial pose
+    ValParam.PosefromOdom = false; // If use odometry as the initial pose
     ValParam.ModeOdom = true; // If exists odometry inputs
     ValParam.ModeMulti = true; // If use multi-resolution mode
     ValParam.ModeKeyFrame = false; // If use the key-frames mode
 
     // The map resolution
-    ValParam.Sizei = 1000;
-    ValParam.Sizej = 1000;
-    ValParam.Scale = 0.05;
-    ValParam.OriginX = -25;
-    ValParam.OriginY = -25;
+//    ValParam.Sizei = 1000;
+//    ValParam.Sizej = 1000;
+//    ValParam.Scale = 0.05;
+//    ValParam.OriginX = -25;
+//    ValParam.OriginY = -25;
+
+    ValParam.Sizei = 600;
+    ValParam.Sizej = 600;
+    ValParam.Scale = 0.1;
+    ValParam.OriginX = -29;
+    ValParam.OriginY = -49;
 
 //    ValParam.Sizei = 900; // The map size
 //    ValParam.Sizej = 900; // The map size
@@ -41,7 +47,7 @@ ParamStruct SetParam(){
 
     // Multi-resolution mode
     ValParam.DownTime = 15; // The maximum times of first stage
-    ValParam.DownRate = 10; // The downsample rate between two stages
+    ValParam.DownRate = 2; // The downsample rate between two stages
     ValParam.SelectDistance = 0.5; // The selection distance from objects' boundary
     ValParam.SelectKernelSize = 3; // The selection kernel size
 
@@ -49,9 +55,9 @@ ParamStruct SetParam(){
     ValParam.KeyframeRate = 10; // The key-frame rate
 
     // Paramters for Iteration Algorithm
-    ValParam.MaxIter = ValParam.DownTime + 3; // The maximum iteration times
-    ValParam.MinMeanDeltaFirst = 2000; // The threshold of minimum mean delta for the first stage
-    ValParam.MinMeanDeltaPoseFirst = 0.0006; // The threshold of minimum mean delta w.r.t. poses for the first stage
+    ValParam.MaxIter = ValParam.DownTime + 2; // The maximum iteration times
+    ValParam.MinMeanDeltaFirst = 100; // The threshold of minimum mean delta for the first stage
+    ValParam.MinMeanDeltaPoseFirst = 0.0001; // The threshold of minimum mean delta w.r.t. poses for the first stage
     ValParam.MinDelta = 100; // The threshold of minimum delta
     ValParam.MinDeltaPose = 0.0002; // The threshold of minimum delta w.r.t. poses
     ValParam.WeightSmoothN = 1; // Weight for the smoothing term of Hit Map N
@@ -59,22 +65,29 @@ ParamStruct SetParam(){
     ValParam.MapSmoothingWeightSecond = 1e-7; // Weight for the smoothing term of Occupancy Map for the second stage
 
     //
-    ValParam.NumBeam = 1081;
-    ValParam.MinAngle = -135.0/180.0*M_PI;
-    ValParam.MaxAngle = 135.0/180.0*M_PI;
+//    ValParam.NumBeam = 1081;
+//    ValParam.MinAngle = -135.0/180.0*M_PI;
+//    ValParam.MaxAngle = 135.0/180.0*M_PI;
+
+    ValParam.NumBeam = 180;
+    ValParam.MinAngle = -1.5707964;
+    ValParam.MaxAngle = 1.5533431;
 
 //    ValParam.NumBeam = 1079; // The number of beams
 //    ValParam.MinAngle = -2.35183119774; // The minimum angle of beams
 //    ValParam.MaxAngle = 2.35183119774; // The maximum angle of beams
 
 
-    ValParam.MaxRange = 30.0; // The maximum range of beams
-    ValParam.MinRange = 0.023; // The minimum range of beams
+//    ValParam.MaxRange = 30.0; // The maximum range of beams
+//    ValParam.MinRange = 0.023; // The minimum range of beams
+
+    ValParam.MaxRange = 20.0; // The maximum range of beams
+    ValParam.MinRange = 0.0; // The minimum range of beams
 
     // Show Map Mode
-    ValParam.ModeShowMap = false; // If show the map during the iteration, suggestion: false
+    ValParam.ModeShowMap = true; // If show the map during the iteration, suggestion: false
     // Sparse System Solver in the First Stage
-    ValParam.ModeSparseSolver = true; //Iterative Solver for 'true' and Direct Solver for 'false'
+    ValParam.ModeSparseSolver = false; //Iterative Solver for 'true' and Direct Solver for 'false'
 
     // For Iterative Solver
     // First Stage

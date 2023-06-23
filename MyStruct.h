@@ -19,8 +19,8 @@ struct ParamStruct{
     int Sizei;
     int Sizej;
     float Scale;
-    int OriginX;
-    int OriginY;
+    double OriginX;
+    double OriginY;
 
     // Multi-resolution mode
     int DownTime;
