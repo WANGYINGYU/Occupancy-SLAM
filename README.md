@@ -106,5 +106,7 @@ Our code is under [MIT](./LICENSE.txt) License.
 
 ## Our Results of Map
 
-![ACES Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true 'ACES Initialization')![ACES Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true 'ACES Our')
+| 表格                                                         | 第一列 |
+| ------------------------------------------------------------ | :----: |
+| ![ACES Initialization](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true 'ACES Initialization') | 第一列 |
 
