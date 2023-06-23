@@ -108,7 +108,7 @@ Our code is under [MIT](./LICENSE.txt) License.
 
 
 
-<table style="width:100%">
+<table border="1" width="100%">
   <tr>
     <th>Dataset</th>
     <th>Initialization</th> 
