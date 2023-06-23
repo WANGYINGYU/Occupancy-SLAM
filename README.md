@@ -120,17 +120,17 @@ Our code is under [MIT](./LICENSE.txt) License.
 
 <table style="width:100%">
   <tr>
-    <th>Firstname</th>
-    <th>Lastname</th> 
-    <th>Age</th>
+    <th>Dataset</th>
+    <th>Initialization</th> 
+    <th>Ours</th>
   </tr>
   <tr>
-    <td>Jill</td>
-    <td>Smith</td> 
-    <td>50</td>
+    <td>ACES</td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true"></td> 
+    <td>![ACES Our](https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true 'ACES Our')</td>
   </tr>
   <tr>
-    <td>Eve</td>
+    <td>Intel Lab</td>
     <td>Jackson</td> 
     <td>94</td>
   </tr>
