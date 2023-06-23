@@ -106,7 +106,17 @@ Our code is under [MIT](./LICENSE.txt) License.
 
 ## Our Results of Map
 
-
+<style>
+table th:first-of-type {
+    width: 10%;
+}
+table th:nth-of-type(2) {
+    width: 40%;
+}
+table th:nth-of-type(3) {
+    width: 50%;
+}
+</style>
 
 |  Dataset  |                        Initialization                        | Ours                                                         |
 | :-------: | :----------------------------------------------------------: | ------------------------------------------------------------ |
