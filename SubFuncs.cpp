@@ -1099,8 +1099,8 @@ void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<doub
     II.makeCompressed();
     Eigen::initParallel();
     Eigen::ConjugateGradient <Eigen::SparseMatrix<double>, Eigen::Upper|Eigen::Lower> solver;
-    int MaxNum = ValParam.SolverSecondMaxIter;
-    solver.setMaxIterations(MaxNum);
+    int MaxNum = 20;
+//    solver.setMaxIterations(MaxNum);
     solver.setTolerance(ValParam.SolverSecondTolerance);
     solver.compute(II);
     Eigen::VectorXd SelectDeltaN = solver.solve(EE);
