@@ -61,7 +61,7 @@ ParamStruct SetParam(){
     ValParam.MinDelta = 100; // The threshold of minimum delta
     ValParam.MinDeltaPose = 0.0002; // The threshold of minimum delta w.r.t. poses
     ValParam.WeightSmoothN = 1; // Weight for the smoothing term of Hit Map N
-    ValParam.MapSmoothingWeightFirst = 1e-7; // Weight for the smoothing term of Occupancy Map for the first stage
+    ValParam.MapSmoothingWeightFirst = 1e-8; // Weight for the smoothing term of Occupancy Map for the first stage
     ValParam.MapSmoothingWeightSecond = 1e-7; // Weight for the smoothing term of Occupancy Map for the second stage
 
     //

@@ -131,7 +131,12 @@ Our code is under [MIT](./LICENSE.txt) License.
     <td>Museum b0</td>
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/b0_Ini.jpg?raw=true"></td> 
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/b0_Our.jpg?raw=true"></td>
-  </tr>
+	</tr>
+    <td>Simu 1</td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu1_Ini.jpg?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu1_Our.jpg?raw=true"></td>
+  </tr>  
+	</tr>
     <td>Simu 2</td>
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu2_Ini.jpg?raw=true"></td> 
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/Simu2_Our.jpg?raw=true"></td>
