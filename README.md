@@ -126,7 +126,7 @@ Our code is under [MIT](./LICENSE.txt) License.
   </tr>
   <tr>
     <td>ACES</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true"></td> 
+    <td><div style="width: 150pt"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Ini.jpg?raw=true"></td> 
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM-CXX/blob/master/images/ACES_Our.jpg?raw=true"></td>
   </tr>
   <tr>
