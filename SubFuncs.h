@@ -7,6 +7,8 @@
 #include <thread>
 #include <random>
 #include <iomanip>
+#include <fstream>
+#include <string>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -89,4 +91,5 @@ Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const s
 void FuncPosefromOdom(const Eigen::MatrixXd& Odom, Eigen::MatrixXd& Pose);
 void RemoveArrayIndex(Eigen::ArrayXi& arr, const std::vector<int>& indicesToRemove);
 void RemoveArrayIndex(Eigen::ArrayXd& arr, const std::vector<int>& indicesToRemove);
+void SetParametersFromFile(const std::string& fileName, ParamStruct& params);
 #endif //FASTOCC_SUBFUNCS_H

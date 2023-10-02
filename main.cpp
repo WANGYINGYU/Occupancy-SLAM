@@ -8,6 +8,7 @@ ParamStruct SetParam();
 
 int main() {
     ParamStruct ValParam = SetParam();
+    SetParametersFromFile("../config.txt", ValParam);
     std::cout << "Enter the names of the input files (range of scan (must), initialization poses (option, if not using odometry inputs as initialization), and odometry inputs (option, if exit), separated by spaces: ";
     std::string input;
     std::getline(std::cin, input);

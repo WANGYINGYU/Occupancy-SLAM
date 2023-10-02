@@ -71,17 +71,17 @@ $m \times 3$ matrix, where $m$ is the number of poses. The three elements of eac
 
 #### Odometry (Option)
 
-$m \times 3$ matrix with the same format as poses. In addtion, this input must be increments.
+$m \times 3$ matrix with the same format as poses. In addition, this input must be in increments format.
 
 ### Parameters Setting
 
-Set parameters in `MyStruct.cpp`. Refer to the comments in the file for the effect of each parameter.
+Set parameters in `config.txt`. Refer to the comments in `MyStruct.cpp` for the effect of each parameter.
 
 
 
 ## Citation
 
-If you find our work useful to your research, please cite fllowing paper:
+If you find our work useful to your research, please cite the following paper:
 
 ```
   

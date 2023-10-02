@@ -2369,3 +2369,89 @@ void FuncPosefromOdom(const Eigen::MatrixXd& Odom, Eigen::MatrixXd& Pose){
         }
     }
 }
+
+
+void SetParametersFromFile(const std::string& fileName, ParamStruct& params) {
+    std::ifstream configFile(fileName);
+    if (!configFile.is_open()) {
+        std::cerr << "Failed to open config file: " << fileName << std::endl;
+        return;
+    }
+
+    std::string paramName;
+    while (configFile >> paramName) {
+        if (paramName == "WeightO") {
+            configFile >> params.WeightO;
+        } else if (paramName == "EvaluateGT") {
+            configFile >> std::boolalpha >> params.EvaluateGT;
+        } else if (paramName == "PosefromOdom") {
+            configFile >> std::boolalpha >> params.PosefromOdom;
+        } else if (paramName == "ModeOdom") {
+            configFile >> std::boolalpha >> params.ModeOdom;
+        } else if (paramName == "ModeMulti") {
+            configFile >> std::boolalpha >> params.ModeMulti;
+        } else if (paramName == "ModeKeyFrame") {
+            configFile >> std::boolalpha >> params.ModeKeyFrame;
+        } else if (paramName == "Sizei") {
+            configFile >> params.Sizei;
+        } else if (paramName == "Sizej") {
+            configFile >> params.Sizej;
+        } else if (paramName == "Scale") {
+            configFile >> params.Scale;
+        } else if (paramName == "OriginX") {
+            configFile >> params.OriginX;
+        } else if (paramName == "OriginY") {
+            configFile >> params.OriginY;
+        } else if (paramName == "DownTime") {
+            configFile >> params.DownTime;
+        } else if (paramName == "DownRate") {
+            configFile >> params.DownRate;
+        } else if (paramName == "SelectDistance") {
+            configFile >> params.SelectDistance;
+        } else if (paramName == "SelectKernelSize") {
+            configFile >> params.SelectKernelSize;
+        } else if (paramName == "KeyframeRate") {
+            configFile >> params.KeyframeRate;
+        } else if (paramName == "MaxIter") {
+            configFile >> params.MaxIter;
+        } else if (paramName == "MinMeanDeltaFirst") {
+            configFile >> params.MinMeanDeltaFirst;
+        } else if (paramName == "MinMeanDeltaPoseFirst") {
+            configFile >> params.MinMeanDeltaPoseFirst;
+        } else if (paramName == "MinDelta") {
+            configFile >> params.MinDelta;
+        } else if (paramName == "MinDeltaPose") {
+            configFile >> params.MinDeltaPose;
+        } else if (paramName == "WeightSmoothN") {
+            configFile >> params.WeightSmoothN;
+        } else if (paramName == "MapSmoothingWeightFirst") {
+            configFile >> params.MapSmoothingWeightFirst;
+        } else if (paramName == "MapSmoothingWeightSecond") {
+            configFile >> params.MapSmoothingWeightSecond;
+        } else if (paramName == "NumBeam") {
+            configFile >> params.NumBeam;
+        } else if (paramName == "MinAngle") {
+            configFile >> params.MinAngle;
+        } else if (paramName == "MaxAngle") {
+            configFile >> params.MaxAngle;
+        } else if (paramName == "MaxRange") {
+            configFile >> params.MaxRange;
+        } else if (paramName == "MinRange") {
+            configFile >> params.MinRange;
+        } else if (paramName == "ModeShowMap") {
+            configFile >> std::boolalpha >> params.ModeShowMap;
+        } else if (paramName == "ModeSparseSolver") {
+            configFile >> std::boolalpha >> params.ModeSparseSolver;
+        } else if (paramName == "SolverFirstMaxIter") {
+            configFile >> params.SolverFirstMaxIter;
+        } else if (paramName == "SolverFirstTolerance") {
+            configFile >> params.SolverFirstTolerance;
+        } else if (paramName == "SolverSecondMaxIter") {
+            configFile >> params.SolverSecondMaxIter;
+        } else if (paramName == "SolverSecondTolerance") {
+            configFile >> params.SolverSecondTolerance;
+        }
+    }
+
+    configFile.close();
+}
