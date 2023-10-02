@@ -17,6 +17,7 @@ This paper considers the 2D SLAM problem using 2D laser scans (and odometry) inf
 3. [OpenMP](https://www.openmp.org)
 4. [OpenCV](https://opencv.org)
 5. [libigl](https://libigl.github.io)
+6. [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html) (Option)
 
 
 
@@ -29,6 +30,10 @@ Download [datasets](https://drive.google.com/file/d/1EDZfsOru4z0j2OEq57DIKOyvude
 ### Modify the path of libigl
 
 Specify the path to libigl in `CMakeLists.txt`.
+
+### Modify the path of MKL or disable
+
+Specify the path to mkl or remove all contents about mkl in `CMakeLists.txt`.
 
 ### Compile
 
