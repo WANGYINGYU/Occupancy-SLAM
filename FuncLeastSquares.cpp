@@ -188,7 +188,12 @@ void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
                 WeightHHSelect = HHSelect * ValParam.MapSmoothingWeightSecond;
             }
             FuncSmoothSelectN2(SelectN, WeightHHSelect, IdSelectVar, ValParam);
+            auto TimeStart = std::chrono::steady_clock::now();
             auto [JP, JD, JO, IS, IO, ErrorS, ErrorO, SumError, MeanError] = FuncDiffSelectJacobian(SelectMap, SelectN, Pose, Odom, SelectScanXY, SelectScanOdd, IdSelectVar, ValParam);
+            auto TimeEnd = std::chrono::steady_clock::now();
+            auto TimeDiff = TimeEnd - TimeStart;
+            std::cout<<"Time for Jacobian is "<<std::chrono::duration<double, std::milli>(TimeDiff).count()<<"ms"<<std::endl;
+
             auto [DeltaP,DeltaD,SumDelta,SecondMeanDelta,SumDeltaP,SecondMeanDeltaP] = FuncSelectMapDelta(SelectMap, Odom, JP, JD, JO, ErrorS, ErrorO, IS, IO, WeightHHSelect, IdSelectVar, ValParam);
             MeanDelta = SecondMeanDelta;
             MeanDeltaP = SecondMeanDeltaP;
@@ -252,7 +257,11 @@ void FuncLeastSquares(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd&
                 WeightHHSelect = HHSelect * ValParam.MapSmoothingWeightSecond;
             }
             FuncSmoothSelectN2(SelectN, WeightHHSelect, IdSelectVar, ValParam);
+            auto TimeStart = std::chrono::steady_clock::now();
             auto [JP, JD, IS, ErrorS, SumError, MeanError] = FuncDiffSelectJacobian(SelectMap, SelectN, Pose, SelectScanXY, SelectScanOdd, IdSelectVar, ValParam);
+            auto TimeEnd = std::chrono::steady_clock::now();
+            auto TimeDiff = TimeEnd - TimeStart;
+            std::cout<<"Time for Jacobian is "<<std::chrono::duration<double, std::milli>(TimeDiff).count()<<"ms"<<std::endl;
             auto [DeltaP,DeltaD,SumDelta,SecondMeanDelta,SumDeltaP,SecondMeanDeltaP] = FuncSelectMapDelta(SelectMap, JP, JD, ErrorS, IS, WeightHHSelect, IdSelectVar, ValParam);
             MeanDelta = SecondMeanDelta;
             MeanDeltaP = SecondMeanDeltaP;

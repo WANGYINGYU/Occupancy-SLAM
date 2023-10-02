@@ -148,7 +148,11 @@ Eigen::SparseMatrix<double> FuncMapConst(const ParamStruct& ValParam) {
     Eigen::SparseMatrix<double> J(MaxID1+1,MaxID2+1);
 
     igl::sparse(ID1,ID2,Val,MaxID1+1,MaxID2+1,J);
+    J.makeCompressed();
+//    J.prune([&](int i, int j, double) { return J.coeff(i,j) != 0.0; });
     Eigen::SparseMatrix<double> HH = J.transpose() * J;
+    HH.makeCompressed();
+//    HH.prune([&](int i, int j, double) { return HH.coeff(i,j) != 0.0; });
     return HH;
 }
 
@@ -166,6 +170,8 @@ void FuncSmoothN2(Eigen::MatrixXd& N, const Eigen::SparseMatrix<double>& HH, con
     Eigen::VectorXd VecOnes = Eigen::VectorXd::Ones(ni);
     Eigen::SparseMatrix<double> A1;
     igl::sparse(ID1,ID2,VecOnes,ni,ValParam.Sizei * ValParam.Sizej, A1);
+    A1.makeCompressed();
+//    A1.prune([&](int i, int j, double) { return A1.coeff(i,j) != 0.0; });
     Eigen::SparseMatrix<double> WeightHH = HH * ValParam.WeightSmoothN;
     Eigen::SparseMatrix<double> II = A1.transpose() * A1 + WeightHH;
     Eigen::SparseMatrix<double> EE = (A1.transpose() * Val).sparseView();
@@ -282,7 +288,7 @@ Eigen::Matrix2d FuncTheta2R(const double& phi)
 }
 
 
-std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::ArrayXd,Eigen::ArrayXd,double,double> FuncDiffJacobian(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& N, const Eigen::MatrixXd& Pose, const Eigen::MatrixXd& Odom, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
+std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::VectorXd,Eigen::VectorXd,double,double> FuncDiffJacobian(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& N, const Eigen::MatrixXd& Pose, const Eigen::MatrixXd& Odom, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
     int NumPose = Pose.size()/3;
     // Calculate the gradient of map
     double h = 1.0;
@@ -304,8 +310,8 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
     Eigen::ArrayXi JOID2;
     Eigen::ArrayXd JOVal;
 
-    Eigen::ArrayXd ErrorS;
-    Eigen::ArrayXd ErrorO;
+    Eigen::VectorXd ErrorS;
+    Eigen::VectorXd ErrorO;
 
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i,2));
@@ -489,32 +495,33 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
     IO.makeCompressed();
     IS.makeCompressed();
 
-    Eigen::MatrixXd MatErrorS = Eigen::MatrixXd::Map(ErrorS.data(), ErrorS.size(), 1);
-    Eigen::MatrixXd MatErrorO = Eigen::MatrixXd::Map(ErrorO.data(), ErrorO.size(), 1);
 
-    double SumErrorS = (MatErrorS.transpose() * IS * MatErrorS)(0,0);
-    double SumErrorO = (ValParam.WeightO * MatErrorO.transpose() * IO * MatErrorO)(0,0);
+    double SumErrorS = (ErrorS.transpose() * ErrorS)(0,0);
+    double SumErrorO = (ValParam.WeightO * ErrorO.transpose() * IO * ErrorO)(0,0);
     double SumError = SumErrorS + SumErrorO;
     double MeanError = SumErrorS/ErrorS.size() + SumErrorO/ErrorO.size();
 
     return std::make_tuple(JP,JD,JO,IS,IO,ErrorS,ErrorO,SumError,MeanError);
 }
 
-std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& Odom, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::SparseMatrix<double>& JO, const Eigen::ArrayXd& ErrorS, const Eigen::ArrayXd& ErrorO, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& IO, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam)
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& Odom, const Eigen::SparseMatrix<double>& JP, Eigen::SparseMatrix<double>& JD, const Eigen::SparseMatrix<double>& JO, const Eigen::VectorXd& ErrorS, const Eigen::VectorXd& ErrorO, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& IO, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam)
 {
     Eigen::SparseMatrix<double> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
     Eigen::SparseMatrix<double> JOSlice = JO.block(0, 3, JO.rows(), JO.cols()-3);
     JPSlice.makeCompressed();
     JOSlice.makeCompressed();
+    JD.makeCompressed();
+
+//    JPSlice.prune([&](int i, int j, double) { return JPSlice.coeff(i,j) != 0.0; });
+//    JOSlice.prune([&](int i, int j, double) { return JOSlice.coeff(i,j) != 0.0; });
+//    JD.prune([&](int i, int j, double) { return JD.coeff(i,j) != 0.0; });
 
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice + ValParam.WeightO * JOSlice.transpose() * IO * JOSlice;
     Eigen::SparseMatrix<double> V = JD.transpose() * JD + WeightHH;
     Eigen::SparseMatrix<double> W = JPSlice.transpose() * JD;
 
-    Eigen::VectorXd VecErrorS = Eigen::VectorXd::Map(ErrorS.data(), ErrorS.size());
-    Eigen::VectorXd VecErrorO = Eigen::VectorXd::Map(ErrorO.data(), ErrorO.size());
-    Eigen::VectorXd EP = -JPSlice.transpose() * IS * VecErrorS - ValParam.WeightO * JOSlice.transpose() * IO * VecErrorO;
-    Eigen::VectorXd ED = -JD.transpose() * IS * VecErrorS;
+    Eigen::VectorXd EP = -JPSlice.transpose() * ErrorS - ValParam.WeightO * JOSlice.transpose() * IO * ErrorO;
+    Eigen::VectorXd ED = -JD.transpose() * ErrorS;
     Eigen::VectorXd XH0 = Map.transpose().reshaped(Map.size(),1);
     Eigen::VectorXd EH = -WeightHH * XH0;
     Eigen::VectorXd EDEH = ED + EH;
@@ -1065,7 +1072,11 @@ void FuncSelectMapConst(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXi&
     int MaxID2 = ID2.maxCoeff();
     Eigen::SparseMatrix<double> J(MaxID1, MaxID2);
     igl::sparse(ID1, ID2, Val, MaxID1+1, MaxID2+1, J);
+    J.makeCompressed();
+//    J.prune([&](int i, int j, double) { return J.coeff(i,j) != 0.0; });
     HH = J.transpose() * J;
+    HH.makeCompressed();
+//    HH.prune([&](int i, int j, double) { return HH.coeff(i,j) != 0.0; });
 }
 
 void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<double>& WeightHHSelect, const Eigen::MatrixXi IdSelectVar, const ParamStruct& ValParam){
@@ -1093,6 +1104,8 @@ void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<doub
     {
         A1Select.col(j) = A1.col(ArraySortSelectId(j));
     }
+    A1Select.makeCompressed();
+//    A1Select.prune([&](int i, int j, double) { return A1Select.coeff(i,j) != 0.0; });
 
     Eigen::SparseMatrix<double> II = A1Select.transpose() * A1Select + WeightHHSelect;
     Eigen::SparseMatrix<double> EE = (A1Select.transpose() * Val).sparseView();
@@ -1117,7 +1130,7 @@ void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<doub
     SelectN = DeltaN.toDense().reshaped(ValParam.Sizej,ValParam.Sizei).transpose();
 }
 
-std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::ArrayXd,Eigen::ArrayXd,double,double> FuncDiffSelectJacobian(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXd& SelectN, const Eigen::MatrixXd& Pose, const Eigen::MatrixXd& Odom, const std::vector<Eigen::ArrayXd>& SelectScanXY, const std::vector<Eigen::ArrayXd>& SelectScanOdd, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam){
+std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::VectorXd,Eigen::VectorXd,double,double> FuncDiffSelectJacobian(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXd& SelectN, const Eigen::MatrixXd& Pose, const Eigen::MatrixXd& Odom, const std::vector<Eigen::ArrayXd>& SelectScanXY, const std::vector<Eigen::ArrayXd>& SelectScanOdd, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam){
     int NumPose = Pose.size()/3;
     // Calculate the gradient of map
     double h = 1.0;
@@ -1146,8 +1159,8 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
     Eigen::ArrayXi JOID2;
     Eigen::ArrayXd JOVal;
 
-    Eigen::ArrayXd ErrorS;
-    Eigen::ArrayXd ErrorO;
+    Eigen::VectorXd ErrorS;
+    Eigen::VectorXd ErrorO;
 
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i,2));
@@ -1190,10 +1203,16 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
         Eigen::ArrayXi OutId;
         igl::find(BoolOut==0, OutId);
 
+        std::vector<int> VecSortOutId(OutId.data(), OutId.data() + OutId.size());
+        std::sort(VecSortOutId.begin(), VecSortOutId.end(), std::greater<int>());
+
         if (OutId.size()!=0){
-            RemoveArrayIndex(Oddi, OutId);
-            RemoveArrayIndex(pa, OutId);
-            RemoveArrayIndex(pb, OutId);
+            RemoveArrayIndex(Oddi, VecSortOutId);
+            RemoveArrayIndex(pa, VecSortOutId);
+            RemoveArrayIndex(pb, VecSortOutId);
+//            RemoveArrayIndex(Oddi, OutId);
+//            RemoveArrayIndex(pa, OutId);
+//            RemoveArrayIndex(pb, OutId);
             RemoveColumn(XY3, OutId);
             RemoveColumn(MatrixXY, OutId);
         }
@@ -1361,11 +1380,8 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
     IO.makeCompressed();
     IS.makeCompressed();
 
-    Eigen::MatrixXd MatErrorS = Eigen::MatrixXd::Map(ErrorS.data(), ErrorS.size(), 1);
-    Eigen::MatrixXd MatErrorO = Eigen::MatrixXd::Map(ErrorO.data(), ErrorO.size(), 1);
-
-    double SumErrorS = (MatErrorS.transpose() * IS * MatErrorS)(0,0);
-    double SumErrorO = (ValParam.WeightO * MatErrorO.transpose() * IO * MatErrorO)(0,0);
+    double SumErrorS = (ErrorS.transpose() * ErrorS)(0,0);
+    double SumErrorO = (ValParam.WeightO * ErrorO.transpose() * IO * ErrorO)(0,0);
     double SumError = SumErrorS + SumErrorO;
     double MeanError = SumErrorS/ErrorS.size() + SumErrorO/ErrorO.size();
     return std::make_tuple(JP,JD,JO,IS,IO,ErrorS,ErrorO,SumError,MeanError);
@@ -1414,8 +1430,61 @@ void RemoveArrayIndex(Eigen::ArrayXi& A, const Eigen::ArrayXi& B)
     A = C;
 }
 
+void RemoveArrayIndex(Eigen::ArrayXi& arr, const std::vector<int>& indicesToRemove)
+{
+    Eigen::Array<bool, Eigen::Dynamic, 1> mask = Eigen::Array<bool, Eigen::Dynamic, 1>::Constant(arr.size(), true);
+    // Mark indices to be removed as false
+    for(int i : indicesToRemove)
+    {
+        if(i >= 0 && i < arr.size())
+        {
+            mask[i] = false;
+        }
+    }
+    // Count the number of true in mask
+    int newSize = mask.count();
 
-std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncSelectMapDelta(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXd& Odom, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::SparseMatrix<double>& JO, const Eigen::ArrayXd& ErrorS, const Eigen::ArrayXd& ErrorO, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& IO, const Eigen::SparseMatrix<double>& WeightHH, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam){
+    // Create a new array that only contains the elements where mask is true
+    Eigen::ArrayXi newArr(newSize);
+    for(int i = 0, j = 0; i < arr.size(); ++i)
+    {
+        if(mask[i])
+        {
+            newArr[j++] = arr[i];
+        }
+    }
+    arr =  newArr;
+}
+
+
+void RemoveArrayIndex(Eigen::ArrayXd& arr, const std::vector<int>& indicesToRemove)
+{
+    Eigen::Array<bool, Eigen::Dynamic, 1> mask = Eigen::Array<bool, Eigen::Dynamic, 1>::Constant(arr.size(), true);
+    // Mark indices to be removed as false
+    for(int i : indicesToRemove)
+    {
+        if(i >= 0 && i < arr.size())
+        {
+            mask[i] = false;
+        }
+    }
+    // Count the number of true in mask
+    int newSize = mask.count();
+
+    // Create a new array that only contains the elements where mask is true
+    Eigen::ArrayXd newArr(newSize);
+    for(int i = 0, j = 0; i < arr.size(); ++i)
+    {
+        if(mask[i])
+        {
+            newArr[j++] = arr[i];
+        }
+    }
+    arr =  newArr;
+}
+
+
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncSelectMapDelta(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXd& Odom, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::SparseMatrix<double>& JO, const Eigen::VectorXd& ErrorS, const Eigen::VectorXd& ErrorO, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& IO, const Eigen::SparseMatrix<double>& WeightHH, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam){
 
     Eigen::SparseMatrix<double> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
     Eigen::SparseMatrix<double> JOSlice = JO.block(0, 3, JO.rows(), JO.cols()-3);
@@ -1425,16 +1494,17 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
     JOSlice.makeCompressed();
     JDRow.makeCompressed();
 
+//    JPSlice.prune([&](int i, int j, double) { return JPSlice.coeff(i,j) != 0.0; });
+//    JOSlice.prune([&](int i, int j, double) { return JOSlice.coeff(i,j) != 0.0; });
+//    JDRow.prune([&](int i, int j, double) { return JDRow.coeff(i,j) != 0.0; });
+
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice + ValParam.WeightO * JOSlice.transpose() * IO * JOSlice;
 
     Eigen::SparseMatrix<double> V = JDRow.transpose() * JDRow + WeightHH;
     Eigen::SparseMatrix<double> W = JPSlice.transpose() * JDRow;
 
-    Eigen::VectorXd VecErrorS = Eigen::VectorXd::Map(ErrorS.data(), ErrorS.size());
-    Eigen::VectorXd VecErrorO = Eigen::VectorXd::Map(ErrorO.data(), ErrorO.size());
-
-    Eigen::VectorXd EP = -JPSlice.transpose() * VecErrorS - ValParam.WeightO * JOSlice.transpose() * IO * VecErrorO;
-    Eigen::VectorXd ED = -JDRow.transpose() * VecErrorS;
+    Eigen::VectorXd EP = -JPSlice.transpose() * ErrorS - ValParam.WeightO * JOSlice.transpose() * IO * ErrorO;
+    Eigen::VectorXd ED = -JDRow.transpose() * ErrorS;
 
     Eigen::ArrayXi RowIdSelectVar = IdSelectVar.col(0);
     Eigen::ArrayXi ColIdSelectVar = IdSelectVar.col(1);
@@ -1634,7 +1704,7 @@ void FuncBatchWrap(Eigen::ArrayXd& alpha) {
 }
 
 // No odometry inputs
-std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::ArrayXd,double,double> FuncDiffJacobian(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& N, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
+std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::VectorXd,double,double> FuncDiffJacobian(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& N, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
     int NumPose = Pose.size()/3;
     // Calculate the gradient of map
     double h = 1.0;
@@ -1656,8 +1726,7 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
     Eigen::ArrayXi JOID2;
     Eigen::ArrayXd JOVal;
 
-    Eigen::ArrayXd ErrorS;
-    Eigen::ArrayXd ErrorO;
+    Eigen::VectorXd ErrorS;
 
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i,2));
@@ -1785,9 +1854,7 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
     Eigen::SparseMatrix<double> IS = FuncGetI(ErrorS);
     IS.makeCompressed();
 
-    Eigen::MatrixXd MatErrorS = Eigen::MatrixXd::Map(ErrorS.data(), ErrorS.size(), 1);
-
-    double SumErrorS = (MatErrorS.transpose() * IS * MatErrorS)(0,0);
+    double SumErrorS = (ErrorS.transpose() * ErrorS)(0,0);
     double SumError = SumErrorS;
     double MeanError = SumErrorS/ErrorS.size();
 
@@ -1807,19 +1874,22 @@ Eigen::SparseMatrix<double> FuncGetI(const Eigen::VectorXd& ErrorS)
 }
 
 // no odom
-std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::ArrayXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam)
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam)
 {
     Eigen::SparseMatrix<double,Eigen::RowMajor> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
     Eigen::SparseMatrix<double,Eigen::RowMajor> JDRow(JD);
     JPSlice.makeCompressed();
     JDRow.makeCompressed();
+
+//    JPSlice.prune([&](int i, int j, double) { return JPSlice.coeff(i,j) != 0.0; });
+//    JDRow.prune([&](int i, int j, double) { return JDRow.coeff(i,j) != 0.0; });
+
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice;
     Eigen::SparseMatrix<double> V = JDRow.transpose() * JDRow + WeightHH;
     Eigen::SparseMatrix<double> W = JPSlice.transpose() * JDRow;
 
-    Eigen::VectorXd VecErrorS = Eigen::VectorXd::Map(ErrorS.data(), ErrorS.size());
-    Eigen::VectorXd EP = -JPSlice.transpose() * VecErrorS;
-    Eigen::VectorXd ED = -JDRow.transpose() * VecErrorS;
+    Eigen::VectorXd EP = -JPSlice.transpose() * ErrorS;
+    Eigen::VectorXd ED = -JDRow.transpose() * ErrorS;
     Eigen::VectorXd XH0 = Map.transpose().reshaped(Map.size(),1);
     Eigen::VectorXd EH = -WeightHH * XH0;
     Eigen::VectorXd EDEH = ED + EH;
@@ -1861,7 +1931,7 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
 
 
 // no odom
-std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::ArrayXd,double,double> FuncDiffSelectJacobian(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXd& SelectN, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& SelectScanXY, const std::vector<Eigen::ArrayXd>& SelectScanOdd, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam){
+std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::VectorXd,double,double> FuncDiffSelectJacobian(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXd& SelectN, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& SelectScanXY, const std::vector<Eigen::ArrayXd>& SelectScanOdd, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam){
     int NumPose = Pose.size()/3;
     // Calculate the gradient of map
     double h = 1.0;
@@ -1890,8 +1960,7 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
     Eigen::ArrayXi JOID2;
     Eigen::ArrayXd JOVal;
 
-    Eigen::ArrayXd ErrorS;
-    Eigen::ArrayXd ErrorO;
+    Eigen::VectorXd ErrorS;
 
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i,2));
@@ -1933,11 +2002,15 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
         Eigen::ArrayXi BoolOut = Boola * Boolb * Boolc * Boold;
         Eigen::ArrayXi OutId;
         igl::find(BoolOut==0, OutId);
-
+        std::vector<int> VecSortOutId(OutId.data(), OutId.data() + OutId.size());
+        std::sort(VecSortOutId.begin(), VecSortOutId.end(), std::greater<int>());
         if (OutId.size()!=0){
-            RemoveArrayIndex(Oddi, OutId);
-            RemoveArrayIndex(pa, OutId);
-            RemoveArrayIndex(pb, OutId);
+            RemoveArrayIndex(Oddi, VecSortOutId);
+            RemoveArrayIndex(pa, VecSortOutId);
+            RemoveArrayIndex(pb, VecSortOutId);
+//            RemoveArrayIndex(Oddi, OutId);
+//            RemoveArrayIndex(pa, OutId);
+//            RemoveArrayIndex(pb, OutId);
             RemoveColumn(XY3, OutId);
             RemoveColumn(MatrixXY, OutId);
         }
@@ -2046,9 +2119,8 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
     Eigen::SparseMatrix<double> IS = FuncGetI(ErrorS);
     IS.makeCompressed();
 
-    Eigen::MatrixXd MatErrorS = Eigen::MatrixXd::Map(ErrorS.data(), ErrorS.size(), 1);
 
-    double SumErrorS = (MatErrorS.transpose() * IS * MatErrorS)(0,0);
+    double SumErrorS = (ErrorS.transpose() * ErrorS)(0,0);
     double SumError = SumErrorS;
     double MeanError = SumErrorS/ErrorS.size();
     return std::make_tuple(JP,JD,IS,ErrorS,SumError,MeanError);
@@ -2056,19 +2128,23 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
 
 //no odom
 
-std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncSelectMapDelta(const Eigen::MatrixXd& SelectMap, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::ArrayXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam){
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncSelectMapDelta(const Eigen::MatrixXd& SelectMap, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam){
     Eigen::SparseMatrix<double,Eigen::RowMajor> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
     Eigen::SparseMatrix<double,Eigen::RowMajor> JDRow(JD);
     JPSlice.makeCompressed();
     JDRow.makeCompressed();
+
+//    JPSlice.prune([&](int i, int j, double) { return JPSlice.coeff(i,j) != 0.0; });
+//    JDRow.prune([&](int i, int j, double) { return JDRow.coeff(i,j) != 0.0; });
+
+
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice ;
     Eigen::SparseMatrix<double> V = JDRow.transpose() * JDRow + WeightHH;
     Eigen::SparseMatrix<double> W = JPSlice.transpose() * JDRow;
 
-    Eigen::VectorXd VecErrorS = Eigen::VectorXd::Map(ErrorS.data(), ErrorS.size());
-    Eigen::VectorXd EP = -JPSlice.transpose()  * VecErrorS;
+    Eigen::VectorXd EP = -JPSlice.transpose()  * ErrorS;
 
-    Eigen::VectorXd ED = -JDRow.transpose()  * VecErrorS;
+    Eigen::VectorXd ED = -JDRow.transpose()  * ErrorS;
     Eigen::ArrayXi RowIdSelectVar = IdSelectVar.col(0);
     Eigen::ArrayXi ColIdSelectVar = IdSelectVar.col(1);
     // Sort the order to variables order

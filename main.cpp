@@ -41,13 +41,13 @@ int main() {
     loadTxTData(filenames[0],VecRange,ValParam);
     Eigen::VectorXd VecRangeT = VectorToEigenVec(VecRange);
     Eigen::MatrixXd Range = VecRangeT.reshaped(ValParam.NumBeam,VecRangeT.size()/ValParam.NumBeam).transpose();
-    auto start1 = std::chrono::high_resolution_clock::now();  // Start
+    auto start = std::chrono::high_resolution_clock::now();  // Start
     std::vector<Eigen::ArrayXd> ScanXY(Range.rows());
     std::vector<Eigen::ArrayXd> ScanOdd(Range.rows());
     FuncConvertObs(Range, ScanXY, ScanOdd, ValParam);
-    auto end1 = std::chrono::high_resolution_clock::now();  // End
-    double elapsed_time_sec1 = std::chrono::duration_cast<std::chrono::duration<double>>(end1 - start1).count();
-    std::cout << "Preprocessing, Elapsed time: " << elapsed_time_sec1 << " seconds " << std::endl;
+    auto end = std::chrono::high_resolution_clock::now();  // End
+    double elapsed_time_sec = std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+    std::cout << "Preprocessing, Elapsed time: " << elapsed_time_sec << " seconds " << std::endl;
     // Load the data from the input files and store it in vectors
     std::vector<std::vector<double>> fileData;
 
@@ -142,7 +142,7 @@ int main() {
         LowScanOdd = ScanOdd;
     }
 
-    auto start = std::chrono::high_resolution_clock::now();  // Start
+    start = std::chrono::high_resolution_clock::now();  // Start
     auto [Map, N] = FuncInitialiseGridMap(Pose,LowScanXY,LowScanOdd,ValParam);
     Eigen::SparseMatrix<double> HH = FuncMapConst(ValParam);
     FuncSmoothN2(N, HH, ValParam);
@@ -167,8 +167,8 @@ int main() {
             FuncLeastSquares(Map, N, Pose, ScanXY, ScanOdd, LowScanXY, LowScanOdd, HH, ValParam);
         }
     }
-    auto end = std::chrono::high_resolution_clock::now();  // End
-    double elapsed_time_sec = std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+    end = std::chrono::high_resolution_clock::now();  // End
+    elapsed_time_sec = std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
     std::cout << "Optimization End, Elapsed time: " << elapsed_time_sec << " seconds " << std::endl;
 
     Eigen::MatrixXd OptimizedMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
