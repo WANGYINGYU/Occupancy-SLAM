@@ -512,9 +512,13 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
     JOSlice.makeCompressed();
     JD.makeCompressed();
 
-//    JPSlice.prune([&](int i, int j, double) { return JPSlice.coeff(i,j) != 0.0; });
-//    JOSlice.prune([&](int i, int j, double) { return JOSlice.coeff(i,j) != 0.0; });
-//    JD.prune([&](int i, int j, double) { return JD.coeff(i,j) != 0.0; });
+    JPSlice.prune([&](int i, int j, double v) { return v != 0.0; });
+    JOSlice.prune([&](int i, int j, double v) { return v != 0.0; });
+    JD.prune([&](int i, int j, double v) { return v != 0.0; });
+
+    JPSlice.makeCompressed();
+    JOSlice.makeCompressed();
+    JD.makeCompressed();
 
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice + ValParam.WeightO * JOSlice.transpose() * IO * JOSlice;
     Eigen::SparseMatrix<double> V = JD.transpose() * JD + WeightHH;
@@ -1488,15 +1492,19 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
 
     Eigen::SparseMatrix<double> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
     Eigen::SparseMatrix<double> JOSlice = JO.block(0, 3, JO.rows(), JO.cols()-3);
-    Eigen::SparseMatrix<double,Eigen::RowMajor> JDRow(JD);
+    Eigen::SparseMatrix<double> JDRow(JD);
 
     JPSlice.makeCompressed();
     JOSlice.makeCompressed();
     JDRow.makeCompressed();
 
-//    JPSlice.prune([&](int i, int j, double) { return JPSlice.coeff(i,j) != 0.0; });
-//    JOSlice.prune([&](int i, int j, double) { return JOSlice.coeff(i,j) != 0.0; });
-//    JDRow.prune([&](int i, int j, double) { return JDRow.coeff(i,j) != 0.0; });
+    JPSlice.prune([&](int i, int j, double v) { return v != 0.0; });
+    JOSlice.prune([&](int i, int j, double v) { return v != 0.0; });
+    JDRow.prune([&](int i, int j, double v) { return v != 0.0; });
+
+    JPSlice.makeCompressed();
+    JOSlice.makeCompressed();
+    JDRow.makeCompressed();
 
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice + ValParam.WeightO * JOSlice.transpose() * IO * JOSlice;
 
@@ -1876,13 +1884,16 @@ Eigen::SparseMatrix<double> FuncGetI(const Eigen::VectorXd& ErrorS)
 // no odom
 std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam)
 {
-    Eigen::SparseMatrix<double,Eigen::RowMajor> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
-    Eigen::SparseMatrix<double,Eigen::RowMajor> JDRow(JD);
+    Eigen::SparseMatrix<double> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
+    Eigen::SparseMatrix<double> JDRow(JD);
     JPSlice.makeCompressed();
     JDRow.makeCompressed();
 
-//    JPSlice.prune([&](int i, int j, double) { return JPSlice.coeff(i,j) != 0.0; });
-//    JDRow.prune([&](int i, int j, double) { return JDRow.coeff(i,j) != 0.0; });
+    JPSlice.prune([&](int i, int j, double v) { return v != 0.0; });
+    JDRow.prune([&](int i, int j, double v) { return v != 0.0; });
+
+    JPSlice.makeCompressed();
+    JDRow.makeCompressed();
 
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice;
     Eigen::SparseMatrix<double> V = JDRow.transpose() * JDRow + WeightHH;
@@ -2129,13 +2140,16 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
 //no odom
 
 std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncSelectMapDelta(const Eigen::MatrixXd& SelectMap, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam){
-    Eigen::SparseMatrix<double,Eigen::RowMajor> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
-    Eigen::SparseMatrix<double,Eigen::RowMajor> JDRow(JD);
+    Eigen::SparseMatrix<double> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
+    Eigen::SparseMatrix<double> JDRow(JD);
     JPSlice.makeCompressed();
     JDRow.makeCompressed();
 
-//    JPSlice.prune([&](int i, int j, double) { return JPSlice.coeff(i,j) != 0.0; });
-//    JDRow.prune([&](int i, int j, double) { return JDRow.coeff(i,j) != 0.0; });
+    JPSlice.prune([&](int i, int j, double v) { return v != 0.0; });
+    JDRow.prune([&](int i, int j, double v) { return v != 0.0; });
+
+    JPSlice.makeCompressed();
+    JDRow.makeCompressed();
 
 
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice ;
