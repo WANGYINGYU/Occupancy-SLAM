@@ -144,6 +144,10 @@ Our code is under [MIT](./LICENSE.txt) License.
     <td>Garage</td>
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Ini.jpg?raw=true"></td> 
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Our.jpg?raw=true"></td>
+</tr>
+    <td>MIT</td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Ini.jpg?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Our.jpg?raw=true"></td>
 	</tr>
     <td>Simu 1</td>
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu1_Ini.jpg?raw=true"></td> 
@@ -157,4 +161,3 @@ Our code is under [MIT](./LICENSE.txt) License.
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Ini.jpg?raw=true"></td> 
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Our.jpg?raw=true"></td>
 </table>
-
