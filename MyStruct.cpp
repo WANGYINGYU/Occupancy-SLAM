@@ -96,7 +96,7 @@ ParamStruct SetParam(){
 //    ValParam.MinRange = 0.0; // The minimum range of beams
 
     // Show Map Mode
-    ValParam.ModeShowMap = true; // If show the map during the iteration, suggestion: false
+    ValParam.ModeShowMap = false; // If show the map during the iteration, suggestion: false
     // Sparse System Solver in the First Stage
     ValParam.ModeSparseSolver = false; //Iterative Solver for 'true' and Direct Solver for 'false'
 

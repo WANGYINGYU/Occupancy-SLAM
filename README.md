@@ -21,6 +21,47 @@ This paper considers the 2D SLAM problem using 2D laser scans (and odometry) inf
 
 
 
+### Ubuntu
+
+#### Eigen 3.4.0 
+
+Download [Eigen 3.4.0](https://gitlab.com/libeigen/eigen/-/releases/3.4.0) 
+
+```
+cd eigen-3.4.0
+mkdir build
+cd build
+cmake ..
+sudo make install
+```
+
+#### CMake
+
+`sudo apt-get install cmake`
+
+#### OpenMP
+
+```
+sudo apt-get install libomp-dev
+```
+
+#### OpenCV
+
+```
+git clone https://github.com/opencv/opencv.git
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+```
+
+#### libigl
+
+Download [libigl](https://libigl.github.io) 
+
+
+
 ## Quickstart
 
 ### Download datasets

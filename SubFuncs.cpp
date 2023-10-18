@@ -1077,8 +1077,11 @@ void FuncSelectMapConst(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXi&
     Eigen::SparseMatrix<double> J(MaxID1, MaxID2);
     igl::sparse(ID1, ID2, Val, MaxID1+1, MaxID2+1, J);
     J.makeCompressed();
+    J.prune([&](int i, int j, double v) { return v != 0.0; });
+    J.makeCompressed();
 //    J.prune([&](int i, int j, double) { return J.coeff(i,j) != 0.0; });
     HH = J.transpose() * J;
+    HH.prune([&](int i, int j, double v) { return v != 0.0; });
     HH.makeCompressed();
 //    HH.prune([&](int i, int j, double) { return HH.coeff(i,j) != 0.0; });
 }
@@ -1108,6 +1111,8 @@ void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<doub
     {
         A1Select.col(j) = A1.col(ArraySortSelectId(j));
     }
+    A1Select.makeCompressed();
+    A1Select.prune([&](int i, int j, double v) { return v != 0.0; });
     A1Select.makeCompressed();
 //    A1Select.prune([&](int i, int j, double) { return A1Select.coeff(i,j) != 0.0; });
 
