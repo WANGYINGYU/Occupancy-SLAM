@@ -149,10 +149,8 @@ Eigen::SparseMatrix<double> FuncMapConst(const ParamStruct& ValParam) {
 
     igl::sparse(ID1,ID2,Val,MaxID1+1,MaxID2+1,J);
     J.makeCompressed();
-//    J.prune([&](int i, int j, double) { return J.coeff(i,j) != 0.0; });
     Eigen::SparseMatrix<double> HH = J.transpose() * J;
     HH.makeCompressed();
-//    HH.prune([&](int i, int j, double) { return HH.coeff(i,j) != 0.0; });
     return HH;
 }
 
@@ -171,7 +169,6 @@ void FuncSmoothN2(Eigen::MatrixXd& N, const Eigen::SparseMatrix<double>& HH, con
     Eigen::SparseMatrix<double> A1;
     igl::sparse(ID1,ID2,VecOnes,ni,ValParam.Sizei * ValParam.Sizej, A1);
     A1.makeCompressed();
-//    A1.prune([&](int i, int j, double) { return A1.coeff(i,j) != 0.0; });
     Eigen::SparseMatrix<double> WeightHH = HH * ValParam.WeightSmoothN;
     Eigen::SparseMatrix<double> II = A1.transpose() * A1 + WeightHH;
     Eigen::SparseMatrix<double> EE = (A1.transpose() * Val).sparseView();
@@ -512,17 +509,10 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
     JOSlice.makeCompressed();
     JD.makeCompressed();
 
-//    JPSlice.prune([&](int i, int j, double v) { return v != 0.0; });
-//    JOSlice.prune([&](int i, int j, double v) { return v != 0.0; });
-//    JD.prune([&](int i, int j, double v) { return v != 0.0; });
-//
-//    JPSlice.makeCompressed();
-//    JOSlice.makeCompressed();
-//    JD.makeCompressed();
-
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice + ValParam.WeightO * JOSlice.transpose() * IO * JOSlice;
     Eigen::SparseMatrix<double> V = JD.transpose() * JD + WeightHH;
     Eigen::SparseMatrix<double> W = JPSlice.transpose() * JD;
+
 
     Eigen::VectorXd EP = -JPSlice.transpose() * ErrorS - ValParam.WeightO * JOSlice.transpose() * IO * ErrorO;
     Eigen::VectorXd ED = -JD.transpose() * ErrorS;
@@ -1077,13 +1067,9 @@ void FuncSelectMapConst(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXi&
     Eigen::SparseMatrix<double> J(MaxID1, MaxID2);
     igl::sparse(ID1, ID2, Val, MaxID1+1, MaxID2+1, J);
     J.makeCompressed();
-//    J.prune([&](int i, int j, double v) { return v != 0.0; });
-//    J.makeCompressed();
-//    J.prune([&](int i, int j, double) { return J.coeff(i,j) != 0.0; });
+
     HH = J.transpose() * J;
-//    HH.prune([&](int i, int j, double v) { return v != 0.0; });
     HH.makeCompressed();
-//    HH.prune([&](int i, int j, double) { return HH.coeff(i,j) != 0.0; });
 }
 
 void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<double>& WeightHHSelect, const Eigen::MatrixXi IdSelectVar, const ParamStruct& ValParam){
@@ -1112,9 +1098,6 @@ void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<doub
         A1Select.col(j) = A1.col(ArraySortSelectId(j));
     }
     A1Select.makeCompressed();
-//    A1Select.prune([&](int i, int j, double v) { return v != 0.0; });
-//    A1Select.makeCompressed();
-//    A1Select.prune([&](int i, int j, double) { return A1Select.coeff(i,j) != 0.0; });
 
     Eigen::SparseMatrix<double> II = A1Select.transpose() * A1Select + WeightHHSelect;
     Eigen::SparseMatrix<double> EE = (A1Select.transpose() * Val).sparseView();
@@ -1126,11 +1109,6 @@ void FuncSmoothSelectN2(Eigen::MatrixXd& SelectN, const Eigen::SparseMatrix<doub
     solver.setTolerance(ValParam.SolverSecondTolerance);
     solver.compute(II);
     Eigen::VectorXd SelectDeltaN = solver.solve(EE);
-
-//    Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> solver;
-//    II.makeCompressed();
-//    solver.compute(II);
-//    Eigen::VectorXd SelectDeltaN = solver.solve(EE);
 
     Eigen::ArrayXi ColumnId = Eigen::ArrayXi::Zero(ArraySortSelectId.size());
     Eigen::SparseMatrix<double> DeltaN(ValParam.Sizei*ValParam.Sizej,1);
@@ -1502,14 +1480,6 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
     JPSlice.makeCompressed();
     JOSlice.makeCompressed();
     JDRow.makeCompressed();
-
-//    JPSlice.prune([&](int i, int j, double v) { return v != 0.0; });
-//    JOSlice.prune([&](int i, int j, double v) { return v != 0.0; });
-//    JDRow.prune([&](int i, int j, double v) { return v != 0.0; });
-//
-//    JPSlice.makeCompressed();
-//    JOSlice.makeCompressed();
-//    JDRow.makeCompressed();
 
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice + ValParam.WeightO * JOSlice.transpose() * IO * JOSlice;
 
@@ -1894,12 +1864,6 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
     JPSlice.makeCompressed();
     JDRow.makeCompressed();
 
-//    JPSlice.prune([&](int i, int j, double v) { return v != 0.0; });
-//    JDRow.prune([&](int i, int j, double v) { return v != 0.0; });
-//
-//    JPSlice.makeCompressed();
-//    JDRow.makeCompressed();
-
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice;
     Eigen::SparseMatrix<double> V = JDRow.transpose() * JDRow + WeightHH;
     Eigen::SparseMatrix<double> W = JPSlice.transpose() * JDRow;
@@ -2149,13 +2113,6 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
     Eigen::SparseMatrix<double> JDRow(JD);
     JPSlice.makeCompressed();
     JDRow.makeCompressed();
-
-//    JPSlice.prune([&](int i, int j, double v) { return v != 0.0; });
-//    JDRow.prune([&](int i, int j, double v) { return v != 0.0; });
-//
-//    JPSlice.makeCompressed();
-//    JDRow.makeCompressed();
-
 
     Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice ;
     Eigen::SparseMatrix<double> V = JDRow.transpose() * JDRow + WeightHH;

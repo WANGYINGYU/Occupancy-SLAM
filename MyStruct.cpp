@@ -15,41 +15,11 @@ ParamStruct SetParam(){
 
     // The map resolution
 
-//    ValParam.Sizei = 1000;
-//    ValParam.Sizej = 1000;
-//    ValParam.Scale = 0.05;
-//    ValParam.OriginX = -25;
-//    ValParam.OriginY = -25;
-
-//    ValParam.Sizei = 600;
-//    ValParam.Sizej = 700;
-//    ValParam.Scale = 0.1;
-//    ValParam.OriginX = -30;
-//    ValParam.OriginY = -25;
-
-//    ValParam.Sizei = 500;
-//    ValParam.Sizej = 500;
-//    ValParam.Scale = 0.1;
-//    ValParam.OriginX = -18;
-//    ValParam.OriginY = -32;
-
     ValParam.Sizei = 900; // The map size
     ValParam.Sizej = 900; // The map size
     ValParam.Scale = 0.1; // The map resolution
     ValParam.OriginX = -60; // The origin
     ValParam.OriginY = -50; // The origin
-
-//    ValParam.Sizei = 750; // The map size
-//    ValParam.Sizej = 850; // The map size
-//    ValParam.Scale = 0.1; // The map resolution
-//    ValParam.OriginX = 115; // The origin
-//    ValParam.OriginY = -100; // The origin
-
-//    ValParam.Sizei = 1200; // The map size
-//    ValParam.Sizej = 1000; // The map size
-//    ValParam.Scale = 0.05; // The map resolution
-//    ValParam.OriginX = -15; // The origin
-//    ValParam.OriginY = -20; // The origin
 
 
     // Multi-resolution mode
@@ -71,19 +41,6 @@ ParamStruct SetParam(){
     ValParam.MapSmoothingWeightFirst = 1e-7; // Weight for the smoothing term of Occupancy Map for the first stage
     ValParam.MapSmoothingWeightSecond = 1e-7; // Weight for the smoothing term of Occupancy Map for the second stage
 
-    //
-//    ValParam.NumBeam = 1081;
-//    ValParam.MinAngle = -135.0/180.0*M_PI;
-//    ValParam.MaxAngle = 135.0/180.0*M_PI;
-
-//    ValParam.NumBeam = 180;
-//    ValParam.MinAngle = -1.5707964;
-//    ValParam.MaxAngle = 1.5533431;
-
-//    ValParam.NumBeam = 360;
-//    ValParam.MinAngle = -1.5707964;
-//    ValParam.MaxAngle = 1.5620697;
-
     ValParam.NumBeam = 1079; // The number of beams
     ValParam.MinAngle = -2.35183119774; // The minimum angle of beams
     ValParam.MaxAngle = 2.35183119774; // The maximum angle of beams
@@ -91,9 +48,6 @@ ParamStruct SetParam(){
 
     ValParam.MaxRange = 30.0; // The maximum range of beams
     ValParam.MinRange = 0.023; // The minimum range of beams
-
-//    ValParam.MaxRange = 20.0; // The maximum range of beams
-//    ValParam.MinRange = 0.0; // The minimum range of beams
 
     // Show Map Mode
     ValParam.ModeShowMap = false; // If show the map during the iteration, suggestion: false

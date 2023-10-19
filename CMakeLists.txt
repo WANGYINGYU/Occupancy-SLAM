@@ -26,7 +26,7 @@ endif()
 
 
 include_directories(${MKL_ROOT}/include)
-link_directories(${MKL_ROOT}/lib/intel64)
+link_directories(${MKL_ROOT}/lib)
 set(MKL_LIBRARIES mkl_intel_lp64 mkl_sequential mkl_core)
 
 # Find libigl library
