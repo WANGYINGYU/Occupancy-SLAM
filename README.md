@@ -10,6 +10,10 @@ This paper considers the SLAM problem using 2D laser scans (and odometry). We pr
 
 
 
+## Associated Video
+
+[![Alt text](https://img.youtube.com/vi/WH2noA4KQCM/0.jpg)](https://www.youtube.com/watch?v=WH2noA4KQCM)
+
 ## Dependencies
 
 1. [Eigen >= 3.4.0](https://eigen.tuxfamily.org/index.php?title=Main_Page)
