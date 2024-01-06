@@ -150,7 +150,7 @@ Our code is under [MIT](./LICENSE.txt) License.
 
 
 
-## Our Results of Map
+## Our Results of Occupancy Grid Map
 
 
 
