@@ -38,7 +38,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 
 
 
-add_executable(Occupancy_SLAM main.cpp MyStruct.cpp MyStruct.h SubFuncs.h SubFuncs.cpp FuncLeastSquares.cpp FuncConvertObs.cpp)
+add_executable(Occupancy_SLAM Main_Occupancy_SLAM.cpp MyStruct.cpp MyStruct.h SubFuncs.h SubFuncs.cpp FuncLeastSquares.cpp FuncConvertObs.cpp)
 
 if(MKL_FOUND)
         target_link_libraries(Occupancy_SLAM PUBLIC ${MKL_LIBRARIES} Eigen3::Eigen  OpenMP::OpenMP_CXX ${OpenCV_LIBS} ${LIBIGL_LIBRARIES} -fopenmp)
