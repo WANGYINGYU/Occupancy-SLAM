@@ -4,11 +4,7 @@ PosefromOdom false
 ModeOdom false
 ModeMulti true
 ModeKeyFrame false
-Sizei 900
-Sizej 900
 Scale 0.1
-OriginX -60
-OriginY -50
 DownTime 8
 DownRate 5
 SelectDistance 0.5

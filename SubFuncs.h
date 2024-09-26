@@ -87,9 +87,12 @@ void FuncKeyFrameSelection(const Eigen::MatrixXd& Pose, Eigen::MatrixXd& PoseTem
 void FuncKeyFrameSelection(const Eigen::MatrixXd& Pose, Eigen::MatrixXd& PoseTem, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, std::vector<Eigen::ArrayXd>& ScanXYTem, std::vector<Eigen::ArrayXd>& ScanOddTem, const ParamStruct& ValParam);
 void FuncShowMap(Eigen::MatrixXd& Map);
 void FuncShowMapPress(Eigen::MatrixXd& Map);
-Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam);
+Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, ParamStruct& ValParam);
+Eigen::MatrixXd FuncInitialiseGridMapToShowFinal(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam);
+
 void FuncPosefromOdom(const Eigen::MatrixXd& Odom, Eigen::MatrixXd& Pose);
 void RemoveArrayIndex(Eigen::ArrayXi& arr, const std::vector<int>& indicesToRemove);
 void RemoveArrayIndex(Eigen::ArrayXd& arr, const std::vector<int>& indicesToRemove);
 void SetParametersFromFile(const std::string& fileName, ParamStruct& params);
+
 #endif //FASTOCC_SUBFUNCS_H

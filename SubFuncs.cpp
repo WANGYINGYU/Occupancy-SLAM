@@ -2298,10 +2298,94 @@ void FuncShowMapPress(Eigen::MatrixXd& Map){
 }
 
 
-Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
+Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, ParamStruct& ValParam){
     Eigen::MatrixXd Map = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
     int NumPose = Pose.size()/3;
+    std::vector<Eigen::MatrixXd> PointsGlobal(NumPose);
+    double global_min_x = std::numeric_limits<double>::infinity();
+    double global_min_y = std::numeric_limits<double>::infinity();
+
+#pragma omp parallel for
+    for (int i = 0; i < NumPose; ++i) {
+        Eigen::Rotation2Dd rotation(Pose(i, 2));
+        Eigen::Matrix2d Ri = rotation.toRotationMatrix();
+        Eigen::ArrayXd XYi = ScanXY[i];
+        Eigen::Map<Eigen::MatrixXd> MatrixXY(XYi.data(), 2, XYi.size() / 2);
+        Eigen::Vector2d VectorTrans = Pose.block<>(i, 0, 1, 2).transpose();
+        Eigen::MatrixXd Si = (Ri * MatrixXY).colwise() + VectorTrans;
+        PointsGlobal[i] = Si;
+        double min_x_i = Si.row(0).minCoeff();
+        double min_y_i = Si.row(1).minCoeff();
+        if (min_x_i < global_min_x) {
+            global_min_x = min_x_i;
+        }
+        if (min_y_i < global_min_y) {
+            global_min_y = min_y_i;
+        }
+    }
+    int rounded_min_x = static_cast<int>(std::floor(global_min_x - 1/ValParam.Scale));
+    int rounded_min_y = static_cast<int>(std::floor(global_min_y - 1/ValParam.Scale));
+    Eigen::Vector2d Origin(rounded_min_x,rounded_min_y);
+
+    ValParam.OriginX = rounded_min_x;
+    ValParam.OriginY = rounded_min_y;
+
+
+    double global_max_x = -std::numeric_limits<double>::infinity();
+    double global_max_y = -std::numeric_limits<double>::infinity();
+    std::vector<Eigen::MatrixXd> PointsGlobalProj(NumPose);
     #pragma omp parallel for
+    for (int i = 0; i < NumPose; ++i) {
+        Eigen::MatrixXd Si = PointsGlobal[i];
+        Eigen::MatrixXd XY3 = ((Si.colwise()-Origin).array() / ValParam.Scale).floor().matrix();
+        PointsGlobalProj[i] = XY3;
+        double max_value_x_i = XY3.row(0).maxCoeff();
+        double max_value_y_i = XY3.row(1).maxCoeff();
+        if (max_value_x_i > global_max_x) {
+            global_max_x = max_value_x_i;
+        }
+        if (max_value_y_i > global_max_y) {
+            global_max_y = max_value_y_i;
+        }
+    }
+
+    double rounded_max_value_x = std::ceil(global_max_x + 5/ValParam.Scale);
+    double rounded_max_value_y = std::ceil(global_max_y + 5/ValParam.Scale);
+
+    ValParam.Sizei = rounded_max_value_x;
+    ValParam.Sizej = rounded_max_value_x;
+
+    #pragma omp parallel for
+    for (int i = 0; i < NumPose; ++i) {
+        Eigen::ArrayXd Oddi = ScanOdd[i];
+        Eigen::MatrixXd XY3 = PointsGlobalProj[i];
+
+//        bool hasNegative = XY3.minCoeff() < 0;
+//        if (hasNegative){
+//                std::cout<<"Incorrect Origin Setting"<<std::endl;
+//        }
+//        bool hasOverSize = XY3.row(0).maxCoeff() >= ValParam.Sizei || XY3.row(1).maxCoeff() >= ValParam.Sizej;
+//        if (hasOverSize){
+//                std::cout<<"Incorrect Map Size Setting"<<std::endl;
+//        }
+
+        Eigen::MatrixXd TemGlobal = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
+        Eigen::MatrixXd TemMapN = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
+        for (int j = 0; j < Oddi.size(); ++j) {
+            int tem_col = XY3(0,j);
+            int tem_row = XY3(1,j);
+            double tem_val = Oddi[j];
+            TemGlobal(tem_row, tem_col) = TemGlobal(tem_row, tem_col) + tem_val;
+        }
+        Map = Map + TemGlobal;
+    }
+    return Map;
+}
+
+Eigen::MatrixXd FuncInitialiseGridMapToShowFinal(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
+    Eigen::MatrixXd Map = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
+    int NumPose = Pose.size()/3;
+#pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i,2));
         Eigen::Matrix2d Ri = rotation.toRotationMatrix();
@@ -2315,11 +2399,11 @@ Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const s
 
         bool hasNegative = XY3.minCoeff() < 0;
         if (hasNegative){
-                std::cout<<"Incorrect Origin Setting"<<std::endl;
+            std::cout<<"Incorrect Origin Setting"<<std::endl;
         }
         bool hasOverSize = XY3.row(0).maxCoeff() >= ValParam.Sizei || XY3.row(1).maxCoeff() >= ValParam.Sizej;
         if (hasOverSize){
-                std::cout<<"Incorrect Map Size Setting"<<std::endl;
+            std::cout<<"Incorrect Map Size Setting"<<std::endl;
         }
 
         Eigen::MatrixXd TemGlobal = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
@@ -2334,6 +2418,7 @@ Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const s
     }
     return Map;
 }
+
 void FuncPosefromOdom(const Eigen::MatrixXd& Odom, Eigen::MatrixXd& Pose){
     Pose = Eigen::MatrixXd::Zero(Odom.rows(), 3);
     for (int i = 0; i < Odom.rows(); ++i) {
@@ -2345,6 +2430,9 @@ void FuncPosefromOdom(const Eigen::MatrixXd& Odom, Eigen::MatrixXd& Pose){
         }
     }
 }
+
+
+
 
 
 void SetParametersFromFile(const std::string& fileName, ParamStruct& params) {

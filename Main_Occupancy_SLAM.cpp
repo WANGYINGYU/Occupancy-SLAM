@@ -22,6 +22,7 @@ int main() {
     }
     filenames.push_back(input);
 
+
     if (ValParam.ModeOdom){
         if (ValParam.PosefromOdom){
             if (filenames.size() != 2) {
@@ -45,6 +46,7 @@ int main() {
     auto start = std::chrono::high_resolution_clock::now();  // Start
     std::vector<Eigen::ArrayXd> ScanXY(Range.rows());
     std::vector<Eigen::ArrayXd> ScanOdd(Range.rows());
+
     FuncConvertObs(Range, ScanXY, ScanOdd, ValParam);
     auto end = std::chrono::high_resolution_clock::now();  // End
     double elapsed_time_sec = std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
@@ -172,7 +174,7 @@ int main() {
     elapsed_time_sec = std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
     std::cout << "Optimization End, Elapsed time: " << elapsed_time_sec << " seconds " << std::endl;
 
-    Eigen::MatrixXd OptimizedMap = FuncInitialiseGridMapToShow(Pose,ScanXY,ScanOdd,ValParam);
+    Eigen::MatrixXd OptimizedMap = FuncInitialiseGridMapToShowFinal(Pose,ScanXY,ScanOdd,ValParam);
     std::cout << "The Optimized Occupancy Map, to end, press any key." << std::endl;
     FuncShowMapPress(OptimizedMap);
 
