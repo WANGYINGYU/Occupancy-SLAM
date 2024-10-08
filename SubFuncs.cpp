@@ -2577,8 +2577,7 @@ Eigen::MatrixXd FuncGetSubmapPose(const std::vector<Eigen::MatrixXd>& PoseSubmap
 }
 
 
-std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector2d> FuncInitialiseLocalMap(const Eigen::MatrixXd& Pose,
-                                                                         const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
+std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector2d> FuncInitialiseLocalMap(const Eigen::MatrixXd& Pose,const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
 
     int NumPose = Pose.rows();
     std::vector<Eigen::MatrixXd> PointsGlobal(NumPose);
@@ -2586,7 +2585,7 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector2d> FuncInitialiseLoca
     double global_min_y = std::numeric_limits<double>::infinity();
 
     // Calculate global positions for each pose and find the minimum coordinates
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i, 2));
         Eigen::Matrix2d Ri = rotation.toRotationMatrix();
@@ -2617,7 +2616,7 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector2d> FuncInitialiseLoca
     double global_max_y = -std::numeric_limits<double>::infinity();
     std::vector<Eigen::MatrixXd> PointsGlobalProj(NumPose);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::MatrixXd Si = PointsGlobal[i];
         Eigen::MatrixXd XY3 = ((Si.colwise() - Origin).array() / ValParam.Scale).floor().matrix();
@@ -2643,9 +2642,8 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector2d> FuncInitialiseLoca
     Eigen::MatrixXd N = Eigen::MatrixXd::Zero(rounded_max_value_y, rounded_max_value_x);
 
     // Populate the map
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
-
         Eigen::ArrayXd Oddi = ScanOdd[i];
         Eigen::MatrixXd XY3 = PointsGlobalProj[i];
 
@@ -2661,23 +2659,19 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector2d> FuncInitialiseLoca
         }
         Map += TemGlobal;
         N = N + TemMapN;
-//        FuncShowMapPress(Map);
     }
     // Return the map and the origin of this submap
     return std::make_tuple(Map, N, Origin);
 }
 
 
-std::vector<SubMap> FuncBuildSubMaps(const std::vector<Eigen::MatrixXd>& PoseSubmaps,
-        const std::vector<std::vector<Eigen::ArrayXd>>& ScanXYSubmaps,
-        const std::vector<std::vector<Eigen::ArrayXd>>& ScanOddSubmaps,
-        ParamStruct& ValParam)
+std::vector<MapStruct> FuncBuildSubMaps(const std::vector<Eigen::MatrixXd>& PoseSubmaps,const std::vector<std::vector<Eigen::ArrayXd>>& ScanXYSubmaps,const std::vector<std::vector<Eigen::ArrayXd>>& ScanOddSubmaps,ParamStruct& ValParam)
 {
     int Num = PoseSubmaps.size();
     int allSize = 0;
 
-    std::vector<SubMap> SubMaps(Num);
-
+    std::vector<MapStruct> SubMaps(Num);
+    #pragma omp parallel for
     for (int i = 0; i < Num; ++i) {
         int sizei = PoseSubmaps[i].rows();
 
@@ -2690,10 +2684,10 @@ std::vector<SubMap> FuncBuildSubMaps(const std::vector<Eigen::MatrixXd>& PoseSub
         Eigen::MatrixXd PoseLocal = TransformToLocalFrame(PosePart);
 
         // Build SubMap with the local submap coordinates
-        auto [SubMapi,SubNi,SubOrigin] = FuncInitialiseLocalMap(PoseLocal, SubScanXY, SubScanOdd, ValParam);
+        auto [SubGridi,SubNi,SubOrigin] = FuncInitialiseLocalMap(PoseLocal, SubScanXY, SubScanOdd, ValParam);
 
         // Store the generated SubMap
-        SubMaps[i].Map = SubMapi;
+        SubMaps[i].Grid = SubGridi;
         SubMaps[i].N = SubNi;
         SubMaps[i].Origin = SubOrigin;
 
@@ -2738,4 +2732,145 @@ Eigen::MatrixXd TransformToLocalFrame(const Eigen::MatrixXd& Pose)
     }
 
     return PoseLocal;
+}
+
+std::tuple<MapStruct,std::vector<ScanStruct>> FuncBuildGlobalMapfromLocalMaps(const std::vector<MapStruct> &SubMaps, const std::vector<Eigen::MatrixXd>& PoseSubmaps,ParamStruct& ValParam){
+    int NumSubMaps = PoseSubmaps.size();
+    double Scale = ValParam.Scale;
+    std::vector<ScanStruct> Scans(NumSubMaps);
+
+    std::vector<Eigen::MatrixXd> PointsGlobal(NumSubMaps);
+    double global_min_x = std::numeric_limits<double>::infinity();
+    double global_min_y = std::numeric_limits<double>::infinity();
+
+    #pragma omp parallel for
+    for (int i = 0; i < NumSubMaps; ++i) {
+        Eigen::MatrixXd SubMapi = SubMaps[i].Grid;
+        Eigen::MatrixXd SubNi = SubMaps[i].N;
+        Eigen::Vector2d SubOrigin = SubMaps[i].Origin;
+
+        // Define Eigen vectors for row, col, occupancy, and hit values
+        Eigen::VectorXi Rows;
+        Eigen::VectorXi Cols;
+        Eigen::VectorXd Oddi;
+        Eigen::VectorXd Ni;
+
+        // Resize the Eigen vectors to match the size of non-zero elements
+        int nonZeroCount = (SubMapi.array() != 0).count();
+        Rows.resize(nonZeroCount);
+        Cols.resize(nonZeroCount);
+        Oddi.resize(nonZeroCount);
+        Ni.resize(nonZeroCount);
+
+        // Collect row, col, occupancy value, and hit number for non-zero elements
+        int idx = 0;
+        for (int row = 0; row < SubMapi.rows(); ++row) {
+            for (int col = 0; col < SubMapi.cols(); ++col) {
+                double Val = SubMapi(row, col);
+                double HitNum = SubNi(row, col);
+                if (Val != 0.0) {
+                    Rows(idx) = row;
+                    Cols(idx) = col;
+                    Oddi(idx) = Val;
+                    Ni(idx) = HitNum;
+                    ++idx;
+                }
+            }
+        }
+        Eigen::MatrixXd XYi(nonZeroCount, 2);
+        XYi.col(0) = Cols.cast<double>();
+        XYi.col(1) = Rows.cast<double>();
+
+        Eigen::MatrixXd LocalXY = (XYi.rowwise() - Eigen::RowVector2d::Ones()).array() * Scale;
+
+        LocalXY.rowwise() += SubOrigin.transpose();
+
+        Scans[i].XY = LocalXY;
+        Scans[i].Odd = Oddi;
+        Scans[i].N = Ni;
+        Eigen::VectorXd Posei = PoseSubmaps[i].row(0);
+        Eigen::Rotation2Dd rotation(Posei(2));
+        Eigen::Matrix2d Ri = rotation.toRotationMatrix();
+
+        Eigen::MatrixXd Si = Ri * LocalXY.transpose();
+        Si.colwise() += Posei.segment(0, 2);
+
+        PointsGlobal[i] = Si;
+
+        double min_x_i = Si.row(0).minCoeff();
+        double min_y_i = Si.row(1).minCoeff();
+
+        if (min_x_i < global_min_x) {
+            global_min_x = min_x_i;
+        }
+        if (min_y_i < global_min_y) {
+            global_min_y = min_y_i;
+        }
+
+    }
+
+    int rounded_min_x = static_cast<int>(std::floor(global_min_x - 1 / ValParam.Scale));
+    int rounded_min_y = static_cast<int>(std::floor(global_min_y - 1 / ValParam.Scale));
+
+    Eigen::Vector2d GlobalOrigin(rounded_min_x, rounded_min_y);
+
+    // Initialize map and project points onto the grid
+    double global_max_x = -std::numeric_limits<double>::infinity();
+    double global_max_y = -std::numeric_limits<double>::infinity();
+
+    std::vector<Eigen::MatrixXd> PointsGlobalProj(NumSubMaps);
+    #pragma omp parallel for
+    for (int i = 0; i < NumSubMaps; ++i) {
+        Eigen::MatrixXd Si = PointsGlobal[i];
+        Eigen::MatrixXd XY3 = ((Si.colwise() - GlobalOrigin).array() / ValParam.Scale).floor().matrix();
+        PointsGlobalProj[i] = XY3;
+        double max_value_x_i = XY3.row(0).maxCoeff();
+        double max_value_y_i = XY3.row(1).maxCoeff();
+
+        if (max_value_x_i > global_max_x) {
+            global_max_x = max_value_x_i;
+        }
+        if (max_value_y_i > global_max_y) {
+            global_max_y = max_value_y_i;
+        }
+    }
+
+    // Determine grid size based on the maximum projected coordinates
+    int rounded_max_value_x = static_cast<int>(std::ceil(global_max_x + 5 / ValParam.Scale));
+    int rounded_max_value_y = static_cast<int>(std::ceil(global_max_y + 5 / ValParam.Scale));
+
+    // Create Global Occupancy Map
+
+    Eigen::MatrixXd GlobalGrid = Eigen::MatrixXd::Zero(rounded_max_value_y, rounded_max_value_x);
+    Eigen::MatrixXd GlobalN = Eigen::MatrixXd::Zero(rounded_max_value_y, rounded_max_value_x);
+
+    #pragma omp parallel for
+    for (int i = 0; i < NumSubMaps; ++i) {
+        Eigen::VectorXd Oddi = Scans[i].Odd;
+        Eigen::VectorXd Ni = Scans[i].N;
+        Eigen::MatrixXd XY3 = PointsGlobalProj[i];
+        Eigen::MatrixXd TemGlobal = Eigen::MatrixXd::Zero(rounded_max_value_y, rounded_max_value_x);
+        Eigen::MatrixXd TemMapN = Eigen::MatrixXd::Zero(rounded_max_value_y, rounded_max_value_x);
+
+        for (int j = 0; j < Oddi.size(); ++j) {
+            int tem_col = XY3(0, j);
+            int tem_row = XY3(1, j);
+
+            double tem_odd = Oddi[j];
+            double tem_nij = Ni[j];
+
+            TemGlobal(tem_row, tem_col) += tem_odd;
+            TemMapN(tem_row, tem_col) += tem_nij;
+        }
+        GlobalGrid += TemGlobal;
+        GlobalN += TemMapN;
+    }
+    FuncShowMapPress(GlobalGrid);
+
+    MapStruct GlobalMap;
+    GlobalMap.Grid = GlobalGrid;
+    GlobalMap.N = GlobalN;
+    GlobalMap.Origin = GlobalOrigin;
+
+    return std::make_tuple(GlobalMap,Scans);
 }

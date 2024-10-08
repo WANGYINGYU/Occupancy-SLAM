@@ -71,10 +71,16 @@ struct ParamStruct{
     int SubmapDevisionNum;
 };
 
-struct SubMap {
-    Eigen::MatrixXd Map;
+struct MapStruct {
+    Eigen::MatrixXd Grid;
     Eigen::MatrixXd N;
     Eigen::Vector2d Origin;
+};
+
+struct ScanStruct {
+    Eigen::MatrixXd XY;
+    Eigen::VectorXd Odd;
+    Eigen::VectorXd N;
 };
 
 
