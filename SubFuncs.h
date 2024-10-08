@@ -95,4 +95,9 @@ void RemoveArrayIndex(Eigen::ArrayXi& arr, const std::vector<int>& indicesToRemo
 void RemoveArrayIndex(Eigen::ArrayXd& arr, const std::vector<int>& indicesToRemove);
 void SetParametersFromFile(const std::string& fileName, ParamStruct& params);
 
+std::tuple<std::vector<Eigen::MatrixXd>, std::vector<std::vector<Eigen::ArrayXd>>, std::vector<std::vector<Eigen::ArrayXd>>> FuncSubmapsDevision(const Eigen::MatrixXd& Pose,const std::vector<Eigen::ArrayXd>& ScanXY,const std::vector<Eigen::ArrayXd>& ScanOdd,const ParamStruct& ValParam);
+Eigen::MatrixXd FuncGetSubmapPose(const std::vector<Eigen::MatrixXd>& PoseSubmaps);
+std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector2d> FuncInitialiseLocalMap(const Eigen::MatrixXd& Pose,const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam);
+Eigen::MatrixXd TransformToLocalFrame(const Eigen::MatrixXd& Pose);
+std::vector<SubMap> FuncBuildSubMaps(const std::vector<Eigen::MatrixXd>& PoseSubmaps,const std::vector<std::vector<Eigen::ArrayXd>>& ScanXYSubmaps,const std::vector<std::vector<Eigen::ArrayXd>>& ScanOddSubmaps,ParamStruct& ValParam);
 #endif //FASTOCC_SUBFUNCS_H

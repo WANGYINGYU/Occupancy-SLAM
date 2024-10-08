@@ -2299,7 +2299,7 @@ void FuncShowMapPress(Eigen::MatrixXd& Map){
 
 
 Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, ParamStruct& ValParam){
-    Eigen::MatrixXd Map = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
+
     int NumPose = Pose.size()/3;
     std::vector<Eigen::MatrixXd> PointsGlobal(NumPose);
     double global_min_x = std::numeric_limits<double>::infinity();
@@ -2352,8 +2352,10 @@ Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const s
     double rounded_max_value_x = std::ceil(global_max_x + 5/ValParam.Scale);
     double rounded_max_value_y = std::ceil(global_max_y + 5/ValParam.Scale);
 
-    ValParam.Sizei = rounded_max_value_x;
+    ValParam.Sizei = rounded_max_value_y;
     ValParam.Sizej = rounded_max_value_x;
+
+    Eigen::MatrixXd Map = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
 
     #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
@@ -2518,4 +2520,223 @@ void SetParametersFromFile(const std::string& fileName, ParamStruct& params) {
     }
 
     configFile.close();
+}
+
+
+std::tuple<std::vector<Eigen::MatrixXd>, std::vector<std::vector<Eigen::ArrayXd>>, std::vector<std::vector<Eigen::ArrayXd>>> FuncSubmapsDevision(const Eigen::MatrixXd& Pose,const std::vector<Eigen::ArrayXd>& ScanXY,const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
+    size_t totalPoints = Pose.rows();
+
+    size_t groupSize = ValParam.SubmapDevisionNum;
+
+    std::vector<Eigen::MatrixXd> PoseSubmaps;
+    std::vector<std::vector<Eigen::ArrayXd>> ScanXYSubmaps;
+    std::vector<std::vector<Eigen::ArrayXd>> ScanOddSubmaps;
+
+
+    size_t startIdx = 0;
+
+    // Data Devision
+    while (startIdx < totalPoints) {
+        size_t currentSubmapSize = std::min(groupSize, totalPoints - startIdx); // All the remaining data if less than groupSize
+        size_t endIdx = startIdx + currentSubmapSize;
+
+        PoseSubmaps.push_back(Pose.block(startIdx, 0, currentSubmapSize, Pose.cols()));
+
+        // Divide ScanXY and ScanOdd
+        std::vector<Eigen::ArrayXd> currentScanXY, currentScanOdd;
+        for (size_t j = startIdx; j < endIdx; ++j) {
+            currentScanXY.push_back(ScanXY[j]);
+            currentScanOdd.push_back(ScanOdd[j]);
+        }
+
+        ScanXYSubmaps.push_back(currentScanXY);
+        ScanOddSubmaps.push_back(currentScanOdd);
+
+        startIdx = endIdx;  // Update startIdx
+    }
+
+    return std::make_tuple(PoseSubmaps, ScanXYSubmaps, ScanOddSubmaps);
+}
+
+
+Eigen::MatrixXd FuncGetSubmapPose(const std::vector<Eigen::MatrixXd>& PoseSubmaps) {
+    size_t NumSubMap = PoseSubmaps.size();
+
+    // Initialize the Poses of submaps matrix (NumSubMap rows, 3 columns)
+    Eigen::MatrixXd StatePose(NumSubMap, 3);
+
+    // Iterate through each submap
+    for (size_t i = 0; i < NumSubMap; ++i) {
+        const Eigen::MatrixXd& SubmapPose_i = PoseSubmaps[i];
+
+        // Extract the first row (pose) of each submap and store it in JoiningPose
+        StatePose.row(i) = SubmapPose_i.row(0);
+    }
+
+    return StatePose;
+}
+
+
+std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector2d> FuncInitialiseLocalMap(const Eigen::MatrixXd& Pose,
+                                                                         const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam){
+
+    int NumPose = Pose.rows();
+    std::vector<Eigen::MatrixXd> PointsGlobal(NumPose);
+    double global_min_x = std::numeric_limits<double>::infinity();
+    double global_min_y = std::numeric_limits<double>::infinity();
+
+    // Calculate global positions for each pose and find the minimum coordinates
+#pragma omp parallel for
+    for (int i = 0; i < NumPose; ++i) {
+        Eigen::Rotation2Dd rotation(Pose(i, 2));
+        Eigen::Matrix2d Ri = rotation.toRotationMatrix();
+        Eigen::ArrayXd XYi = ScanXY[i];
+        Eigen::Map<Eigen::MatrixXd> MatrixXY(XYi.data(), 2, XYi.size() / 2);
+        Eigen::Vector2d VectorTrans = Pose.block(i, 0, 1, 2).transpose();
+        Eigen::MatrixXd Si = (Ri * MatrixXY).colwise() + VectorTrans;
+        PointsGlobal[i] = Si;
+
+        double min_x_i = Si.row(0).minCoeff();
+        double min_y_i = Si.row(1).minCoeff();
+
+        if (min_x_i < global_min_x) {
+            global_min_x = min_x_i;
+        }
+        if (min_y_i < global_min_y) {
+            global_min_y = min_y_i;
+        }
+    }
+
+    // Define local origin
+    int rounded_min_x = static_cast<int>(std::floor(global_min_x - 1 / ValParam.Scale));
+    int rounded_min_y = static_cast<int>(std::floor(global_min_y - 1 / ValParam.Scale));
+    Eigen::Vector2d Origin(rounded_min_x, rounded_min_y);
+
+    // Initialize map and project points onto the grid
+    double global_max_x = -std::numeric_limits<double>::infinity();
+    double global_max_y = -std::numeric_limits<double>::infinity();
+    std::vector<Eigen::MatrixXd> PointsGlobalProj(NumPose);
+
+#pragma omp parallel for
+    for (int i = 0; i < NumPose; ++i) {
+        Eigen::MatrixXd Si = PointsGlobal[i];
+        Eigen::MatrixXd XY3 = ((Si.colwise() - Origin).array() / ValParam.Scale).floor().matrix();
+        PointsGlobalProj[i] = XY3;
+
+        double max_value_x_i = XY3.row(0).maxCoeff();
+        double max_value_y_i = XY3.row(1).maxCoeff();
+
+        if (max_value_x_i > global_max_x) {
+            global_max_x = max_value_x_i;
+        }
+        if (max_value_y_i > global_max_y) {
+            global_max_y = max_value_y_i;
+        }
+    }
+
+    // Determine grid size based on the maximum projected coordinates
+    int rounded_max_value_x = static_cast<int>(std::ceil(global_max_x + 5 / ValParam.Scale));
+    int rounded_max_value_y = static_cast<int>(std::ceil(global_max_y + 5 / ValParam.Scale));
+
+    // Create a map with the calculated size
+    Eigen::MatrixXd Map = Eigen::MatrixXd::Zero(rounded_max_value_y, rounded_max_value_x);
+    Eigen::MatrixXd N = Eigen::MatrixXd::Zero(rounded_max_value_y, rounded_max_value_x);
+
+    // Populate the map
+#pragma omp parallel for
+    for (int i = 0; i < NumPose; ++i) {
+
+        Eigen::ArrayXd Oddi = ScanOdd[i];
+        Eigen::MatrixXd XY3 = PointsGlobalProj[i];
+
+        Eigen::MatrixXd TemGlobal = Eigen::MatrixXd::Zero(rounded_max_value_y, rounded_max_value_x);
+        Eigen::MatrixXd TemMapN = Eigen::MatrixXd::Zero(rounded_max_value_y, rounded_max_value_x);
+        for (int j = 0; j < Oddi.size(); ++j) {
+            int tem_col = XY3(0, j);
+            int tem_row = XY3(1, j);
+
+            double tem_val = Oddi[j];
+            TemGlobal(tem_row, tem_col) += tem_val;
+            TemMapN(tem_row, tem_col) = TemMapN(tem_row, tem_col) + 1;
+        }
+        Map += TemGlobal;
+        N = N + TemMapN;
+//        FuncShowMapPress(Map);
+    }
+    // Return the map and the origin of this submap
+    return std::make_tuple(Map, N, Origin);
+}
+
+
+std::vector<SubMap> FuncBuildSubMaps(const std::vector<Eigen::MatrixXd>& PoseSubmaps,
+        const std::vector<std::vector<Eigen::ArrayXd>>& ScanXYSubmaps,
+        const std::vector<std::vector<Eigen::ArrayXd>>& ScanOddSubmaps,
+        ParamStruct& ValParam)
+{
+    int Num = PoseSubmaps.size();
+    int allSize = 0;
+
+    std::vector<SubMap> SubMaps(Num);
+
+    for (int i = 0; i < Num; ++i) {
+        int sizei = PoseSubmaps[i].rows();
+
+        // Retrieve submap components
+        Eigen::MatrixXd PosePart = PoseSubmaps[i];
+        std::vector<Eigen::ArrayXd> SubScanXY = ScanXYSubmaps[i];
+        std::vector<Eigen::ArrayXd> SubScanOdd = ScanOddSubmaps[i];
+
+        // Transform poses to the local coordinate frame of the first pose
+        Eigen::MatrixXd PoseLocal = TransformToLocalFrame(PosePart);
+
+        // Build SubMap with the local submap coordinates
+        auto [SubMapi,SubNi,SubOrigin] = FuncInitialiseLocalMap(PoseLocal, SubScanXY, SubScanOdd, ValParam);
+
+
+        // Store the generated SubMap
+        SubMaps[i].Map = SubMapi;
+        SubMaps[i].N = SubNi;
+        SubMaps[i].Origin = SubOrigin;
+
+        // Update allSize
+        allSize += sizei;
+    }
+    return SubMaps;
+}
+
+
+Eigen::MatrixXd TransformToLocalFrame(const Eigen::MatrixXd& Pose)
+{
+    int sizei = Pose.rows();
+
+    // Get the first pose in the submap (the reference pose)
+    Eigen::Vector2d firstPoseTranslation = Pose.block(0, 0, 1, 2).transpose();
+    double firstPoseRot = Pose(0, 2);
+
+    // Create the inverse transformation for the first pose
+    Eigen::Rotation2Dd inverseRotation(-firstPoseRot);
+    Eigen::Matrix2d Ri_inv = inverseRotation.toRotationMatrix();
+    Eigen::Vector2d ti_inv = -Ri_inv * firstPoseTranslation;
+
+    // Create a matrix to store the transformed poses
+    Eigen::MatrixXd PoseLocal = Pose;
+
+    // Apply the inverse transformation to each pose in the submap to bring them to the local frame
+    for (int j = 0; j < sizei; ++j) {
+        Eigen::Vector2d poseTranslation = Pose.block(j, 0, 1, 2).transpose();
+        double poseRot = Pose(j, 2);
+
+        // Transform translation part
+        Eigen::Vector2d localTranslation = Ri_inv * poseTranslation + ti_inv;
+
+        // Transform rotation angle
+        double localRot = poseRot - firstPoseRot;
+
+        // Update PoseLocal with the transformed pose
+        PoseLocal(j, 0) = localTranslation(0);
+        PoseLocal(j, 1) = localTranslation(1);
+        PoseLocal(j, 2) = localRot;
+    }
+
+    return PoseLocal;
 }
