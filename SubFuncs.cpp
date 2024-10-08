@@ -2692,7 +2692,6 @@ std::vector<SubMap> FuncBuildSubMaps(const std::vector<Eigen::MatrixXd>& PoseSub
         // Build SubMap with the local submap coordinates
         auto [SubMapi,SubNi,SubOrigin] = FuncInitialiseLocalMap(PoseLocal, SubScanXY, SubScanOdd, ValParam);
 
-
         // Store the generated SubMap
         SubMaps[i].Map = SubMapi;
         SubMaps[i].N = SubNi;

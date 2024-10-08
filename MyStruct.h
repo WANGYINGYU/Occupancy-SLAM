@@ -5,6 +5,10 @@
 #ifndef FASTOCC_FUNCS_H
 #define FASTOCC_FUNCS_H
 
+#include <Eigen/Dense>
+#include <vector>
+#include <tuple>
+
 #endif //FASTOCC_FUNCS_H
 
 struct ParamStruct{
@@ -62,6 +66,15 @@ struct ParamStruct{
     //Second Stage
     int SolverSecondMaxIter;
     double SolverSecondTolerance;
+
+    // Submap Joining Parameters
+    int SubmapDevisionNum;
+};
+
+struct SubMap {
+    Eigen::MatrixXd Map;
+    Eigen::MatrixXd N;
+    Eigen::Vector2d Origin;
 };
 
 

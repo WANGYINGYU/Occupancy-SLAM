@@ -62,6 +62,9 @@ ParamStruct SetParam(){
     ValParam.SolverSecondMaxIter = 50; // The maximum iteration times of iterative solver for the second stage
     ValParam.SolverSecondTolerance = 0.01; // The converge tolerance of iterative solver for the second stage
 
+    // Submap Joining Parameters
+    ValParam.SubmapDevisionNum = 50; // The number of submaps in each dimension
+
     return ValParam;
 }
 
