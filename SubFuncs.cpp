@@ -183,7 +183,7 @@ Eigen::ArrayXd FuncBilinearInterpolation(const Eigen::MatrixXd& Map, const Eigen
     // The input should be the [x,y], i.e. the order is col and row
     int nn = ObjectXY.rows(); // The number of points
     Eigen::ArrayXd res(nn); // The interpolation result
-    #pragma omp parallel for
+//    #pragma omp parallel for
     for (int i = 0; i < nn; i++)
     {
         double x = ObjectXY(i, 0);
@@ -2734,7 +2734,7 @@ Eigen::MatrixXd TransformToLocalFrame(const Eigen::MatrixXd& Pose)
     return PoseLocal;
 }
 
-std::tuple<MapStruct,std::vector<ScanStruct>> FuncBuildGlobalMapfromLocalMaps(const std::vector<MapStruct> &SubMaps, const std::vector<Eigen::MatrixXd>& PoseSubmaps,ParamStruct& ValParam){
+MapStruct FuncBuildGlobalMapfromLocalMaps(const std::vector<MapStruct> &SubMaps, const std::vector<Eigen::MatrixXd>& PoseSubmaps,ParamStruct& ValParam){
     int NumSubMaps = PoseSubmaps.size();
     double Scale = ValParam.Scale;
     std::vector<ScanStruct> Scans(NumSubMaps);
@@ -2743,7 +2743,7 @@ std::tuple<MapStruct,std::vector<ScanStruct>> FuncBuildGlobalMapfromLocalMaps(co
     double global_min_x = std::numeric_limits<double>::infinity();
     double global_min_y = std::numeric_limits<double>::infinity();
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
     for (int i = 0; i < NumSubMaps; ++i) {
         Eigen::MatrixXd SubMapi = SubMaps[i].Grid;
         Eigen::MatrixXd SubNi = SubMaps[i].N;
@@ -2872,5 +2872,366 @@ std::tuple<MapStruct,std::vector<ScanStruct>> FuncBuildGlobalMapfromLocalMaps(co
     GlobalMap.N = GlobalN;
     GlobalMap.Origin = GlobalOrigin;
 
-    return std::make_tuple(GlobalMap,Scans);
+    return GlobalMap;
 }
+
+std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::VectorXd,double,double> FuncDiffJoiningJacobianGlobal2Local(const MapStruct& GlobalMap, const Eigen::MatrixXd &StatePoses, const std::vector<MapStruct> &SubMaps, ParamStruct& ValParam){
+    int NumSubMaps = SubMaps.size()/3;
+    Eigen::MatrixXd GlobalGrid = GlobalMap.Grid;
+    Eigen::MatrixXd GlobalN = GlobalMap.N;
+    int GlobalSizei = GlobalGrid.rows();
+    int GlobalSizej = GlobalGrid.cols();
+    Eigen::Vector2d GlobalOrigin = GlobalMap.Origin;
+    double Scale = ValParam.Scale;
+    double DeleteThreshold = ValParam.DeleteThreshold;
+
+    double InterpSize = 1.0;
+
+    // Define Eigen vectors for row, col, occupancy, and hit values
+    Eigen::VectorXi Rows;
+    Eigen::VectorXi Cols;
+    Eigen::VectorXd Odd;
+    Eigen::VectorXd N;
+
+    // Resize the Eigen vectors to match the size of non-zero elements
+    int nonZeroCount = (GlobalGrid.array() != 0).count();
+    Rows.resize(nonZeroCount);
+    Cols.resize(nonZeroCount);
+    Odd.resize(nonZeroCount);
+    N.resize(nonZeroCount);
+
+    // Collect row, col, occupancy value, and hit number for non-zero elements in global occupancy map
+    int idx = 0;
+    for (int row = 0; row < GlobalGrid.rows(); ++row) {
+        for (int col = 0; col < GlobalGrid.cols(); ++col) {
+            double Val = GlobalGrid(row, col);
+            double HitNum = GlobalN(row, col);
+            if (Val != 0.0) {
+                Rows(idx) = row;
+                Cols(idx) = col;
+                Odd(idx) = Val;
+                N(idx) = HitNum;
+                ++idx;
+            }
+        }
+    }
+
+    Eigen::MatrixXd GlobalGridCoor(nonZeroCount, 2); // the row and col of projected cells in the global occupancy map
+    GlobalGridCoor.col(0) = Cols.cast<double>();
+    GlobalGridCoor.col(1) = Rows.cast<double>();
+
+    Eigen::MatrixXd GlobalXY = (GlobalGridCoor.rowwise() - Eigen::RowVector2d::Ones()).array() * Scale;
+
+    GlobalXY.rowwise() += GlobalOrigin.transpose();
+
+    int nPts = 0;
+
+    Eigen::ArrayXi JPID1;
+    Eigen::ArrayXi JPID2;
+    Eigen::ArrayXd JPVal;
+
+    Eigen::ArrayXi JDID1;
+    Eigen::ArrayXi JDID2;
+    Eigen::ArrayXd JDVal;
+
+    Eigen::VectorXd ErrorS;
+    Eigen::VectorXd LocalOdd;
+
+    for (int i = 0; i < NumSubMaps; ++i) {
+
+        Eigen::Vector2d SubMapOrigin = SubMaps[i].Origin;
+        Eigen::MatrixXd SubMapGrid = SubMaps[i].Grid;
+        Eigen::MatrixXd SubMapN = SubMaps[i].N;
+
+        Eigen::VectorXd Posei = StatePoses.row(i);
+
+        Eigen::Rotation2Dd rotation(Posei(2));
+        Eigen::Matrix2d Ri = rotation.toRotationMatrix();
+        Eigen::Vector2d Ti = Posei.segment(0, 2);
+
+        Eigen::MatrixXd Pi = Ri.transpose() * (GlobalXY.transpose().colwise()-Ti); // global to local projection
+        Pi = ((Pi.colwise() - SubMapOrigin).array() / Scale).matrix();
+
+        std::vector<int> indicesValid = filterOutOfBounds(Pi, SubMapGrid.cols(), SubMapGrid.rows()); // Remove out of bounds points
+
+        Eigen::MatrixXd filteredGlobalCoord(indicesValid.size(),2);
+        Eigen::MatrixXd filteredGlobalXY(indicesValid.size(),2);
+        Eigen::VectorXd filteredOddi(indicesValid.size());
+        Eigen::VectorXd filteredNi(indicesValid.size());
+
+        // Calculate the coordinate of valid cells in the global map
+        for (int j = 0; j < indicesValid.size(); ++j) {
+            filteredGlobalCoord.row(j) = GlobalGridCoor.row(indicesValid[j]);
+            filteredGlobalXY.row(j) = GlobalXY.row(indicesValid[j]);
+            filteredOddi(j) = Odd(j);
+            filteredNi(j) = N(j);
+        }
+
+        // Interpolation
+        Eigen::ArrayXd MapInterpPi = FuncBilinearInterpolation(SubMapGrid, Pi.transpose()); // Occupancy values of porojected points on local submaps
+        Eigen::ArrayXd NInterpPi = FuncBilinearInterpolation(SubMapN, Pi.transpose()); // Hit numbers of projected points on local submaps
+
+        std::vector<int> indicesToRemove;
+
+        for (int j = 0; j < MapInterpPi.size(); ++j) {
+            if (abs(MapInterpPi(j)) < DeleteThreshold) {
+                indicesToRemove.push_back(j);
+            }
+        }
+
+        int newCols = Pi.cols() - indicesToRemove.size();
+        Eigen::MatrixXd filterPi(Pi.rows(), newCols);
+        Eigen::VectorXd doublefilteredOddi(newCols);
+        Eigen::VectorXd doublefilteredNi(newCols);
+        Eigen::MatrixXd doublefilteredGlobalXY(newCols,2);
+        Eigen::MatrixXd doublefilteredGlobalCoord(newCols,2);
+
+        int idx = 0;
+        for (int col = 0; col < Pi.cols(); ++col) {
+            if (std::find(indicesToRemove.begin(), indicesToRemove.end(), col) == indicesToRemove.end()) {
+                filterPi.col(idx) = Pi.col(col);
+                doublefilteredGlobalXY.row(idx) = filteredGlobalXY.row(col);
+                doublefilteredGlobalCoord.row(idx) = filteredGlobalCoord.row(col);
+                doublefilteredOddi(idx) = filteredOddi(col);
+                doublefilteredNi(idx) = filteredNi(col);
+                ++idx;
+            }
+        }
+
+        // Calculate the gradient of the local submaps
+        Eigen::MatrixXd Gi = FuncGradient(SubMapGrid,InterpSize);
+        Eigen::MatrixXd Gvi = Gi.block(0, 0, SubMapGrid.rows(), SubMapGrid.cols());
+        Eigen::MatrixXd Gui = Gi.block(0, SubMapGrid.cols(), SubMapGrid.rows(), SubMapGrid.cols());
+
+        Eigen::ArrayXd GuInterpPi = FuncBilinearInterpolation(Gui, filterPi.transpose());
+        Eigen::ArrayXd GvInterpPi = FuncBilinearInterpolation(Gvi, filterPi.transpose());
+
+        Eigen::MatrixXd dMdPi(2, GuInterpPi.size());
+        dMdPi.row(0) = GuInterpPi;
+        dMdPi.row(1) = GvInterpPi;
+
+        Eigen::Matrix2d dPdT = -Ri;
+        int NumObs = filterPi.cols();
+        Eigen::MatrixXd dPdTRepmat = dPdT.replicate(NumObs, 1);
+        Eigen::VectorXd dPdTRepmat1 = dPdTRepmat.col(0);
+        Eigen::VectorXd dPdTRepmat2 = dPdTRepmat.col(1);
+
+        Eigen::MatrixXd dPdTReshape1 = Eigen::Map<Eigen::MatrixXd>(dPdTRepmat1.data(), 2, NumObs);
+        Eigen::MatrixXd dPdTReshape2 = Eigen::Map<Eigen::MatrixXd>(dPdTRepmat2.data(), 2, NumObs);
+
+        Eigen::RowVectorXd dEdT1 = (dMdPi.array() * dPdTReshape1.array()).colwise().sum();
+        Eigen::RowVectorXd dEdT2 = (dMdPi.array() * dPdTReshape2.array()).colwise().sum();
+
+
+        Eigen::MatrixXd dEdT(2, NumObs);
+        dEdT.row(0) = dEdT1;
+        dEdT.row(1) = dEdT2;
+
+        Eigen::Matrix2d dR = FuncdR2D(Posei(2));
+
+        Eigen::MatrixXd Coef = (doublefilteredGlobalXY.rowwise() - Ti.transpose());
+
+        Eigen::MatrixXd dPdR = dR * Coef.transpose();
+
+        Eigen::RowVectorXd dEdR = (dMdPi.array() * dPdR.array()).colwise().sum();
+
+        Eigen::VectorXi IDi(NumObs);
+        for (int j = 0; j < NumObs; ++j) {
+            IDi[j] = nPts + j;
+        }
+        nPts += NumObs;
+
+        Eigen::MatrixXi dEdPID1 = IDi.transpose().replicate(3, 1);
+
+        Eigen::VectorXi dEdPID2(3*NumObs);
+        Eigen::VectorXi range = Eigen::VectorXi::LinSpaced(3, 3 * i, 3 * (i+1)-1);
+        dEdPID2 = range.replicate(NumObs,1);
+
+        Eigen::VectorXd dEdP(dEdT.size() + dEdR.size());
+        dEdP << -dEdT.reshaped(), -dEdR.transpose();
+
+        // Calculate the occupancy value of these reserved projected points on the local occupancy map
+
+        Eigen::ArrayXd LocalOddi = FuncBilinearInterpolation(SubMapGrid, filterPi.transpose());
+        Eigen::ArrayXd LocalNi = FuncBilinearInterpolation(SubMapN, filterPi.transpose());
+
+        Eigen::ArrayXd ArrfilterGlobalNi = Eigen::Map<Eigen::ArrayXd>(doublefilteredNi.data(), doublefilteredNi.size());
+        Eigen::ArrayXd ArrfilterGlobalOddi = Eigen::Map<Eigen::ArrayXd>(doublefilteredOddi.data(), doublefilteredOddi.size());
+
+        Eigen::ArrayXd Weighti = LocalNi / ArrfilterGlobalNi;
+        Eigen::ArrayXd Ei = ArrfilterGlobalOddi * Weighti - LocalOddi;
+
+        ErrorS.conservativeResize(ErrorS.size()+Ei.size());
+        ErrorS.tail(Ei.size()) = Ei;
+
+        LocalOdd.conservativeResize(LocalOdd.size()+LocalOddi.size());
+        LocalOdd.tail(LocalOddi.size()) = LocalOddi;
+
+        JPID1.conservativeResize(JPID1.size()+dEdPID1.size());
+        JPID1.tail(dEdPID1.size()) = dEdPID1;
+        JPID2.conservativeResize(JPID2.size()+dEdPID2.size());
+        JPID2.tail(dEdPID2.size()) = dEdPID2;
+        JPVal.conservativeResize(JPVal.size()+dEdP.size());
+        JPVal.tail(dEdP.size()) = dEdP;
+
+        // Calculate the Jacobian w.r.t. the global map
+        JDID1.conservativeResize(JDID1.size()+IDi.size());
+        JDID1.tail(IDi.size()) = IDi;
+
+        // Calculate the index of variables
+        Eigen::VectorXd Colsi = doublefilteredGlobalCoord.col(0);
+        Eigen::VectorXd Rowsi = doublefilteredGlobalCoord.col(1);
+        Eigen::VectorXd IdVari = Rowsi * GlobalGrid.cols() + Colsi;
+        JDID2.conservativeResize(JDID2.size()+IdVari.size());
+        JDID2.tail(IdVari.size()) = IdVari.cast<int>();
+
+        JDVal.conservativeResize(JDVal.size()+Weighti.size());
+        JDVal.tail(Weighti.size()) = Weighti;
+
+    }
+
+    Eigen::SparseMatrix<double> JP(ErrorS.size(),3*NumSubMaps), JD(ErrorS.size(),GlobalSizei*GlobalSizej);
+    std::thread t1([&]() {
+        igl::sparse(JPID1, JPID2, JPVal, ErrorS.size(), 3 * NumSubMaps, JP);
+    });
+    std::thread t2([&]() {
+        igl::sparse(JDID1, JDID2, JDVal, ErrorS.size(), GlobalSizei*GlobalSizej, JD);
+    });
+    t1.join();
+    t2.join();
+
+    JP.makeCompressed();
+    JD.makeCompressed();
+
+    Eigen::SparseMatrix<double> IS = FuncGetI(ErrorS);
+    IS.makeCompressed();
+
+    double SumErrorS = (ErrorS.transpose() * ErrorS)(0,0);
+    double SumError = SumErrorS;
+    double MeanError = SumErrorS/ErrorS.size();
+
+    return std::make_tuple(JP,JD,IS,ErrorS,SumError,MeanError);
+}
+
+
+std::vector<int> filterOutOfBounds(Eigen::MatrixXd& Pi, double width, double height) {
+    std::vector<int> validIndices;
+
+    for (int i = 0; i < Pi.cols(); ++i) {
+        double x = Pi(0, i);
+        double y = Pi(1, i);
+
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+            validIndices.push_back(i);
+        }
+    }
+
+    Eigen::MatrixXd filteredPi(2, validIndices.size());
+    for (int i = 0; i < validIndices.size(); ++i) {
+        filteredPi.col(i) = Pi.col(validIndices[i]);
+    }
+
+    Pi = filteredPi;
+    return validIndices;
+}
+
+// no smoothing no odometry
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const ParamStruct& ValParam)
+{
+    Eigen::SparseMatrix<double> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
+//    Eigen::SparseMatrix<double> JDRow(JD);
+    JPSlice.makeCompressed();
+//    JDRow.makeCompressed();
+
+    std::cout<<JD.cols()<<std::endl;
+
+    // Find the number of non-zero elements in each column of JD
+    Eigen::VectorXi sum_JD(JD.cols());
+    for (int j = 0; j < JD.cols(); ++j) {
+        sum_JD(j) = JD.col(j).nonZeros();
+    }
+
+    // Find the indices of columns with less than 4 non-zero elements
+    std::vector<int> indicesToRemove;
+    std::vector<int> indicesToRecover;
+    for (int j = 0; j < sum_JD.size(); ++j) {
+        if (sum_JD(j) < 4) {
+            indicesToRemove.push_back(j);
+        } else {
+            indicesToRecover.push_back(j);
+        }
+    }
+
+    std::cout<<indicesToRemove.size()<<std::endl;
+    std::cout<<indicesToRecover.size()<<std::endl;
+
+
+    int newCols = indicesToRecover.size();
+    Eigen::SparseMatrix<double> JDFiltered(JD.rows(), newCols);
+
+    for (int colIdx = 0; colIdx < newCols; ++colIdx) {
+        JDFiltered.col(colIdx) = JD.col(indicesToRecover[colIdx]);
+    }
+    std::cout<<JDFiltered.cols()<<std::endl;
+    JDFiltered.makeCompressed();
+
+    Eigen::SparseMatrix<double> U = JPSlice.transpose() * JPSlice;
+    Eigen::SparseMatrix<double> V = JDFiltered.transpose() * JDFiltered;
+    Eigen::SparseMatrix<double> W = JPSlice.transpose() * JDFiltered;
+//    Eigen::SparseMatrix<double> V = JDRow.transpose() * JDRow;
+//    Eigen::SparseMatrix<double> W = JPSlice.transpose() * JDRow;
+
+    Eigen::VectorXd EP = -JPSlice.transpose() * ErrorS;
+    Eigen::VectorXd ED = -JDFiltered.transpose() * ErrorS;
+//    Eigen::VectorXd ED = -JDRow.transpose() * ErrorS;
+//    Eigen::VectorXd XH0 = Map.transpose().reshaped(Map.size(),1);
+
+    Eigen::SparseMatrix<double> UW = igl::cat(2, U, W);
+    Eigen::SparseMatrix<double> WT = W.transpose();
+    Eigen::SparseMatrix<double> WV = igl::cat(2, WT, V);
+    Eigen::SparseMatrix<double> II = igl::cat(1, UW, WV);
+    Eigen::VectorXd EE = igl::cat(1,EP,ED);
+
+    Eigen::initParallel();
+    II.makeCompressed();
+    Eigen::VectorXd Delta;
+    if (ValParam.ModeSparseSolver){
+        Eigen::ConjugateGradient <Eigen::SparseMatrix<double>, Eigen::Upper|Eigen::Lower> solver;
+        int MaxNum = floor(sqrt(II.rows()));
+        if (MaxNum > ValParam.SolverFirstMaxIter){MaxNum = ValParam.SolverFirstMaxIter;}
+        solver.setMaxIterations(MaxNum);
+        solver.setTolerance(ValParam.SolverFirstTolerance);
+        solver.compute(II);
+        Delta = solver.solve(EE);
+    }
+    else{
+        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
+        solver.compute(II);
+        Delta = solver.solve(EE);
+    }
+
+    Eigen::VectorXd DeltaP = Delta.head(JPSlice.cols());
+    Eigen::VectorXd DeltaD = Delta.tail(Delta.size() - JPSlice.cols());
+
+    Eigen::VectorXd DeltaDRecovered = Eigen::VectorXd::Zero(JD.cols());
+    for (size_t i = 0; i < indicesToRecover.size(); ++i) {
+        DeltaDRecovered(indicesToRecover[i]) = DeltaD(i);
+    }
+
+    Eigen::VectorXd DeltaFull(DeltaP.size() + DeltaDRecovered.size());
+    DeltaFull << DeltaP, DeltaDRecovered;
+
+    double SumDelta = DeltaFull.transpose() * DeltaFull;
+    double MeanDelta = SumDelta / DeltaFull.size();
+    double SumDeltaP = DeltaP.transpose() * DeltaP;
+    double MeanDeltaP = SumDeltaP / DeltaP.size();
+
+
+//    double SumDelta = Delta.transpose() * Delta;
+//    double MeanDelta = SumDelta / Delta.size();
+//    double SumDeltaP = DeltaP.transpose() * DeltaP;
+//    double MeanDeltaP = SumDeltaP / DeltaP.size();
+
+    return std::make_tuple(DeltaP,DeltaD,SumDelta,MeanDelta,SumDeltaP,MeanDeltaP);
+}
+
