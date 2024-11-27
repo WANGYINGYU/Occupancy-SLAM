@@ -31,7 +31,8 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
-
+#include <unordered_set>
+#include <cmath>
 
 void loadFileData(const std::vector<std::string>& filenames, std::vector<std::vector<double>>& fileData, const ParamStruct& ValParam);
 std::vector<double> linspace(double start, double end, int num);
@@ -100,5 +101,10 @@ Eigen::MatrixXd FuncGetSubmapPose(const std::vector<Eigen::MatrixXd>& PoseSubmap
 std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector2d> FuncInitialiseLocalMap(const Eigen::MatrixXd& Pose,const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam);
 Eigen::MatrixXd TransformToLocalFrame(const Eigen::MatrixXd& Pose);
 std::vector<MapStruct> FuncBuildSubMaps(const std::vector<Eigen::MatrixXd>& PoseSubmaps,const std::vector<std::vector<Eigen::ArrayXd>>& ScanXYSubmaps,const std::vector<std::vector<Eigen::ArrayXd>>& ScanOddSubmaps,ParamStruct& ValParam);
-std::tuple<MapStruct,std::vector<ScanStruct>> FuncBuildGlobalMapfromLocalMaps(const std::vector<MapStruct> &SubMaps, const std::vector<Eigen::MatrixXd>& PoseSubmaps,ParamStruct& ValParam);
+MapStruct FuncBuildGlobalMapfromLocalMaps(const std::vector<MapStruct> &SubMaps, const std::vector<Eigen::MatrixXd>& PoseSubmaps,ParamStruct& ValParam);
+void FuncSubmapJoiningNLLS(const std::vector<MapStruct>& SubMaps,MapStruct& GlobalMap,Eigen::MatrixXd& StatePoses,ParamStruct& ValParam);
+std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::VectorXd,double,double> FuncDiffJoiningJacobianGlobal2Local(const MapStruct& GlobalMap, const Eigen::MatrixXd &StatePoses, const std::vector<MapStruct> &SubMaps, ParamStruct& ValParam);
+std::vector<int> filterOutOfBounds(const Eigen::MatrixXd& Pi, double width, double height);
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const ParamStruct& ValParam);
+Eigen::ArrayXd FuncComputeRelativePose(const Eigen::ArrayXd& FirstPosePrev, const Eigen::ArrayXd& FirstPoseEst);
 #endif //FASTOCC_SUBFUNCS_H

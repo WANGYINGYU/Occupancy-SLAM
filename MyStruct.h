@@ -69,6 +69,8 @@ struct ParamStruct{
 
     // Submap Joining Parameters
     int SubmapDevisionNum;
+
+    double DeleteThreshold;
 };
 
 struct MapStruct {

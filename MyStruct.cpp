@@ -64,6 +64,7 @@ ParamStruct SetParam(){
 
     // Submap Joining Parameters
     ValParam.SubmapDevisionNum = 50; // The number of submaps in each dimension
+    ValParam.DeleteThreshold = 0.1; // The threshold of find observed cells at local maps
 
     return ValParam;
 }
