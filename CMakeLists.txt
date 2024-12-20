@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(Occupancy_SLAM)
 set(CMAKE_CXX_STANDARD 17)
 # Find Eigen library
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 3.4 REQUIRED)
 # Find OpenMP library
 find_package(OpenMP REQUIRED)
 # Find OpenCV
