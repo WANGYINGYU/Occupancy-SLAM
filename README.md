@@ -54,7 +54,7 @@ sudo make install
 
 #### libigl
 
-Download [libigl](https://libigl.github.io) 
+Download [libigl](https://libigl.github.io) and put it in the project root floder or set the path in CMakeList.txt
 
 
 
@@ -86,7 +86,7 @@ cd Occupancy-SLAM
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j12
+make
 ```
 
 ### Run
