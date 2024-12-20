@@ -66,10 +66,6 @@ Download [libigl](https://libigl.github.io) and put it in the project root flode
 
 ## Quickstart
 
-### Download datasets
-
-Download [datasets](https://drive.google.com/file/d/1EDZfsOru4z0j2OEq57DIKOyvudecWrkM/view?usp=share_link), and place the file under the main folder. 
-
 ### Modify the path of libigl
 
 Specify the path to libigl in `CMakeLists.txt`.
