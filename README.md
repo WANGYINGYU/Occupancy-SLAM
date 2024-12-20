@@ -97,7 +97,7 @@ make -j12
 
 and then input
 
-`../Data/Museum/b0/Range.txt ../Data/Museum/b0/Pose.txt `
+`../Data/Museum_b0/Range.txt ../Data/Museum_b0/Pose.txt `
 
 
 
