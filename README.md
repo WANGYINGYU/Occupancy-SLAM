@@ -213,5 +213,5 @@ It should be noted that although Cartographer takes 2680 scans as input, it only
 
 
 ```html
-<img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/High_Frequency.png?raw=true" alt="Comparisons using high-frequency scans" width="600">
+<img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/High_Frequency.png?raw=true">
 ```
