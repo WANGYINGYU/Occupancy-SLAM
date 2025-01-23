@@ -67,20 +67,7 @@ struct ParamStruct{
     int SolverSecondMaxIter;
     double SolverSecondTolerance;
 
-    // Submap Joining Parameters
-    int SubmapDevisionNum;
-};
 
-struct MapStruct {
-    Eigen::MatrixXd Grid;
-    Eigen::MatrixXd N;
-    Eigen::Vector2d Origin;
-};
-
-struct ScanStruct {
-    Eigen::MatrixXd XY;
-    Eigen::VectorXd Odd;
-    Eigen::VectorXd N;
 };
 
 
