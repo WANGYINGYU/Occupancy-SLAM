@@ -2,7 +2,7 @@
     Occupancy-SLAM
 </h1>
 
-C++ implementation of *<u>[Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map](https://arxiv.org/pdf/2502.06292). Yingyu Wang, Liang Zhao, and Shoudong Huang. Preprint</u>* and *<u>[Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map](https://www.roboticsproceedings.org/rss18/p003.pdf). Liang Zhao, Yingyu Wang, and Shoudong Huang. In Robotics Science and Systems (RSS), 2022</u>*.
+C++ implementation of *<u>[Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map](https://arxiv.org/pdf/2502.06292). Yingyu Wang, Liang Zhao, and Shoudong Huang. In IEEE Transactions on Robotics (T-RO)</u>* and *<u>[Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map](https://www.roboticsproceedings.org/rss18/p003.pdf). Liang Zhao, Yingyu Wang, and Shoudong Huang. In Robotics Science and Systems (RSS), 2022</u>*.
 
 
 Joint optimization of poses and features has been extensively studied and demonstrated to yield more accurate results in feature-based SLAM problems. However, research on
