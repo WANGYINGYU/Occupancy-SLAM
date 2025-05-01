@@ -60,7 +60,7 @@ Download [libigl](https://libigl.github.io) and put it in the project root flode
 
 ## Showcase Video
 
-[![Alt text](https://img.youtube.com/vi/-_-39SrPxKk&t=4s/maxresdefault.jpg)](https://www.youtube.com/watch?v=-_-39SrPxKk&t=4s)
+[![Alt text](https://img.youtube.com/vi/-_-39SrPxKk/maxresdefault.jpg)](https://www.youtube.com/watch?v=-_-39SrPxKk&t=4s)
 
 
 
