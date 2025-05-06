@@ -1,4 +1,4 @@
-Preliminary MATLAB code for 3D Occupancy-SLAM. To get started, run *3D_Occupancy_SLAM* for standard-scale datasets, and *3D_Occupancy_Joining* for large-scale environments. Our approach produces consistent maps and poses without making any assumptions about the environment. Furthermore, it is robust to initialization errors, allowing the use of noisy initial poses. The results below demonstrate its performance in an unstructured environment captured by a UAV.
+Preliminary MATLAB code for 3D Occupancy-SLAM. To get started, run *3D_Occupancy_SLAM* for standard-scale datasets, and *3D_Occupancy_Joining* for large-scale environments. Our approach produces consistent maps and poses without making any assumptions about the environment. Furthermore, it is robust to initialization errors, allowing the use of noisy initial poses. The results below demonstrate its performance in an unstructured environment captured by a UAV. More detailed are shown in our video and paper.
 
 <table border="1" width="100%">
   <tr>
@@ -6,8 +6,8 @@ Preliminary MATLAB code for 3D Occupancy-SLAM. To get started, run *3D_Occupancy
     <th>Ours</th>
   </tr>
   <tr>
-    <td width="49%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_1.png?raw=true"></td> 
-    <td width="50.5%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_1.png?raw=true"></td>
+    <td width="50%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_1.png?raw=true"></td> 
+    <td width="50%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_1.png?raw=true"></td>
   </tr>
   <tr>
     <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_2.png?raw=true"></td> 
