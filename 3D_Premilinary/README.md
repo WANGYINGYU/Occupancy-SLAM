@@ -2,51 +2,43 @@ Preliminary MATLAB code for 3D Occupancy-SLAM. To get started, run *3D_Occupancy
 
 <table border="1" width="100%">
   <tr>
-    <th>Dataset</th>
-    <th>Initialization</th> 
+    <th>Odometry</th> 
     <th>Ours</th>
   </tr>
   <tr>
-    <td width="0.5%">ACES</td>
-    <td width="49%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/ACES_Ini.jpg?raw=true"></td> 
-    <td width="50.5%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/ACES_Our.jpg?raw=true"></td>
+    <td width="49%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_1.png?raw=true"></td> 
+    <td width="50.5%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_1.png?raw=true"></td>
   </tr>
   <tr>
-    <td>Intel Lab</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Intel_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Intel_Our.jpg?raw=true"></td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_2.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_2.png?raw=true"></td>
   </tr>
-  	<td>C5</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/C5_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/C5_Our.jpg?raw=true"></td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_3.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_3.png?raw=true"></td>
   </tr>
-    <td>Museum b0</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/b0_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/b0_Our.jpg?raw=true"></td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_4.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_4.png?raw=true"></td>
 	</tr>
-    <td>Freiburg Building 079</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/fr079_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/fr079_Our.jpg?raw=true"></td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_5.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_5.png?raw=true"></td>
 </tr>
-    <td>Garage</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Our.jpg?raw=true"></td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_6.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_6.png?raw=true"></td>
 </tr>
-    <td>MIT</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Our.jpg?raw=true"></td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_7.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_7.png?raw=true"></td>
 	</tr>
-    <td>Simu 1</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu1_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu1_Our.jpg?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_8.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_8.png?raw=true"></td> 
 	</tr>
-    <td>Simu 2</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu2_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu2_Our.jpg?raw=true"></td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_9.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_9.png?raw=true"></td>
 	</tr>
-    <td>Simu 3</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Our.jpg?raw=true"></td>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_10.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_10.png?raw=true"></td>
+</tr>
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_11.png?raw=true"></td> 
+    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_11.png?raw=true"></td>
 </table>
 
 
