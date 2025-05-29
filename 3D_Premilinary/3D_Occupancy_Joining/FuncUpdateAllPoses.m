@@ -8,19 +8,13 @@ OverlapScan = Param.OverlapScan;
 Trajectory = [Trajectory;AllPose{1}];
 
 for i=2:NumSubmap
-
     NumOverlapScan = OverlapScan(i-1);
-    
     MapPose_Pre = AllPose{i}(NumOverlapScan+1,:);
     MapPose_Current = CoordinatePose(i,:);
     
     MapTFMat_Pre = FuncTFMatrix(MapPose_Pre);
     MapTFMat_Current = FuncTFMatrix(MapPose_Current);
-    % RelativeTF =  MapTFMat_Pre * inv(MapTFMat_Current);
     RelativeTF =  MapTFMat_Current * inv(MapTFMat_Pre);
-    
-    
-
     % Transfer all poses at cuurent frame
     for j=NumOverlapScan+1:size(AllPose{i},1)
         Pose_Pre_j = AllPose{i}(j,:);
@@ -31,9 +25,5 @@ for i=2:NumSubmap
         AllPose{i}(j,:) = Pose_Transfer_j;
         Trajectory = [Trajectory;Pose_Transfer_j];
     end
-    % end
 end    
-
-
-
 end

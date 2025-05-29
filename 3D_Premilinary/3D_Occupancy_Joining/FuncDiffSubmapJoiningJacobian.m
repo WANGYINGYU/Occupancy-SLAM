@@ -1,4 +1,4 @@
-function [JP,JM,JO,ErrorS,ErrorO,OccVal,MeanErrorObs] = FuncDiffSubmapJoiningJacobianUneven2(GlobalMap,SubMap,Pose,Odom,Param)
+function [JP,JM,JO,ErrorS,ErrorO,OccVal,MeanErrorObs] = FuncDiffSubmapJoiningJacobian(GlobalMap,SubMap,Pose,Odom,Param)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Calculate Jacobians for Occupancy Submap Joining Problem
@@ -10,10 +10,7 @@ function [JP,JM,JO,ErrorS,ErrorO,OccVal,MeanErrorObs] = FuncDiffSubmapJoiningJac
 % 30/05/2024
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 GlobalOrigin  = GlobalMap.Origin;
-% GlobalScale = GlobalMap.Scale;
-GlobalScaleX = Param.GlobalScaleX;
-GlobalScaleY = Param.GlobalScaleY;
-GlobalScaleZ = Param.GlobalScaleZ;
+GlobalScale = Param.GlobalScale;
 GlobalGrid = GlobalMap.Grid;
 GlobalN = GlobalMap.N;
 GlobalSize_i = GlobalMap.Size_i;
@@ -31,12 +28,10 @@ cell_JMID2 = cell(1,NumPose);
 cell_JMVal = cell(1,NumPose);
 
 
-if Param.LambdaO~=0
-    cell_JOID1 = cell(1,NumPose);
-    cell_JOID2 = cell(1,NumPose);
-    cell_JOVal = cell(1,NumPose);
-    cell_ErrorO = cell(1,NumPose);
-end
+cell_JOID1 = cell(1,NumPose);
+cell_JOID2 = cell(1,NumPose);
+cell_JOVal = cell(1,NumPose);
+cell_ErrorO = cell(1,NumPose);
 
 cell_ErrorS = cell(1,NumPose);
 cell_OccVal = cell(1,NumPose);
@@ -44,31 +39,20 @@ cell_OccVal = cell(1,NumPose);
 nPts = 0;
 Cnti = 1;
 
-% GlobalMapPoints = FuncTruncatedCell(GlobalMap,Param);
-% Id = sub2ind(size(GlobalN),GlobalMapPoints(:,1),GlobalMapPoints(:,2),GlobalMapPoints(:,3)); 
-
-
 Id = find(isnan(GlobalGrid)==0);
 
 [I,J,H] = ind2sub(size(GlobalN),Id);
 GlobalMapPoints = [J,I,H];
 GlobalP = (GlobalMapPoints - 1);
-GlobalSiPre = [GlobalP(:,1) * GlobalScaleX,GlobalP(:,2) * GlobalScaleY,GlobalP(:,3) * GlobalScaleZ] + GlobalOrigin';
-
-
-
+GlobalSiPre = GlobalP*GlobalScale + GlobalOrigin';
 
 for i=1:NumPose
     % find observed cells in global map using global hit map  
     GlobalIdi = Id;
     GlobalSi = GlobalSiPre;
-    % GlobalSi = (GlobalMapPoints - 1) * GlobalScale + GlobalOrigin';
-
     %% Process Observations
     LocalOrigin = SubMap{i}.Origin;
-    LocalScaleX = SubMap{i}.ScaleX;
-    LocalScaleY = SubMap{i}.ScaleY;
-    LocalScaleZ = SubMap{i}.ScaleZ;
+    LocalScale = SubMap{i}.Scale;
     
     Posei = Pose(i,:);
     RX = FuncRX(Posei(4));
@@ -80,7 +64,7 @@ for i=1:NumPose
     Coef = (GlobalSi' - Posei(1:3)');
     LocalXYZi = Ri'*Coef-LocalOrigin;
 
-    LocalMapPoints = [LocalXYZi(1,:)./LocalScaleX;LocalXYZi(2,:)./LocalScaleY;LocalXYZi(3,:)./LocalScaleZ] + 1;
+    LocalMapPoints = LocalXYZi/LocalScale + 1;
 
     % delete points out of map
     IdOut = find((LocalMapPoints(1,:)>=1).*(LocalMapPoints(2,:)>=1).*(LocalMapPoints(3,:)>=1) ...
@@ -90,70 +74,47 @@ for i=1:NumPose
    
     GlobalIdi(IdOut) = []; % calculate the corresponding cells in the global map
     Val = SubMap{i}.DgridG(LocalMapPoints(2,:),LocalMapPoints(1,:),LocalMapPoints(3,:));
-
   
     %% caculate Observation Errors
     Weight = SubMap{i}.NgridG(LocalMapPoints(2,:),LocalMapPoints(1,:),LocalMapPoints(3,:)) ./ GlobalN(GlobalIdi)';
-
     IDNaN = isnan(Weight)==1 ;
     Weight(IDNaN) = 1;
-   
-
     IDInf = isinf(Weight)==1 ;
     Weight(IDInf) = 1;
-
     GlobalVal = GlobalGrid(GlobalIdi)'.*Weight;
-
     Ei = GlobalVal - Val;
-
     cell_OccVal{i} = Val';
     cell_ErrorS{i} = Ei';
     NumObs = size(LocalMapPoints,2);
-
     %% Calculate Jacobian of Observation Term w.r.t. Poses
     % derevative of local map w.r.t. projected points
-    
-    dLdP = [SubMap{i}.DgridGu(LocalMapPoints(2,:),LocalMapPoints(1,:),LocalMapPoints(3,:))./LocalScaleX; SubMap{i}.DgridGv(LocalMapPoints(2,:),LocalMapPoints(1,:),LocalMapPoints(3,:))./LocalScaleY;...
-        SubMap{i}.DgridGz(LocalMapPoints(2,:),LocalMapPoints(1,:),LocalMapPoints(3,:))./LocalScaleZ];
+    dLdP = [SubMap{i}.DgridGu(LocalMapPoints(2,:),LocalMapPoints(1,:),LocalMapPoints(3,:))./LocalScale; SubMap{i}.DgridGv(LocalMapPoints(2,:),LocalMapPoints(1,:),LocalMapPoints(3,:))./LocalScale;...
+        SubMap{i}.DgridGz(LocalMapPoints(2,:),LocalMapPoints(1,:),LocalMapPoints(3,:))./LocalScale];
 
     % derevative projected points w.r.t. Translation and Rotation
     dPdT = -Ri';
-    
-
     dRdr = FuncRZ(Posei(6))'*FuncRY(Posei(5))'*FuncdRXdG(Posei(4))';
     dRdp = FuncRZ(Posei(6))'*FuncdRYdB(Posei(5))'*FuncRX(Posei(4))';
     dRdy = FuncdRZdA(Posei(6))'*FuncRY(Posei(5))'*FuncRX(Posei(4))';
-
-
     dPdr = (dRdr' * Coef);
     dPdp = (dRdp' * Coef);
     dPdy = (dRdy' * Coef);
-
     dPdX = repmat(dPdT(:,1),1,NumObs);
     dPdY = repmat(dPdT(:,2),1,NumObs);
     dPdZ = repmat(dPdT(:,3),1,NumObs);
-
     dEdX = sum(dLdP.*dPdX);
     dEdY = sum(dLdP.*dPdY);
     dEdZ = sum(dLdP.*dPdZ);
-
     dEdT = - [dEdX;dEdY;dEdZ]; % Checked 
-
     dEdr = sum(dLdP .* dPdr);
     dEdp = sum(dLdP .* dPdp);
     dEdy = sum(dLdP .* dPdy);
-
     dEdEul = -[dEdr;dEdp;dEdy];
-
     dEdPose = [dEdT;dEdEul];
-
-  
     IDi = nPts+1:nPts+NumObs;
     nPts = nPts+NumObs;
-
     dEdPID1 = repmat(IDi',6,1);
     dEdPID2 = repmat(6*(i-1)+1:6*i,NumObs,1)';
-    
     cell_JPID1{i} = reshape(dEdPID1',[],1);
     cell_JPID2{i} = reshape(dEdPID2',[],1);
     cell_JPVal{i} = reshape(dEdPose',[],1);
@@ -165,8 +126,6 @@ for i=1:NumPose
     cell_JMID1{i} = IDi';
     cell_JMID2{i} = IdVar;
     cell_JMVal{i} = Weight';
-    % cell_JMVal{i} = 1./GlobalN(GlobalIdi);
-
     %% Calculate Jacobian of Odometry Term w.r.t. Poses
     if i < NumPose
         P1 = Pose(i,:)'; 
@@ -180,7 +139,6 @@ for i=1:NumPose
             end
         end
         EOi = [dT;dPhi]-Odom(i+1,:)';
-
         cell_ErrorO{i} = EOi;
         dTdT1 = -Ri';
         dTdT2 = Ri';
@@ -189,7 +147,6 @@ for i=1:NumPose
         dTdPhi3 = dRdy'*(P2(1:3)-P1(1:3));
         dPhid1 = -ones(1,3);
         dPhid2 = ones(1,3);
-
         a = (6*i-5:6*i)';
         b = (6*i+1:6*i+6)';
         cell_JOID1{i} = [Cnti;Cnti;Cnti;Cnti+1;Cnti+1;Cnti+1;Cnti+2;Cnti+2;Cnti+2;Cnti;Cnti;Cnti;Cnti+1;Cnti+1;Cnti+1;Cnti+2;Cnti+2;Cnti+2;...
@@ -225,15 +182,9 @@ JOID1 = vertcat(cell_JOID1{:});
 JOID2 = vertcat(cell_JOID2{:});
 JOVal = horzcat(cell_JOVal{:});
 JO = sparse(JOID1,JOID2,JOVal);
-
 ErrorS = vertcat(cell_ErrorS{:});
 OccVal = vertcat(cell_OccVal{:});
-
-
 SumErrorObs = ErrorS'*ErrorS;
-
 MeanErrorObs = sqrt(SumErrorObs)/(length(ErrorS));
 MeanErrorObs = full(MeanErrorObs);
-
-
 end

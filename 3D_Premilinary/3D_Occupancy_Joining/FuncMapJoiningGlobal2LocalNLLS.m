@@ -1,4 +1,4 @@
-function [GlobalMap,CoordinatePose] = FuncMapJoiningGlobal2LocalNLLS(GlobalMap,SubMap,CoordinatePose,AllPose,PoseOdom,LocalObs,OriginScan,TrajectoryGT,Timestamps,Param)
+function [GlobalMap,CoordinatePose] = FuncMapJoiningGlobal2LocalNLLS(GlobalMap,SubMap,CoordinatePose,AllPose,LocalObs,TrajectoryGT,Param)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Solve Non-linear Least Square Problem for Occupancy Submap Joining
 % Problem (Global to Local Projection Form)
@@ -18,10 +18,7 @@ Iter = 1;
 MaxIter = Param.MaxIter;
 MinPoseDelta = Param.MinPoseDelta;
 MeanPoseDelta = 100;
-
-
 DividePlan = Param.DividePlan;
-
 % Calculate Odometry between Submaps from Poses 
 Odom = zeros(size(DividePlan,2),6);
 for i=1:size(DividePlan,2)
@@ -33,30 +30,22 @@ for i=1:size(DividePlan,2)
     Odom(i,:) = FuncCalOdomfromPose(CalPose);
 end
 Odom = [zeros(1,6);Odom];
-
-
 [~,Trajectory] = FuncUpdateAllPoses(CoordinatePose,AllPose,Param);
-
-FuncEvaluatePose(Trajectory,TrajectoryGT,Param);
-
+if Param.Evaluation
+    FuncEvaluatePose(Trajectory,TrajectoryGT,Param);
+end
 while Iter <= MaxIter && MeanPoseDelta>= MinPoseDelta 
     fprintf("Iter Time of Submap Joining is %i\n\n", Iter);
-    [JP,JM,JO,ErrorS,ErrorO,OccVal,MeanErrorObs] = FuncDiffSubmapJoiningJacobianUneven2(GlobalMap,SubMap,CoordinatePose,Odom,Param);
-    [DeltaP,DeltaM,Mean_Delta,MeanPoseDelta] = FuncDelta(JP,JM,JO,ErrorS,ErrorO,GlobalMap,Param); 
+    [JP,JM,JO,ErrorS,ErrorO,~,~] = FuncDiffSubmapJoiningJacobian(GlobalMap,SubMap,CoordinatePose,Odom,Param);
+    [DeltaP,DeltaM,~,MeanPoseDelta] = FuncDelta(JP,JM,JO,ErrorS,ErrorO,GlobalMap,Param); 
     [GlobalMap,CoordinatePose] = FuncUpdate3D(GlobalMap,CoordinatePose,DeltaP,DeltaM);
-    [GlobalMap,Param] = FuncUpdateUnevenGlobalN(GlobalMap,CoordinatePose,LocalObs,Param);
-
+    [GlobalMap,Param] = FuncUpdateGlobalN(GlobalMap,CoordinatePose,LocalObs,Param);
     GlobalMap = FuncMapGrid(GlobalMap);
-    
     [~,Trajectory] = FuncUpdateAllPoses(CoordinatePose,AllPose,Param);
-
-    FuncEvaluatePose(Trajectory,TrajectoryGT,Param);
-
+    if Param.Evaluation
+        FuncEvaluatePose(Trajectory,TrajectoryGT,Param);
+        FuncDrawTrajectory(Trajectory,TrajectoryGT,4);
+    end
     Iter = Iter + 1;
-
-    FuncDrawTrajectory(Trajectory,TrajectoryGT,PoseOdom,4);
-
 end
-
-
 end

@@ -10,6 +10,7 @@ Size_j = Map.Size_j;
 Size_h = Map.Size_h;
 
 N = zeros(Size_i, Size_j, Size_h);
+cell_N = cell(1,NumPose);
 % project 3D local observations into global coordinate 
 for i = 1:NumPose
 
@@ -21,7 +22,6 @@ for i = 1:NumPose
     Ri = FuncR(RZ',RY',RX');
 
     xyz = Scan{i}.xyz';
-    Oddi = Scan{i}.Odd;
 
     Si = Ri*xyz+Posei(1:3)';
 
@@ -36,14 +36,19 @@ for i = 1:NumPose
 
     ind = (Size_i*Size_j*(z-1)) + (x-1)*Size_i + y;
 
- 
-
     TemN = accumarray(ind',1,[size(N,1)*size(N,2)*size(N,3),1]);
+
+    IdMore = find(TemN>1);
+
+    TemN(IdMore) = 1;
+
     TemN_reshaped = reshape(TemN, size(N));
 
-    N = N + TemN_reshaped;
+    cell_N{1,i} = TemN_reshaped; 
 
-end    
+end
+
+N = sum(cat(4, cell_N{:}), 4);
 
 Map.N = N;
 

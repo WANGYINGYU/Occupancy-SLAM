@@ -1,11 +1,7 @@
-function [GlobalMap,Param] = FuncUpdateUnevenGlobalN(GlobalMap,Pose,LocalObs,Param)
+function [GlobalMap,Param] = FuncUpdateGlobalN(GlobalMap,Pose,LocalObs,Param)
 
 NumPose = size(Pose,1);
-% GlobalScale = Param.GlobalScale;
-GlobalScaleX = Param.GlobalScaleX;
-GlobalScaleY = Param.GlobalScaleY;
-GlobalScaleZ = Param.GlobalScaleZ;
-
+GlobalScale = Param.GlobalScale;
 
 PointsGlobal = cell(1,NumPose);
 for i=1:NumPose
@@ -31,7 +27,7 @@ for i=1:NumPose
     Si = PointsGlobal{i};
     Ni = LocalObs{i}.N;
     XYZ = Si-GlobalOrigin;
-    XYZ3 = [XYZ(1,:)./GlobalScaleX;XYZ(2,:)./GlobalScaleY;XYZ(3,:)./GlobalScaleZ] + 1;      
+    XYZ3 = XYZ/GlobalScale + 1;      
     x = round(XYZ3(1,:));
     y = round(XYZ3(2,:));
     z = round(XYZ3(3,:));
@@ -45,7 +41,5 @@ end
 Check = GlobalMap.Grid./N;
 GlobalMap.Grid(abs(Check)>=1000) = 0;
 N(abs(Check)>=1000) = 0;
-
 GlobalMap.N = N;
-
 end

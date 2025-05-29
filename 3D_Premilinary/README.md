@@ -1,4 +1,6 @@
-Preliminary MATLAB code for 3D Occupancy-SLAM. To get started, run *3D_Occupancy_SLAM* for standard-scale datasets, and *3D_Occupancy_Joining* for large-scale environments. Our approach produces consistent maps and poses without making any assumptions about the environment. Furthermore, it is robust to initialization errors, allowing the use of noisy initial poses. The results below demonstrate its performance in an unstructured environment captured by a UAV. More detailed are shown in our video and paper.
+Preliminary MATLAB code for 3D Occupancy-SLAM. To get started, run *3D_Occupancy_SLAM* for standard-scale datasets, and *3D_Occupancy_Joining* for large-scale environments. Please read the comments on the code for your own data preparation. 
+
+Our approach produces consistent maps and poses without making any assumptions about the environment. Furthermore, it is robust to initialization errors, allowing the use of noisy initial poses. The results below demonstrate its performance in an unstructured environment captured by a UAV. More details are shown in our video and paper.
 
 <table border="1" width="100%">
   <tr>
