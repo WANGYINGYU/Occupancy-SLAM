@@ -7,7 +7,7 @@ function Param = FuncLoadParams()
 
     % Optimization Solver Parameters
     Param.MaxIter = 30;
-    Param.SmoothWeight = 0.01;
+    Param.SmoothWeight = 0.01; % smoothing weight, adjusting as resolution change 
     Param.PoseThreshold = 0.00001;
     Param.ObsThreshold = 0.001;
 
