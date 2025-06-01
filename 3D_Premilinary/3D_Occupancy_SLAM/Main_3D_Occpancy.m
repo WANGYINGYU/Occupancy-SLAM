@@ -16,15 +16,15 @@ clc;
 % ***************************** Data Preparation ***************************
 
 
-load ./Data/Real_3D_Lidar_Data/Voxgraph/Voxgraph_Demo.mat;
+load ./Data/Demo.mat;
 
 Odom = FuncCalOdomfromPose(Pose);
 PoseGT = Pose; % load ground truth poses if you have
 Param = FuncLoadParams();
 
+FuncShowPointCloud(Pose,Scan,0,Param);
 % Time consuming, turn off
 if Param.Visualization 
-    FuncShowPointCloud(Pose,Scan,3);
     FuncShowOccupancyMap(Scan,Pose,5,Param.MaxRange,1);
 end
 

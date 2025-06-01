@@ -12,6 +12,7 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
     fprintf("Iter Time is %i\n\n",Iter);
     [ErrorS,ErrorO,MeanError,JP,JM,JO] = FuncDiffJacobian(Map,Pose,Scan,Odom);
     [DeltaP,DeltaM,~,MeanDeltaPose] = Func6DoFDelta(JP,JM,JO,ErrorS,ErrorO,Map,HH2,Param);
+    fprintf("Mean Pose Delta is %3d\n\n",MeanDeltaPose);
     clear JP;
     clear JM;
     clear JO;
@@ -20,9 +21,9 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
         FuncEvaluatePose(Pose,PoseGT,Param);
         FuncDrawTrajectory(Pose,TrajectoryGT,PoseOdom,4);    
     end
+    FuncShowPointCloud(Pose,OriginalScan,Iter,Param);
     if Param.Visualization
         FuncShowOccupancyMap(OriginalScan,Pose,2,Param.MaxRange,2);
-        FuncShowPointCloud(Pose,OriginalScan,5);
     end
     % Smoothing weight tuning
     if mod(Iter,5)==0
