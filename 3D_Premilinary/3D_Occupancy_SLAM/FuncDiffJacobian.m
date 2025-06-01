@@ -194,26 +194,21 @@ JOID2 = vertcat(cell_JOID2{:});
 clear cell_JOID2;
 JOVal = horzcat(cell_JOVal{:});
 clear cell_JOVal;
-JO = sparse(JOID1,JOID2,JOVal);
-clear JOID1;
-clear JOID2;
-clear JOVal;
+
 
 Sum_Error = ErrorS'*ErrorS;
 Mean_Error = Sum_Error/length(ErrorS);
 %% Jacobians
+JO = sparse(JOID1,JOID2,JOVal);
+clear JOID1 JOID2 JOVal;
+
 JPVal = double(JPVal);
 JP = sparse(JPID1,JPID2,JPVal);
-clear JPID1;
-clear JPID2;
-clear JPVal;
+clear JPID1 JPID2 JPVal;
 
 JMVal = double(JMVal);
 JMID1 = double(JMID1);
 JMID2 = double(JMID2);
 JM = sparse(JMID1,JMID2,JMVal,nPts,Size_i*Size_j*Size_h);
-clear JMID1;
-clear JMID2;
-clear JMVal;
-
+clear JMID1 JMID2 JMVal;
 end

@@ -13,9 +13,7 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
     [ErrorS,ErrorO,MeanError,JP,JM,JO] = FuncDiffJacobian(Map,Pose,Scan,Odom);
     [DeltaP,DeltaM,~,MeanDeltaPose] = Func6DoFDelta(JP,JM,JO,ErrorS,ErrorO,Map,HH2,Param);
     fprintf("Mean Pose Delta is %3d\n\n",MeanDeltaPose);
-    clear JP;
-    clear JM;
-    clear JO;
+    clear JP JM JO;
     [Map,Pose] = FuncUpdate3D(Map,Pose,DeltaP,DeltaM);
     if Param.Evaluation
         FuncEvaluatePose(Pose,PoseGT,Param);
