@@ -129,11 +129,12 @@ If you find our work useful to your research, please cite the following papers:
 
 ```
 @article{wang2025occupancy,
-  title={Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map},
   author={Wang, Yingyu and Zhao, Liang and Huang, Shoudong},
-  journal={arXiv preprint arXiv:2502.06292},
-  year={2025}
-}
+  journal={IEEE Transactions on Robotics}, 
+  title={Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map}, 
+  year={2025},
+  pages={1-20},
+  doi={10.1109/TRO.2025.3578227}}
 ```
 
 ```
