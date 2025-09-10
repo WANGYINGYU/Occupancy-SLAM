@@ -2,6 +2,7 @@ function [sampled_points,val] = FuncEqualDistanceSample3DLines(points,Param)
 SampleDistance = Param.SampleDistance;
 ValOddHit = Param.ValOddHit;
 ValOddFree = Param.ValOddFree;
+TruncatedSamplingDist = Param.TruncatedSamplingDist;
     % Check the input dimensions
     [num_points, dim] = size(points);
     if dim ~= 3
@@ -11,15 +12,15 @@ ValOddFree = Param.ValOddFree;
     cell_val = cell(1,num_points);
 
     % Define the origin
-
+    
     % Loop through each point to create a line segment from the origin
     parfor i = 1:num_points
         % Get the end point of the current line segment
         p = points(i, :);
         distance = norm(p);   
-        if distance > 40
+        if distance > TruncatedSamplingDist
             direction = p / distance;    
-            origin = direction * 40;
+            origin = direction * TruncatedSamplingDist;
         else
             origin = [0, 0, 0];
         end    

@@ -38,7 +38,7 @@ else
     int_minz = fix(min_z);
 end
 
-Origin = [int_minx - fix(1/Scale);int_miny- fix(1/Scale);int_minz- fix(4/Scale)] ;
+Origin = [int_minx - fix(Param.ExtraOrigin(1)/Scale);int_miny- fix(Param.ExtraOrigin(2)/Scale);int_minz- fix(Param.ExtraOrigin(3)/Scale)] ;
 
 XYZ3 = (PointsGlobal-Origin) / Scale + 1;
 
@@ -52,9 +52,9 @@ max_y = max(y);
 max_z = max(z);
 
 Param.Origin = Origin;
-Size_i = max_y+ fix(2/Scale);
-Size_j = max_x+ fix(2/Scale);
-Size_h = max_z+ fix(8/Scale);
+Size_i = max_y+ fix(Param.ExtraBoundary(1)/Scale);
+Size_j = max_x+ fix(Param.ExtraBoundary(2)/Scale);
+Size_h = max_z+ fix(Param.ExtraBoundary(3)/Scale);
 
 Param.Size_i = Size_i;
 Param.Size_j = Size_j;

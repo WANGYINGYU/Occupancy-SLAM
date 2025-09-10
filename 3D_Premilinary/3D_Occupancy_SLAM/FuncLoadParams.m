@@ -4,6 +4,12 @@ function Param = FuncLoadParams()
     Param.MinRange = 0.2;
     Param.Scale = 1; % Resolution of the occcupancy grid map, tune to larger if you want higher speed and lower memory consumptipn
     Param.SampleDistance = Param.Scale;
+    Param.TruncatedSamplingDist = Param.MaxRange; % Maximum sampling distance: if the distance is less than the value of the Param.MaxRange parameter, the programme shall only sample data points from the hit point to the point at the maximum distance.
+
+    % Parameters used to initialize map: chane them to adjust the more/less
+    % space for Origin and Size of the occupancy map initiazation. 
+    Param.ExtraOrigin = [1,1,4];
+    Param.ExtraBoundary = [2,2,8];
 
     % Optimization Solver Parameters
     Param.MaxIter = 50;
