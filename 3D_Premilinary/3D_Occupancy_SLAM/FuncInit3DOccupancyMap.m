@@ -3,8 +3,9 @@ function [Map,Param] = FuncInit3DOccupancyMap(Pose,Scan,Param)
 NumPose = size(Pose,1);
 Scale = Param.Scale;
 
-PointsGlobal = [];
-parfor i = 1:NumPose
+minXYZ = [inf; inf; inf];
+maxXYZ = [-inf; -inf; -inf];
+for i = 1:NumPose
     Posei = Pose(i,:);
     RX = FuncRX(Posei(4));
     RY = FuncRY(Posei(5));
@@ -12,13 +13,14 @@ parfor i = 1:NumPose
     Ri = FuncR(RZ',RY',RX');
     xyz = double(Scan{i}.xyz');
     Si = Ri*xyz+Posei(1:3)';
-    PointsGlobal = [PointsGlobal,Si];
+    minXYZ = min(minXYZ, min(Si,[],2));
+    maxXYZ = max(maxXYZ, max(Si,[],2));
 end
 
 % find the origin and size of map
-min_x = min(PointsGlobal(1,:));
-min_y = min(PointsGlobal(2,:));
-min_z = min(PointsGlobal(3,:));
+min_x = minXYZ(1);
+min_y = minXYZ(2);
+min_z = minXYZ(3);
 
 if min_x <=1e-6
     int_minx = floor(min_x);
@@ -40,16 +42,10 @@ end
 
 Origin = [int_minx - fix(Param.ExtraOrigin(1)/Scale);int_miny- fix(Param.ExtraOrigin(2)/Scale);int_minz- fix(Param.ExtraOrigin(3)/Scale)] ;
 
-XYZ3 = (PointsGlobal-Origin) / Scale + 1;
-
-x = round(XYZ3(1,:));
-y = round(XYZ3(2,:));
-z = round(XYZ3(3,:));
-
 % calculate the map size
-max_x = max(x);
-max_y = max(y);
-max_z = max(z);
+max_x = round((maxXYZ(1) - Origin(1)) / Scale + 1);
+max_y = round((maxXYZ(2) - Origin(2)) / Scale + 1);
+max_z = round((maxXYZ(3) - Origin(3)) / Scale + 1);
 
 Param.Origin = Origin;
 Size_i = max_y+ fix(Param.ExtraBoundary(1)/Scale);
@@ -60,8 +56,9 @@ Param.Size_i = Size_i;
 Param.Size_j = Size_j;
 Param.Size_h = Size_h;
 
-Grid = zeros(Size_i, Size_j, Size_h);
-N = zeros(Size_i, Size_j, Size_h);
+numVoxels = Size_i * Size_j * Size_h;
+GridLin = zeros(numVoxels,1);
+NLin = zeros(numVoxels,1);
 
 for i=1:NumPose
 
@@ -85,22 +82,23 @@ for i=1:NumPose
 
     ind = (Size_i*Size_j*(z-1)) + (x-1)*Size_i + y;
 
-    TemN = accumarray(ind',1,[size(N,1)*size(N,2)*size(N,3),1]);
-    IdMore = find(TemN>1);
+    TemN = accumarray(ind',1,[numVoxels,1]);
+    IdMore = TemN > 1;
     ValMore = TemN(IdMore);
     TemN(IdMore) = 1;
-    TemN_reshaped = reshape(TemN, size(N));
-    N = N + TemN_reshaped;
+    NLin = NLin + TemN;
 
-    TemGrid = accumarray(ind',Oddi,[size(Grid,1)*size(Grid,2)*size(Grid,3),1]);
+    TemGrid = accumarray(ind',Oddi,[numVoxels,1]);
 
     TemGrid(IdMore) = TemGrid(IdMore)./ValMore;
 
-    TemGrid_reshaped = reshape(TemGrid, size(Grid));    
-    Grid = Grid + TemGrid_reshaped;
+    GridLin = GridLin + TemGrid;
 
 
 end    
+
+N = reshape(NLin, [Size_i, Size_j, Size_h]);
+Grid = reshape(GridLin, [Size_i, Size_j, Size_h]);
 
 Map.Grid = Grid;
 Map.N = N;

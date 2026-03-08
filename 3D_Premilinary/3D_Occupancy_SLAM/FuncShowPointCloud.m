@@ -20,10 +20,8 @@ if Param.SavePCD
     pcwrite(ptCloud, filename, 'Encoding', 'binary');
 end
 
-if Param.Visualization 
-    figure(Iter)
+if Param.VisualizationPC 
     pcshow(ptCloud);
-    title(sprintf('Global point cloud (iter %d)', Iter));
 end
 
 end

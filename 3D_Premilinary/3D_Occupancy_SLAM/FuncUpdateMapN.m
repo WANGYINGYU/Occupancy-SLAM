@@ -9,8 +9,8 @@ Size_i = Map.Size_i;
 Size_j = Map.Size_j;
 Size_h = Map.Size_h;
 
-N = zeros(Size_i, Size_j, Size_h);
-cell_N = cell(1,NumPose);
+numVoxels = Size_i * Size_j * Size_h;
+NLin = zeros(numVoxels,1);
 % project 3D local observations into global coordinate 
 for i = 1:NumPose
 
@@ -36,19 +36,17 @@ for i = 1:NumPose
 
     ind = (Size_i*Size_j*(z-1)) + (x-1)*Size_i + y;
 
-    TemN = accumarray(ind',1,[size(N,1)*size(N,2)*size(N,3),1]);
+    TemN = accumarray(ind',1,[numVoxels,1]);
 
-    IdMore = find(TemN>1);
+    IdMore = TemN > 1;
 
     TemN(IdMore) = 1;
 
-    TemN_reshaped = reshape(TemN, size(N));
-
-    cell_N{1,i} = TemN_reshaped; 
+    NLin = NLin + TemN;
 
 end
 
-N = sum(cat(4, cell_N{:}), 4);
+N = reshape(NLin, [Size_i, Size_j, Size_h]);
 
 Map.N = N;
 

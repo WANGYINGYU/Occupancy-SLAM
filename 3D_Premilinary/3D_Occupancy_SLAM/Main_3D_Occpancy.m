@@ -24,7 +24,7 @@ Param = FuncLoadParams();
 
 FuncShowPointCloud(Pose,Scan,0,Param);
 % Time consuming, turn off
-if Param.Visualization 
+if Param.VisualizationOGM 
     FuncShowOccupancyMap(Scan,Pose,5,Param.MaxRange,1);
 end
 
@@ -42,3 +42,4 @@ end
 
 [Map,Param] = FuncInit3DOccupancyMap(Pose,Obs,Param);
 [Pose,Iter] = FuncLeastSquares(Map,Pose,Odom,PoseGT,Obs,Scan,1,Param);
+FuncShowPointCloud(Pose,Scan,0,Param);

@@ -13,8 +13,8 @@ function Param = FuncLoadParams()
 
     % Optimization Solver Parameters
     Param.MaxIter = 50;
-    Param.SmoothWeight = 0.001; % smoothing weight, adjusting as resolution change 
-    Param.PoseThreshold = 0.00001;
+    Param.SmoothWeight = 0.00001; % smoothing weight, adjusting as resolution change 
+    Param.PoseThreshold = 0.005;
     Param.ObsThreshold = 0.001;
 
     Param.ValOddHit = 0.847297860387203;
@@ -25,7 +25,8 @@ function Param = FuncLoadParams()
     Param.LambdaO = 1000; % Weight of odometry term
     Param.InfMatO = [1,1,1,1,1,1]; % Information matrix of odometry inputs
 
-    Param.Visualization = false; % Time consuming, turn off
+    Param.VisualizationPC = true; 
+    Param.VisualizationOGM = false; % Time consuming, turn off
     Param.Evaluation = false;
     Param.SavePCD = true;
 end

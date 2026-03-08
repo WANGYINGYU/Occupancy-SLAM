@@ -19,8 +19,7 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
         FuncEvaluatePose(Pose,PoseGT,Param);
         FuncDrawTrajectory(Pose,TrajectoryGT,PoseOdom,4);    
     end
-    FuncShowPointCloud(Pose,OriginalScan,Iter,Param);
-    if Param.Visualization
+    if Param.VisualizationOGM
         FuncShowOccupancyMap(OriginalScan,Pose,2,Param.MaxRange,2);
     end
     % Smoothing weight tuning

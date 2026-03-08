@@ -53,7 +53,7 @@ for i=1:NumPose
 
     Ei = Md./MN-Oddi'; %  diff between each point
 
-    IdDeleta = find(MN==0);
+    IdDeleta = (MN==0);
     Ei(IdDeleta) = 0;
 
     cell_ErrorS{i} = Ei';
@@ -61,9 +61,9 @@ for i=1:NumPose
     dMdPm = [DgridGu(Pi(2,:),Pi(1,:),Pi(3,:));DgridGv(Pi(2,:),Pi(1,:),Pi(3,:));DgridGz(Pi(2,:),Pi(1,:),Pi(3,:))]./MN;
 
 
-    dRdr = FuncRZ(Posei(6))'*FuncRY(Posei(5))'*FuncdRXdG(Posei(4))';
-    dRdp = FuncRZ(Posei(6))'*FuncdRYdB(Posei(5))'*FuncRX(Posei(4))';
-    dRdy = FuncdRZdA(Posei(6))'*FuncRY(Posei(5))'*FuncRX(Posei(4))';
+    dRdr = RZ'*RY'*FuncdRXdG(Posei(4))';
+    dRdp = RZ'*FuncdRYdB(Posei(5))'*RX';
+    dRdy = FuncdRZdA(Posei(6))'*RY'*RX';
 
     dPdr = (dRdr * xyz)/Scale;
     dPdp = (dRdp * xyz)/Scale;
@@ -77,7 +77,7 @@ for i=1:NumPose
 
     dEdP = [dMdT;dMdr;dMdp;dMdy];
 
-    nPtsi = length(Oddi);
+    nPtsi = numel(Oddi);
     IDi = nPts+1:nPts+nPtsi;
     nPts = nPts+nPtsi;
     
@@ -111,7 +111,7 @@ for i=1:NumPose
 
     dEdM = [dEdm1;dEdm2;dEdm3;dEdm4;dEdm5;dEdm6;dEdm7;dEdm8] ./ MN;
 
-    IdDeleta = find(dEdM<1e-3);
+    IdDeleta = (dEdM<1e-3);
     dEdM(IdDeleta) = 0;
 
     dEdMID1 = repmat(IDi,8,1);
