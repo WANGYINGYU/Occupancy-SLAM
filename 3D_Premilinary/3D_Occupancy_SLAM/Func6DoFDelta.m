@@ -1,4 +1,11 @@
-function [DeltaP,DeltaM,MeanDelta,MeanDeltaPose] = Func6DoFDelta(JP,JM,JO,ErrorS,ErrorO,Map,HH,Param)
+function [DeltaP,DeltaM,MeanDelta,MeanDeltaPose] = Func6DoFDelta(JP,JM,JO,ErrorS,ErrorO,Map,HH,Param,MapVarId,RegEHOffset)
+
+if nargin < 9
+    MapVarId = [];
+end
+if nargin < 10
+    RegEHOffset = [];
+end
 
 Size_i = Map.Size_i;
 Size_j = Map.Size_j;
@@ -21,18 +28,58 @@ ErrorO = sparse(ErrorO);
 EP = -JP'*ErrorS - LambdaO*JO'*IO*ErrorO;
 EM = -JM'*ErrorS;
 
+clearvars JM JO
 
 XH0 = reshape(permute(Map.Grid, [2, 1, 3]), Size_i * Size_j * Size_h, 1);
+if ~isempty(MapVarId)
+    XH0 = XH0(MapVarId);
+elseif size(HH,1) ~= numel(XH0)
+    XH0 = zeros(size(HH,1),1);
+end
 
 EH = -HH*XH0;
+if ~isempty(RegEHOffset)
+    EH = EH + RegEHOffset;
+end
 
 EM = EM+EH;
 
 II = [U,W;
       W',V+HH];
+
+OptimizerType = 'GN';
+if isfield(Param,'OptimizerType') && ~isempty(Param.OptimizerType)
+    OptimizerType = upper(Param.OptimizerType);
+end
+
+if strcmp(OptimizerType,'LM')
+    LMDamping = 1e-3;
+    if isfield(Param,'LMDamping') && Param.LMDamping > 0
+        LMDamping = Param.LMDamping;
+    end
+    DiagII = abs(spdiags(II,0));
+    DiagII(DiagII < 1e-9) = 1;
+    II = II + LMDamping * spdiags(DiagII, 0, length(DiagII), length(DiagII));
+elseif ~strcmp(OptimizerType,'GN')
+    error('Unknown OptimizerType: %s. Use ''GN'' or ''LM''.', OptimizerType);
+end
+
+clearvars U W V;
   
 EE = [EP;EM];
 Delta = II\EE;
+
+if any(~isfinite(Delta))
+    SolverRidge = 1e-9;
+    if isfield(Param,'LinearSolverRidge') && Param.LinearSolverRidge > 0
+        SolverRidge = Param.LinearSolverRidge;
+    end
+    II = II + SolverRidge * speye(size(II,1));
+    Delta = II\EE;
+end
+if any(~isfinite(Delta))
+    Delta(~isfinite(Delta)) = 0;
+end
 
 nP = size(JP,2);
 DeltaP = Delta(1:nP);
@@ -40,9 +87,17 @@ DeltaM = Delta(nP+1:end);
 
 Delta = [DeltaP;DeltaM];
 
-Sum_Delta = Delta'*Delta;
-MeanDelta = full(Sum_Delta/length(Delta));
-Sum_Delta_Pose = DeltaP'*DeltaP;
-MeanDeltaPose = full(Sum_Delta_Pose/length(DeltaP));
+if isempty(Delta)
+    MeanDelta = 0;
+else
+    Sum_Delta = Delta'*Delta;
+    MeanDelta = full(Sum_Delta/length(Delta));
+end
+if isempty(DeltaP)
+    MeanDeltaPose = 0;
+else
+    Sum_Delta_Pose = DeltaP'*DeltaP;
+    MeanDeltaPose = full(Sum_Delta_Pose/length(DeltaP));
+end
 
 end
