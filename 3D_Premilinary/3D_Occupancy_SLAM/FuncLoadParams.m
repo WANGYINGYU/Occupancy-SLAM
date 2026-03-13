@@ -1,33 +1,36 @@
 function Param = FuncLoadParams()
-    Param.FileDict = './Results';
-    Param.MaxRange =30;
+    Param.FileDict = './Results'; % output folder
+    Param.MaxRange =30; % lidar max range used in preprocessing
     Param.MinRange = 0.2;
-    Param.Scale = 1;
+    Param.Scale = 1; % voxel size (m)
     Param.SampleDistance = Param.Scale;
     Param.TruncatedSamplingDist = Param.MaxRange;
 
     Param.ExtraOrigin = [1,1,4];
     Param.ExtraBoundary = [2,2,8];
 
-    Param.MaxIter = 50;
-    Param.SmoothWeight = 0.00001;
+    Param.MaxIter = 50; % max GN/LM iterations
+    Param.SmoothWeight = 0.00001; % map smoothness term weight
+    Param.UseAnisotropicSmoothness = 0; % 1: use xyz anisotropic smoothness
+    Param.SmoothnessLambdaXYZ = [1,1,0.5]; % [lambda_x, lambda_y, lambda_z]
     Param.PoseThreshold = 0.005;
     Param.ObsThreshold = 0.001;
 
     Param.ValOddHit = 0.847297860387203;
     Param.ValOddFree = -0.405465108108164;
 
-    Param.PreProcess = true;
+    Param.PreProcess = true; % build observations from raw scans
 
-    Param.UseVoxelDownsample = 0; % Set it to 1 to downsample observations
-    Param.VoxelSize = 0.05;
+    Param.UseVoxelDownsample = 0; % local voxel downsample on each scan
+    Param.VoxelSize = 0.05; % local voxel size (m)
     Param.VoxelMethod = 'centroid';
     Param.VoxelVerbose = 1;
-    Param.UseAdaptiveVoxelDownsample = 0;
+    Param.UseAdaptiveVoxelDownsample = 0; % range-adaptive voxel downsample
     Param.AdaptiveVoxelRangeEdges = [0,15,30,inf];
     Param.AdaptiveVoxelSizes = [0.05,0.10,0.15];
+    Param.UseGlobalVoxelDensityFilter = 0; % world-frame coarse voxel density filter
 
-    Param.LambdaO = 1000;
+    Param.LambdaO = 1000; % odometry term weight
     Param.InfMatO = [1,1,1,1,1,1];
 
     Param.UseRobustKernel = 0;
@@ -36,21 +39,27 @@ function Param = FuncLoadParams()
     Param.RobustMinWeight = 0.0;
     Param.RobustUseMAD = 1;
 
-    Param.OptimizerType = 'GN';
-    Param.LMDamping = 1e-3;
-    Param.LinearSolverRidge = 1e-9;
+    Param.OptimizerType = 'GN'; % 'GN' or 'LM'
+    Param.LMDamping = 1e-3; % LM diagonal damping
+    Param.LinearSolverRidge = 1e-9; % fallback ridge when solve is unstable
 
-    Param.MinHitCount = 1;
-    Param.UseActiveVoxelOptimization = 0;
-    Param.ActiveVoxelNeighborLayers = 1;
+    Param.MinHitCount = 1; % lower bound in Md./N normalization
+    Param.UseActiveVoxelOptimization = 0; % optimize only active voxel subset
+    Param.ActiveVoxelNeighborLayers = 1; % active subset expansion layers
 
-    Param.UseTruncatedRegionOptimization = 0; % Set it to 1 to open this mode to only optimizing cells within truncated area only when you want to save memory, but you must ensure the intial poses are good
-    Param.TruncatedRegionLayers = 2;
-    Param.TruncatedOccupancyThreshold = 0;
-    Param.TruncatedObsClipExtraLayers = 2;
+    Param.UseTruncatedRegionOptimization = 0; % 1: optimize only truncated region
+    Param.TruncatedRegionLayers = 2; % dilation layers around occupied cells
+    Param.TruncatedOccupancyThreshold = 0; % occupied threshold to define truncation seed
+    Param.TruncatedObsClipExtraLayers = 2; % extra clip margin for observations
 
-    Param.VisualizationPC = true;
-    Param.VisualizationOGM = false;
+    Param.UseBlockHashMapInTruncatedMode = 0; % 1: use block-hash map storage in truncated mode
+    Param.BlockHashBlockSize = 16; % block side length (voxels)
+    Param.BlockHashExtraLayers = 1; % extra region layers for block extraction
+    Param.BlockHashInterpPadding = 1; % interpolation padding cells
+    Param.BlockHashInitUseAABBCorners = 1; % faster bound init using 8 AABB corners
+
+    Param.VisualizationPC = true; % show/save reconstructed point cloud
+    Param.VisualizationOGM = false; % show initialized OGM occupancy
     Param.Evaluation = false;
     Param.SavePCD = true;
 end

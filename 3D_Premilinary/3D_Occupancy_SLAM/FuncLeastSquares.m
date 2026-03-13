@@ -1,7 +1,33 @@
 function [Pose,Iter] = FuncLeastSquares(Map,Pose,Odom,PoseGT,Scan,OriginalScan,Iter,Param)
 
 UseTruncatedHH = isfield(Param,'UseTruncatedRegionOptimization') && Param.UseTruncatedRegionOptimization;
-if UseTruncatedHH
+
+UseBlockHashInTrunc = false;
+if UseTruncatedHH && isfield(Param,'UseBlockHashMapInTruncatedMode') && Param.UseBlockHashMapInTruncatedMode
+    UseBlockHashInTrunc = true;
+end
+
+FixedRegion = [];
+HasFixedRegion = true;
+
+if UseTruncatedHH && UseBlockHashInTrunc
+    Map = FuncDenseMapToBlockHash(Map, Param);
+    [FixedRegion, HasFixedRegion] = FuncBlockHashGetOccupiedBBox(Map, Param);
+    if HasFixedRegion
+        MapClip = FuncBlockHashExtractDenseRegion(Map, FixedRegion);
+        MapClip = FuncMapGrid(MapClip);
+        [Scan, ClipStats] = FuncPreclipObsByTruncatedRegion(Scan, Pose, MapClip, Param);
+        if isfield(Param,'VoxelVerbose') && Param.VoxelVerbose && ClipStats.NumInput > 0
+            fprintf('[TruncObs][OneShot] in=%d, out=%d, compression=%.4f, reduction=%.2f%%\n', ...
+                    ClipStats.NumInput, ClipStats.NumOutput, ClipStats.CompressionRatio, 100*ClipStats.ReductionRatio);
+        end
+    else
+        for ii = 1:length(Scan)
+            Scan{ii}.xyz = zeros(0,3);
+            Scan{ii}.Odd = zeros(0,1);
+        end
+    end
+elseif UseTruncatedHH
     [Scan, ClipStats] = FuncPreclipObsByTruncatedRegion(Scan, Pose, Map, Param);
     if isfield(Param,'VoxelVerbose') && Param.VoxelVerbose && ClipStats.NumInput > 0
         fprintf('[TruncObs][OneShot] in=%d, out=%d, compression=%.4f, reduction=%.2f%%\n', ...
@@ -9,7 +35,7 @@ if UseTruncatedHH
     end
 end
 
-if UseTruncatedHH
+if UseTruncatedHH || UseBlockHashInTrunc
     HH = [];
 else
     HH = FuncMapConst3D(Map);
@@ -29,13 +55,28 @@ MeanError = 100;
 while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Param.ObsThreshold
     fprintf('Iter Time is %i\n\n',Iter);
 
-    [ErrorS,ErrorO,MeanError,JP,JM,JO,MapVarId] = FuncDiffJacobian(Map,Pose,Scan,Odom,Param);
+    HasRegion = true;
+    Region = [];
+    if UseTruncatedHH && UseBlockHashInTrunc
+        Region = FixedRegion;
+        HasRegion = HasFixedRegion;
+        if HasRegion
+            MapWork = FuncBlockHashExtractDenseRegion(Map, Region);
+            MapWork = FuncMapGrid(MapWork);
+        else
+            MapWork = LocalBuildEmptyWorkingMap(Map);
+        end
+    else
+        MapWork = Map;
+    end
+
+    [ErrorS,ErrorO,MeanError,JP,JM,JO,MapVarId] = FuncDiffJacobian(MapWork,Pose,Scan,Odom,Param);
 
     HHLocal = [];
     RegEHOffset = [];
     if ~isempty(MapVarId)
         if UseTruncatedHH
-            [HHLocal, BoundaryTerm] = FuncMapConst3DByVarId(MapVarId, Map.Size_i, Map.Size_j, Map.Size_h, Map.Grid);
+            [HHLocal, BoundaryTerm] = FuncMapConst3DByVarId(MapVarId, MapWork.Size_i, MapWork.Size_j, MapWork.Size_h, MapWork.Grid);
             HHi = SmoothWeight * HHLocal;
             RegEHOffset = SmoothWeight * BoundaryTerm;
         else
@@ -49,12 +90,12 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
         end
     end
 
-    [DeltaP,DeltaM,~,MeanDeltaPose] = Func6DoFDelta(JP,JM,JO,ErrorS,ErrorO,Map,HHi,Param,MapVarId,RegEHOffset);
+    [DeltaP,DeltaM,~,MeanDeltaPose] = Func6DoFDelta(JP,JM,JO,ErrorS,ErrorO,MapWork,HHi,Param,MapVarId,RegEHOffset);
     fprintf('Mean Pose Delta is %3d\n\n',MeanDeltaPose);
 
     clear JP JM JO;
 
-    [Map,Pose] = FuncUpdate3D(Map,Pose,DeltaP,DeltaM,MapVarId);
+    [MapWork,Pose] = FuncUpdate3D(MapWork,Pose,DeltaP,DeltaM,MapVarId);
 
     if isfield(Param,'Evaluation') && Param.Evaluation
         FuncEvaluatePose(Pose,PoseGT,Param);
@@ -75,18 +116,38 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
     Iter = Iter + 1;
 
     if Iter<=MaxIter || MeanDeltaPose >= Param.PoseThreshold || MeanError >= Param.ObsThreshold
-        Map = FuncUpdateMapNNorm(Map,Pose,Scan);
+        MapWork = FuncUpdateMapNNorm(MapWork,Pose,Scan);
         if UseTruncatedHH && ~isempty(MapVarId)
             if isempty(HHLocal)
-                [HHLocal, ~] = FuncMapConst3DByVarId(MapVarId, Map.Size_i, Map.Size_j, Map.Size_h);
+                [HHLocal, ~] = FuncMapConst3DByVarId(MapVarId, MapWork.Size_i, MapWork.Size_j, MapWork.Size_h);
             end
-            [~, NBoundaryTerm] = FuncMapConst3DByVarId(MapVarId, Map.Size_i, Map.Size_j, Map.Size_h, Map.N);
-            Map = FuncSmoothN2Subset(Map,SmoothWeight,HHLocal,MapVarId,NBoundaryTerm);
+            [~, NBoundaryTerm] = FuncMapConst3DByVarId(MapVarId, MapWork.Size_i, MapWork.Size_j, MapWork.Size_h, MapWork.N);
+            MapWork = FuncSmoothN2Subset(MapWork,SmoothWeight,HHLocal,MapVarId,NBoundaryTerm);
         elseif ~isempty(HH)
-            Map = FuncSmoothN2(Map,SmoothWeight,HH);
+            MapWork = FuncSmoothN2(MapWork,SmoothWeight,HH);
         end
-        Map = FuncMapGrid(Map);
+        MapWork = FuncMapGrid(MapWork);
+    end
+
+    if UseTruncatedHH && UseBlockHashInTrunc
+        if HasRegion
+            Map = FuncBlockHashMergeDenseRegion(Map, MapWork, Region);
+        end
+    else
+        Map = MapWork;
     end
 end
 
+end
+
+function MapWork = LocalBuildEmptyWorkingMap(Map)
+MapWork = struct();
+MapWork.Grid = zeros(1,1,1);
+MapWork.N = zeros(1,1,1);
+MapWork.Scale = Map.Scale;
+MapWork.Origin = Map.Origin;
+MapWork.Size_i = 1;
+MapWork.Size_j = 1;
+MapWork.Size_h = 1;
+MapWork = FuncMapGrid(MapWork);
 end

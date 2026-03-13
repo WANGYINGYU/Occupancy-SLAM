@@ -1,10 +1,16 @@
-function Obs = FuncEqualProcessObs(Scan,Param)
+function Obs = FuncEqualProcessObs(Scan,Pose,Param)
+
+if nargin == 2
+    Param = Pose;
+    Pose = [];
+end
 
 NumPose = length(Scan);
 MaxRange = Param.MaxRange;
 MinRange = Param.MinRange;
 UseVoxelDownsample = isfield(Param,'UseVoxelDownsample') && Param.UseVoxelDownsample;
 UseAdaptiveVoxelDownsample = isfield(Param,'UseAdaptiveVoxelDownsample') && Param.UseAdaptiveVoxelDownsample;
+UseGlobalVoxelDensityFilter = isfield(Param,'UseGlobalVoxelDensityFilter') && Param.UseGlobalVoxelDensityFilter;
 VoxelSize = 0.15;
 if isfield(Param,'VoxelSize')
     VoxelSize = Param.VoxelSize;
@@ -24,6 +30,7 @@ end
 VoxelVerbose = isfield(Param,'VoxelVerbose') && Param.VoxelVerbose;
 
 Obs = cell(1,NumPose);
+HitLocal = cell(1,NumPose);
 TotalInputValid = 0;
 TotalOutput = 0;
 for i=1:NumPose
@@ -45,9 +52,28 @@ for i=1:NumPose
         TotalInputValid = TotalInputValid + Stats.NumInputValid;
         TotalOutput = TotalOutput + Stats.NumOutput;
     end
-    
-    [AllXYZi,AllOddi] = FuncEqualDistanceSample3DLines(HitPi',Param);
+    HitLocal{i} = HitPi';
+end
 
+if UseGlobalVoxelDensityFilter
+    HasPose = ~isempty(Pose) && size(Pose,1) >= NumPose;
+    if HasPose
+        [HitLocal, GlobalFilterStats] = FuncGlobalVoxelDensityFilter(HitLocal, Pose, Param);
+        if VoxelVerbose && GlobalFilterStats.NumInput > 0
+            fprintf('[GlobalVoxelFilter][Total] in=%d, out=%d, compression=%.4f, reduction=%.2f%%, fallback_pose=%d\n', ...
+                    GlobalFilterStats.NumInput, GlobalFilterStats.NumOutput, ...
+                    GlobalFilterStats.CompressionRatio, 100*GlobalFilterStats.ReductionRatio, ...
+                    GlobalFilterStats.NumFallbackPose);
+        end
+    elseif VoxelVerbose
+        fprintf('[GlobalVoxelFilter] skipped (Pose missing or length mismatch)\n');
+    end
+end
+
+for i = 1:NumPose
+    HitPi = HitLocal{i};
+    [AllXYZi,AllOddi] = FuncEqualDistanceSample3DLines(HitPi,Param);
+    Obs{i}.HitXYZ = HitPi;
     Obs{i}.xyz = AllXYZi;
     Obs{i}.Odd = AllOddi;
 end

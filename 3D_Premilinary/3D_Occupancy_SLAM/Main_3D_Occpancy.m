@@ -37,9 +37,12 @@ end
 
 % Enale Preprocess if you don't load processed observation directly
 if Param.PreProcess
-    Obs = FuncEqualProcessObs(Scan,Param);
+    Obs = FuncEqualProcessObs(Scan,Pose,Param);
 end
 
 [Map,Param] = FuncInit3DOccupancyMap(Pose,Obs,Param);
+if Param.VisualizationOGM && exist('FuncShowOGMMap','file') == 2
+    FuncShowOGMMap(Map,6);
+end
 [Pose,Iter] = FuncLeastSquares(Map,Pose,Odom,PoseGT,Obs,Scan,1,Param);
 FuncShowPointCloud(Pose,Scan,0,Param);

@@ -19,6 +19,16 @@ IO = FuncGet3DIO(ErrorO,InfMatO(1),InfMatO(2),InfMatO(3),InfMatO(4),InfMatO(5),I
 JP = JP(:,7:end);
 JO = JO(:,7:end);
 
+% Keep pose-state blocks aligned even if one term has no constraints on
+% trailing poses (e.g., empty scan residuals near sequence tail).
+nPoseCols = max(size(JP,2), size(JO,2));
+if size(JP,2) < nPoseCols
+    JP(:,end+1:nPoseCols) = 0;
+end
+if size(JO,2) < nPoseCols
+    JO(:,end+1:nPoseCols) = 0;
+end
+
 U = JP'*JP+LambdaO*(JO'*IO*JO);
 V = JM'*JM;
 W = JP'*JM;

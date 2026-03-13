@@ -9,10 +9,12 @@ Size_i = Map.Size_i;
 Size_j = Map.Size_j;
 Size_h = Map.Size_h;
 
-N = zeros(Size_i, Size_j, Size_h);
 NumVoxel = Size_i * Size_j * Size_h;
-% project 3D local observations into global coordinate 
-for i = 1:NumPose
+cell_UniInd = cell(NumPose,1);
+
+% Project each pose independently, keep one hit per pose/voxel.
+parfor i = 1:NumPose
+    cell_UniInd{i} = zeros(0,1,'uint32');
 
     Posei = Pose(i,:);
     RX = FuncRX(Posei(4));
@@ -42,13 +44,23 @@ for i = 1:NumPose
     z = z(Valid);
 
     ind = (Size_i*Size_j*(z-1)) + (x-1)*Size_i + y;
-
-    % Per-pose binary hit occupancy, then accumulate across poses.
-    TemN = accumarray(ind',1,[NumVoxel,1]);
-    TemN(TemN > 1) = 1;
-    N = N + reshape(TemN, size(N));
+    cell_UniInd{i} = uint32(unique(ind(:)));
 
 end
+
+N = zeros(NumVoxel,1);
+ChunkSize = 32;
+for s = 1:ChunkSize:NumPose
+    e = min(s + ChunkSize - 1, NumPose);
+    AllIndChunk = vertcat(cell_UniInd{s:e});
+    if isempty(AllIndChunk)
+        continue;
+    end
+    [UniChunk, ~, Ic] = unique(AllIndChunk);
+    HitCnt = accumarray(double(Ic), 1);
+    N(double(UniChunk)) = N(double(UniChunk)) + HitCnt;
+end
+N = reshape(N, [Size_i, Size_j, Size_h]);
 
 Map.N = N;
 

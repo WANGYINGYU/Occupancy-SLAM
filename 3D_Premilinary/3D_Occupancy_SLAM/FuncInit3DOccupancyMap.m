@@ -1,5 +1,12 @@
 function [Map,Param] = FuncInit3DOccupancyMap(Pose,Scan,Param)
 
+UseTruncated = isfield(Param,'UseTruncatedRegionOptimization') && Param.UseTruncatedRegionOptimization;
+UseBlockHash = isfield(Param,'UseBlockHashMapInTruncatedMode') && Param.UseBlockHashMapInTruncatedMode;
+if UseTruncated && UseBlockHash
+    [Map,Param] = FuncInit3DBlockHashMapNorm(Pose,Scan,Param);
+    return;
+end
+
 NumPose = size(Pose,1);
 Scale = Param.Scale;
 
@@ -80,6 +87,16 @@ for i=1:NumPose
     y = round(XYZ3(2,:));
     z = round(XYZ3(3,:));
 
+    Valid = x >= 1 & x <= Size_j & y >= 1 & y <= Size_i & z >= 1 & z <= Size_h;
+    if ~any(Valid)
+        continue;
+    end
+
+    x = x(Valid);
+    y = y(Valid);
+    z = z(Valid);
+    Oddi = Oddi(Valid)';
+
     ind = (Size_i*Size_j*(z-1)) + (x-1)*Size_i + y;
 
     TemN = accumarray(ind',1,[numVoxels,1]);
@@ -95,7 +112,7 @@ for i=1:NumPose
     GridLin = GridLin + TemGrid;
 
 
-end    
+end
 
 N = reshape(NLin, [Size_i, Size_j, Size_h]);
 Grid = reshape(GridLin, [Size_i, Size_j, Size_h]);
