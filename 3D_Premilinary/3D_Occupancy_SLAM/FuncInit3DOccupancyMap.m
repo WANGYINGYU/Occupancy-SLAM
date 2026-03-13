@@ -9,6 +9,14 @@ end
 
 NumPose = size(Pose,1);
 Scale = Param.Scale;
+[WorldToMapR, WorldToMapT, MapFrameStats] = FuncEstimateMapFrameTransform(Pose, Scan, Param);
+Param.WorldToMapR = WorldToMapR;
+Param.WorldToMapT = WorldToMapT;
+
+if isfield(Param,'VoxelVerbose') && Param.VoxelVerbose && MapFrameStats.Enabled
+    fprintf('[MapFrame] enabled: mode=yaw_pca, yaw=%.3f deg, pts=%d\n', ...
+            MapFrameStats.YawRad * 180 / pi, MapFrameStats.NumWorldPoints);
+end
 
 minXYZ = [inf; inf; inf];
 maxXYZ = [-inf; -inf; -inf];
@@ -20,8 +28,9 @@ for i = 1:NumPose
     Ri = FuncR(RZ',RY',RX');
     xyz = double(Scan{i}.xyz');
     Si = Ri*xyz+Posei(1:3)';
-    minXYZ = min(minXYZ, min(Si,[],2));
-    maxXYZ = max(maxXYZ, max(Si,[],2));
+    SiMap = FuncWorldToMapFrame(Si, WorldToMapR, WorldToMapT);
+    minXYZ = min(minXYZ, min(SiMap,[],2));
+    maxXYZ = max(maxXYZ, max(SiMap,[],2));
 end
 
 % find the origin and size of map
@@ -80,6 +89,7 @@ for i=1:NumPose
     Oddi = Scan{i}.Odd;
 
     Si = Ri*xyz+Posei(1:3)';
+    Si = FuncWorldToMapFrame(Si, WorldToMapR, WorldToMapT);
 
     XYZ3 = (Si-Origin) / Scale + 1;
 
@@ -124,6 +134,9 @@ Map.Origin = Origin;
 Map.Size_i = Size_i;
 Map.Size_j = Size_j;
 Map.Size_h = Size_h;
+Map.WorldToMapR = WorldToMapR;
+Map.WorldToMapT = WorldToMapT;
+Map.MapFrameStats = MapFrameStats;
 
 Dgrid = griddedInterpolant(Grid);
 Ngrid = griddedInterpolant(N);

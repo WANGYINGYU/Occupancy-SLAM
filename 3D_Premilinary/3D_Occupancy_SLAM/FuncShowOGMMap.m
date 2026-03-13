@@ -46,6 +46,20 @@ Yo = (double(OccRow) - 1) * Scale + Origin(2);
 Zo = (double(OccHei) - 1) * Scale + Origin(3);
 Co = Prob(OccMask);
 
+if isfield(Map,'WorldToMapR') && isequal(size(Map.WorldToMapR),[3,3])
+    WorldToMapR = double(Map.WorldToMapR);
+    if isfield(Map,'WorldToMapT') && numel(Map.WorldToMapT) == 3
+        WorldToMapT = double(Map.WorldToMapT(:));
+    else
+        WorldToMapT = zeros(3,1);
+    end
+    PMap = [Xo'; Yo'; Zo'];
+    PWorld = WorldToMapR' * PMap + WorldToMapT;
+    Xo = PWorld(1,:)';
+    Yo = PWorld(2,:)';
+    Zo = PWorld(3,:)';
+end
+
 MaxShow = 300000;
 NumOcc = numel(Xo);
 if NumOcc > MaxShow

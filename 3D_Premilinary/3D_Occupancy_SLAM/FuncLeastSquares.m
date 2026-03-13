@@ -149,5 +149,14 @@ MapWork.Origin = Map.Origin;
 MapWork.Size_i = 1;
 MapWork.Size_j = 1;
 MapWork.Size_h = 1;
+if isfield(Map,'WorldToMapR')
+    MapWork.WorldToMapR = Map.WorldToMapR;
+end
+if isfield(Map,'WorldToMapT')
+    MapWork.WorldToMapT = Map.WorldToMapT;
+end
+if isfield(Map,'MapFrameStats')
+    MapWork.MapFrameStats = Map.MapFrameStats;
+end
 MapWork = FuncMapGrid(MapWork);
 end

@@ -44,6 +44,14 @@ Size_h = Map.Size_h;
 
 Scale = Map.Scale;
 Origin = Map.Origin;
+WorldToMapR = eye(3);
+WorldToMapT = zeros(3,1);
+if isfield(Map,'WorldToMapR') && isequal(size(Map.WorldToMapR),[3,3])
+    WorldToMapR = double(Map.WorldToMapR);
+end
+if isfield(Map,'WorldToMapT') && numel(Map.WorldToMapT) == 3
+    WorldToMapT = double(Map.WorldToMapT(:));
+end
 DgridG = Map.DgridG;
 NgridG = Map.NgridG;
 DgridGu = Map.DgridGu;
@@ -113,8 +121,9 @@ parfor i=1:NumPose
             ObsInputCount(i) = uint32(nUse);
 
             Si = Ri*xyz+Posei(1:3)';
+            SiMap = FuncWorldToMapFrame(Si, WorldToMapR, WorldToMapT);
 
-            Pi = (Si-Origin) / Scale + 1;
+            Pi = (SiMap-Origin) / Scale + 1;
             IdBadPi = ~all(isfinite(Pi),1);
             if any(IdBadPi)
                 Pi(:,IdBadPi) = [];
@@ -150,15 +159,15 @@ parfor i=1:NumPose
 
             dMdPm = [CheckGradu(IdValidInterp);CheckGradv(IdValidInterp);CheckGradz(IdValidInterp)]./MNSafe;
 
-            dPdr = (dRdr * xyz)/Scale;
-            dPdp = (dRdp * xyz)/Scale;
-            dPdy = (dRdy * xyz)/Scale;
+            dPdr = (WorldToMapR * dRdr * xyz)/Scale;
+            dPdp = (WorldToMapR * dRdp * xyz)/Scale;
+            dPdy = (WorldToMapR * dRdy * xyz)/Scale;
 
             dMdr = sum(dMdPm.*dPdr);
             dMdp = sum(dMdPm.*dPdp);
             dMdy = sum(dMdPm.*dPdy);
 
-            dMdT = dMdPm / Scale;
+            dMdT = (WorldToMapR' * dMdPm) / Scale;
             dEdP = [dMdT;dMdr;dMdp;dMdy];
 
             nPtsi = uint32(length(Oddi));

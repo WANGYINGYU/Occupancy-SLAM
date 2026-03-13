@@ -4,6 +4,9 @@ function [Map,Param] = FuncInit3DBlockHashMapNorm(Pose,Scan,Param)
 
 NumPose = size(Pose,1);
 Scale = Param.Scale;
+[WorldToMapR, WorldToMapT, MapFrameStats] = FuncEstimateMapFrameTransform(Pose, Scan, Param);
+Param.WorldToMapR = WorldToMapR;
+Param.WorldToMapT = WorldToMapT;
 
 BlockSize = 16;
 if isfield(Param,'BlockHashBlockSize') && Param.BlockHashBlockSize > 0
@@ -17,6 +20,10 @@ if isfield(Param,'BlockHashInitUseAABBCorners')
     UseAABBCornerBound = Param.BlockHashInitUseAABBCorners ~= 0;
 end
 InitVerbose = isfield(Param,'VoxelVerbose') && Param.VoxelVerbose;
+if InitVerbose && MapFrameStats.Enabled
+    fprintf('[MapFrame] enabled: mode=yaw_pca, yaw=%.3f deg, pts=%d\n', ...
+        MapFrameStats.YawRad * 180 / pi, MapFrameStats.NumWorldPoints);
+end
 
 % Pass-1: bound estimation only.
 tAll = tic;
@@ -53,6 +60,7 @@ for i = 1:NumPose
     else
         Si = Ri*xyzRaw' + Posei(1:3)';
     end
+    Si = FuncWorldToMapFrame(Si, WorldToMapR, WorldToMapT);
 
     MinXYZ = min(MinXYZ, min(Si,[],2));
     MaxXYZ = max(MaxXYZ, max(Si,[],2));
@@ -122,6 +130,7 @@ for i = 1:NumPose
     Oddi = Oddi(1:nPts);
 
     Si = Ri*xyz + Posei(1:3)';
+    Si = FuncWorldToMapFrame(Si, WorldToMapR, WorldToMapT);
     XYZ3 = (Si-Origin) / Scale + 1;
     x = round(XYZ3(1,:));
     y = round(XYZ3(2,:));
@@ -214,6 +223,9 @@ Map.BlockSize = BlockSize;
 Map.BlockKeyToIdx = KeyToIdx;
 Map.BlockGrid = BlockGrid;
 Map.BlockN = BlockN;
+Map.WorldToMapR = WorldToMapR;
+Map.WorldToMapT = WorldToMapT;
+Map.MapFrameStats = MapFrameStats;
 
 if InitVerbose
     fprintf('[BlockHashInit] pass1=%.3fs, pass2=%.3fs, total=%.3fs, blocks=%d\n', ...

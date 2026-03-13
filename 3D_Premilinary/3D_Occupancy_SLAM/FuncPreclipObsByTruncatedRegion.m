@@ -40,6 +40,14 @@ Size_j = Map.Size_j;
 Size_h = Map.Size_h;
 Origin = Map.Origin;
 Scale = Map.Scale;
+WorldToMapR = eye(3);
+WorldToMapT = zeros(3,1);
+if isfield(Map,'WorldToMapR') && isequal(size(Map.WorldToMapR),[3,3])
+    WorldToMapR = double(Map.WorldToMapR);
+end
+if isfield(Map,'WorldToMapT') && numel(Map.WorldToMapT) == 3
+    WorldToMapT = double(Map.WorldToMapT(:));
+end
 TotalSize = Size_i * Size_j * Size_h;
 
 KeepMask = false(TotalSize,1);
@@ -95,6 +103,7 @@ parfor i = 1:NumPose
     Ri = FuncR(RZ',RY',RX');
 
     Si = Ri * xyz' + Posei(1:3)';
+    Si = FuncWorldToMapFrame(Si, WorldToMapR, WorldToMapT);
     Pi = (Si - Origin) / Scale + 1;
 
     u = Pi(1,:);
@@ -180,6 +189,14 @@ Size_j = Map.Size_j;
 Size_h = Map.Size_h;
 Origin = Map.Origin;
 Scale = Map.Scale;
+WorldToMapR = eye(3);
+WorldToMapT = zeros(3,1);
+if isfield(Map,'WorldToMapR') && isequal(size(Map.WorldToMapR),[3,3])
+    WorldToMapR = double(Map.WorldToMapR);
+end
+if isfield(Map,'WorldToMapT') && numel(Map.WorldToMapT) == 3
+    WorldToMapT = double(Map.WorldToMapT(:));
+end
 
 IdCell = cell(NumPose,1);
 for i = 1:NumPose
@@ -219,6 +236,7 @@ for i = 1:NumPose
     Ri = FuncR(RZ',RY',RX');
 
     Si = (Ri * HitLocal' + Posei(1:3)')';
+    Si = FuncWorldToMapFrame(Si, WorldToMapR, WorldToMapT);
     Pi = (Si - Origin') / Scale + 1;
 
     x = round(Pi(:,1));

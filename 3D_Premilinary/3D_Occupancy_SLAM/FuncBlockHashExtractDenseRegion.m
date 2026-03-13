@@ -99,6 +99,15 @@ MapDense.Size_i = LocalSize_i;
 MapDense.Size_j = LocalSize_j;
 MapDense.Size_h = LocalSize_h;
 MapDense.RegionGlobal = struct('RowMin',r0,'RowMax',r1,'ColMin',c0,'ColMax',c1,'HMin',h0,'HMax',h1);
+if isfield(Map,'WorldToMapR')
+    MapDense.WorldToMapR = Map.WorldToMapR;
+end
+if isfield(Map,'WorldToMapT')
+    MapDense.WorldToMapT = Map.WorldToMapT;
+end
+if isfield(Map,'MapFrameStats')
+    MapDense.MapFrameStats = Map.MapFrameStats;
+end
 
 end
 
