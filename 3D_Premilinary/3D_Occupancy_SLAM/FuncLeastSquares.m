@@ -9,6 +9,8 @@ end
 
 FixedRegion = [];
 HasFixedRegion = true;
+FixedTruncVarId = [];
+UseFixedTruncVarId = false;
 
 if UseTruncatedHH && UseBlockHashInTrunc
     Map = FuncDenseMapToBlockHash(Map, Param);
@@ -16,6 +18,8 @@ if UseTruncatedHH && UseBlockHashInTrunc
     if HasFixedRegion
         MapClip = FuncBlockHashExtractDenseRegion(Map, FixedRegion);
         MapClip = FuncMapGrid(MapClip);
+        FixedTruncVarId = FuncFindCellOptimized(MapClip, Param);
+        UseFixedTruncVarId = true;
         [Scan, ClipStats] = FuncPreclipObsByTruncatedRegion(Scan, Pose, MapClip, Param);
         if isfield(Param,'VoxelVerbose') && Param.VoxelVerbose && ClipStats.NumInput > 0
             fprintf('[TruncObs][OneShot] in=%d, out=%d, compression=%.4f, reduction=%.2f%%\n', ...
@@ -28,6 +32,8 @@ if UseTruncatedHH && UseBlockHashInTrunc
         end
     end
 elseif UseTruncatedHH
+    FixedTruncVarId = FuncFindCellOptimized(Map, Param);
+    UseFixedTruncVarId = true;
     [Scan, ClipStats] = FuncPreclipObsByTruncatedRegion(Scan, Pose, Map, Param);
     if isfield(Param,'VoxelVerbose') && Param.VoxelVerbose && ClipStats.NumInput > 0
         fprintf('[TruncObs][OneShot] in=%d, out=%d, compression=%.4f, reduction=%.2f%%\n', ...
@@ -70,7 +76,11 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
         MapWork = Map;
     end
 
-    [ErrorS,ErrorO,MeanError,JP,JM,JO,MapVarId] = FuncDiffJacobian(MapWork,Pose,Scan,Odom,Param);
+    ParamIter = Param;
+    if UseTruncatedHH && UseFixedTruncVarId
+        ParamIter.FixedTruncatedVarId = FixedTruncVarId;
+    end
+    [ErrorS,ErrorO,MeanError,JP,JM,JO,MapVarId] = FuncDiffJacobian(MapWork,Pose,Scan,Odom,ParamIter);
 
     HHLocal = [];
     RegEHOffset = [];

@@ -385,7 +385,11 @@ if UseActiveVoxelOptimization && ~isempty(HitVarId)
 end
 
 if UseTruncatedRegionOptimization
-    TruncatedVarId = FuncFindCellOptimized(Map, Param);
+    if isfield(Param,'FixedTruncatedVarId')
+        TruncatedVarId = unique(double(Param.FixedTruncatedVarId(:)));
+    else
+        TruncatedVarId = FuncFindCellOptimized(Map, Param);
+    end
     if isempty(CandidateVarId)
         CandidateVarId = TruncatedVarId;
     else
