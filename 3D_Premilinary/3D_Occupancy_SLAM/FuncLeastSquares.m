@@ -132,9 +132,9 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
                 [HHLocal, ~] = FuncMapConst3DByVarId(MapVarId, MapWork.Size_i, MapWork.Size_j, MapWork.Size_h);
             end
             [~, NBoundaryTerm] = FuncMapConst3DByVarId(MapVarId, MapWork.Size_i, MapWork.Size_j, MapWork.Size_h, MapWork.N);
-            MapWork = FuncSmoothN2Subset(MapWork,SmoothWeight,HHLocal,MapVarId,NBoundaryTerm);
+            MapWork = FuncSmoothN2Subset(MapWork,SmoothWeight,HHLocal,MapVarId,NBoundaryTerm,Param);
         elseif ~isempty(HH)
-            MapWork = FuncSmoothN2(MapWork,SmoothWeight,HH);
+            MapWork = FuncSmoothN2(MapWork,SmoothWeight,HH,Param);
         end
         MapWork = FuncMapGrid(MapWork);
     end

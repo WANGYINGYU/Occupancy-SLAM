@@ -77,18 +77,57 @@ end
 clearvars U W V;
   
 EE = [EP;EM];
-Delta = II\EE;
+UsePCGSolver = isfield(Param,'UsePCGSolver') && Param.UsePCGSolver;
+if UsePCGSolver
+    persistent PCGWarmStart PCGWarmSize
 
-if any(~isfinite(Delta))
+    nSys = size(II,1);
     SolverRidge = 1e-9;
     if isfield(Param,'LinearSolverRidge') && Param.LinearSolverRidge > 0
         SolverRidge = Param.LinearSolverRidge;
     end
-    II = II + SolverRidge * speye(size(II,1));
-    Delta = II\EE;
-end
-if any(~isfinite(Delta))
-    Delta(~isfinite(Delta)) = 0;
+
+    % Symmetrize + ridge for safer SPD behavior in PCG.
+    A = 0.5 * (II + II') + SolverRidge * speye(nSys);
+    x0 = zeros(nSys,1);
+    if ~isempty(PCGWarmStart) && ~isempty(PCGWarmSize) && PCGWarmSize == nSys && all(isfinite(PCGWarmStart))
+        x0 = PCGWarmStart;
+    end
+
+    PCGTol = 1e-3;
+    if isfield(Param,'PCGTol') && Param.PCGTol > 0
+        PCGTol = Param.PCGTol;
+    end
+    PCGMaxIter = 80;
+    if isfield(Param,'PCGMaxIter') && Param.PCGMaxIter > 0
+        PCGMaxIter = floor(Param.PCGMaxIter);
+    end
+    PCGAcceptTolFactor = 1.10;
+    if isfield(Param,'PCGAcceptTolFactor') && Param.PCGAcceptTolFactor >= 1
+        PCGAcceptTolFactor = Param.PCGAcceptTolFactor;
+    end
+    flag = 1;
+    relres = inf;
+    iter = 0;
+    try
+        IcholSetup = struct('type','ict', 'droptol',1e-3, 'diagcomp',1e-3);
+        Lp = ichol(A, IcholSetup);
+        [Delta, flag, relres, iter] = pcg(A, EE, PCGTol, PCGMaxIter, Lp, Lp', x0);
+    catch
+        [Delta, flag, relres, iter] = pcg(A, EE, PCGTol, PCGMaxIter, [], [], x0);
+    end
+
+    IsNearConverged = (flag == 1) && isfinite(relres) && (relres <= PCGAcceptTolFactor * PCGTol);
+    if (flag == 0 || IsNearConverged) && all(isfinite(Delta))
+        PCGWarmStart = Delta;
+        PCGWarmSize = nSys;
+    else
+        Delta = LocalSolveDirect(II, EE, Param);
+        PCGWarmStart = [];
+        PCGWarmSize = [];
+    end
+else
+    Delta = LocalSolveDirect(II, EE, Param);
 end
 
 nP = size(JP,2);
@@ -110,4 +149,43 @@ else
     MeanDeltaPose = full(Sum_Delta_Pose/length(DeltaP));
 end
 
+end
+
+function Delta = LocalSolveDirect(II, EE, Param)
+nSys = size(II,1);
+Perm = symamd(II);
+Aperm = II(Perm,Perm);
+bperm = EE(Perm);
+
+[L,p] = chol(Aperm,'lower');
+if p ~= 0
+    SolverRidge = 1e-9;
+    if isfield(Param,'LinearSolverRidge') && Param.LinearSolverRidge > 0
+        SolverRidge = Param.LinearSolverRidge;
+    end
+    Aperm = Aperm + SolverRidge * speye(nSys);
+    [L,p] = chol(Aperm,'lower');
+end
+
+if p == 0
+    y = L\bperm;
+    xperm = L'\y;
+else
+    xperm = Aperm\bperm;
+end
+
+Delta = zeros(nSys,1);
+Delta(Perm) = xperm;
+
+if any(~isfinite(Delta))
+    SolverRidge = 1e-9;
+    if isfield(Param,'LinearSolverRidge') && Param.LinearSolverRidge > 0
+        SolverRidge = Param.LinearSolverRidge;
+    end
+    II = II + SolverRidge * speye(size(II,1));
+    Delta = II\EE;
+end
+if any(~isfinite(Delta))
+    Delta(~isfinite(Delta)) = 0;
+end
 end

@@ -44,6 +44,10 @@ function Param = FuncLoadParams()
 
     Param.OptimizerType = 'GN'; % 'GN' or 'LM'
     Param.LMDamping = 1e-3; % LM diagonal damping
+    Param.UsePCGSolver = 0; % 1: enable pcg+ichol solver (with warm-start)
+    Param.PCGTol = 1e-3; % pcg relative residual tolerance
+    Param.PCGMaxIter = 80; % pcg max iterations
+    Param.PCGAcceptTolFactor = 1.10; % accept near-convergence when relres <= factor * tol
     Param.LinearSolverRidge = 1e-9; % fallback ridge when solve is unstable
 
     Param.MinHitCount = 1; % lower bound in Md./N normalization
