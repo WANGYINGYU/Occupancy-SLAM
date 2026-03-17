@@ -2,6 +2,8 @@ Preliminary MATLAB code for 3D Occupancy-SLAM. To get started, run *3D_Occupancy
 
 Our approach produces consistent maps and poses without making any assumptions about the environment. Furthermore, it is robust to initialization errors, allowing the use of noisy initial poses. The results below demonstrate its performance in an unstructured environment captured by a UAV. More details are shown in our video and paper.
 
+If your 3D map is large, you can use PCG to solve the sparse system by setting `Param.UsePCGSolver = 1`. In addition, if your initial poses are already very accurate and you want to improve accuracy further, you can use truncated mode by setting `Param.UseTruncatedRegionOptimization = 1`.
+
 <table border="1" width="100%">
   <tr>
     <th>Odometry</th> 
