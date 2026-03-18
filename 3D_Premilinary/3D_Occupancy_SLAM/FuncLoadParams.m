@@ -4,7 +4,6 @@ function Param = FuncLoadParams()
     Param.MinRange = 0.2;
     Param.Scale = 1; % voxel size (m)
     Param.SampleDistance = Param.Scale;
-    Param.TruncatedSamplingDist = Param.MaxRange;
     Param.UseMapFrameRotation = 0; % 1: estimate a fixed rotated map frame for tighter map bounds
     Param.MapFrameRotationMode = 'yaw_pca'; % current supported mode: yaw_pca
     Param.MapFrameSamplePerScan = 300; % sampled points per scan for map-frame rotation estimation
