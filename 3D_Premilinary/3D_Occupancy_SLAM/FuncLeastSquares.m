@@ -1,6 +1,12 @@
 function [Pose,Iter] = FuncLeastSquares(Map,Pose,Odom,PoseGT,Scan,OriginalScan,Iter,Param)
 
 UseTruncatedHH = isfield(Param,'UseTruncatedRegionOptimization') && Param.UseTruncatedRegionOptimization;
+UseCoarseOccStabilityFilter = isfield(Param,'UseCoarseOccupancyStabilityFilter') && Param.UseCoarseOccupancyStabilityFilter;
+ReprocessObsEachIter = isfield(Param,'ReprocessObsEachIter') && Param.ReprocessObsEachIter;
+
+if UseCoarseOccStabilityFilter && ReprocessObsEachIter && (~iscell(OriginalScan) || isempty(OriginalScan))
+    error('UseCoarseOccupancyStabilityFilter requires raw OriginalScan cell input for per-iteration reprocessing.');
+end
 
 UseBlockHashInTrunc = false;
 if UseTruncatedHH && isfield(Param,'UseBlockHashMapInTruncatedMode') && Param.UseBlockHashMapInTruncatedMode
@@ -20,7 +26,9 @@ if UseTruncatedHH && UseBlockHashInTrunc
         MapClip = FuncMapGrid(MapClip);
         FixedTruncVarId = FuncFindCellOptimized(MapClip, Param);
         UseFixedTruncVarId = true;
-        [Scan, ClipStats] = FuncPreclipObsByTruncatedRegion(Scan, Pose, MapClip, Param);
+        ParamClipOneShot = Param;
+        ParamClipOneShot.FixedTruncatedVarId = FixedTruncVarId;
+        [Scan, ClipStats] = FuncPreclipObsByTruncatedRegion(Scan, Pose, MapClip, ParamClipOneShot);
         if isfield(Param,'VoxelVerbose') && Param.VoxelVerbose && ClipStats.NumInput > 0
             fprintf('[TruncObs][OneShot] in=%d, out=%d, compression=%.4f, reduction=%.2f%%\n', ...
                     ClipStats.NumInput, ClipStats.NumOutput, ClipStats.CompressionRatio, 100*ClipStats.ReductionRatio);
@@ -34,7 +42,9 @@ if UseTruncatedHH && UseBlockHashInTrunc
 elseif UseTruncatedHH
     FixedTruncVarId = FuncFindCellOptimized(Map, Param);
     UseFixedTruncVarId = true;
-    [Scan, ClipStats] = FuncPreclipObsByTruncatedRegion(Scan, Pose, Map, Param);
+    ParamClipOneShot = Param;
+    ParamClipOneShot.FixedTruncatedVarId = FixedTruncVarId;
+    [Scan, ClipStats] = FuncPreclipObsByTruncatedRegion(Scan, Pose, Map, ParamClipOneShot);
     if isfield(Param,'VoxelVerbose') && Param.VoxelVerbose && ClipStats.NumInput > 0
         fprintf('[TruncObs][OneShot] in=%d, out=%d, compression=%.4f, reduction=%.2f%%\n', ...
                 ClipStats.NumInput, ClipStats.NumOutput, ClipStats.CompressionRatio, 100*ClipStats.ReductionRatio);
@@ -56,7 +66,18 @@ end
 
 MaxIter = Param.MaxIter;
 MeanDeltaPose = 100;
-MeanError = 100;
+MeanError = inf; % stop metric: scan-only mean squared residual
+PrevScanOnlyMeanError = inf;
+DecreaseCount = 0;
+DecreaseSum = 0;
+ScanOnlyDecreaseWindow = 3;
+if isfield(Param,'ScanOnlyDecreaseWindow') && Param.ScanOnlyDecreaseWindow >= 1
+    ScanOnlyDecreaseWindow = floor(Param.ScanOnlyDecreaseWindow);
+end
+ScanOnlyDecreaseTol = 1e-4;
+if isfield(Param,'ScanOnlyDecreaseTol') && Param.ScanOnlyDecreaseTol >= 0
+    ScanOnlyDecreaseTol = Param.ScanOnlyDecreaseTol;
+end
 
 while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Param.ObsThreshold
     fprintf('Iter Time is %i\n\n',Iter);
@@ -81,6 +102,22 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
         ParamIter.FixedTruncatedVarId = FixedTruncVarId;
     end
     [ErrorS,ErrorO,MeanError,JP,JM,JO,MapVarId] = FuncDiffJacobian(MapWork,Pose,Scan,Odom,ParamIter);
+    if MeanError < PrevScanOnlyMeanError
+        DecreaseCount = DecreaseCount + 1;
+        DecreaseSum = DecreaseSum + (PrevScanOnlyMeanError - MeanError);
+        if DecreaseCount >= ScanOnlyDecreaseWindow
+            AvgDecrease = DecreaseSum / DecreaseCount;
+            if AvgDecrease < ScanOnlyDecreaseTol
+                fprintf('[Converged] stop: avg scan_only decrease over %d consecutive decreasing iterations is below threshold (avg=%.6e, tol=%.6e)\n', ...
+                        DecreaseCount, AvgDecrease, ScanOnlyDecreaseTol);
+                break;
+            end
+        end
+    else
+        DecreaseCount = 0;
+        DecreaseSum = 0;
+    end
+    PrevScanOnlyMeanError = MeanError;
 
     HHLocal = [];
     RegEHOffset = [];
@@ -110,6 +147,26 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
     if isfield(Param,'Evaluation') && Param.Evaluation
         FuncEvaluatePose(Pose,PoseGT,Param);
         FuncDrawTrajectory(Pose,PoseGT,4);
+    end
+
+    if UseCoarseOccStabilityFilter && ReprocessObsEachIter
+        ParamObsIter = Param;
+        if isfield(ParamObsIter,'UseTemporalRangeConsistencyFilter')
+            ParamObsIter.UseTemporalRangeConsistencyFilter = 0;
+        end
+        Scan = FuncEqualProcessObs(OriginalScan,Pose,ParamObsIter);
+
+        if UseTruncatedHH
+            ParamClipIter = Param;
+            if UseFixedTruncVarId
+                ParamClipIter.FixedTruncatedVarId = FixedTruncVarId;
+            end
+            [Scan, ClipStatsIter] = FuncPreclipObsByTruncatedRegion(Scan, Pose, MapWork, ParamClipIter);
+            if isfield(Param,'VoxelVerbose') && Param.VoxelVerbose && ClipStatsIter.NumInput > 0
+                fprintf('[TruncObs][Iter] in=%d, out=%d, compression=%.4f, reduction=%.2f%%\n', ...
+                        ClipStatsIter.NumInput, ClipStatsIter.NumOutput, ClipStatsIter.CompressionRatio, 100*ClipStatsIter.ReductionRatio);
+            end
+        end
     end
 
     if isfield(Param,'VisualizationOGM') && Param.VisualizationOGM

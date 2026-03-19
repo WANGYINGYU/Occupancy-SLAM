@@ -11,7 +11,7 @@ NumOdom = size(Odom,1);
 if NumPose == 0
     ErrorS = zeros(0,1);
     ErrorO = zeros(0,1);
-    Mean_Error = 0;
+    Mean_Error = inf;
     JP = sparse(0,0);
     JM = sparse(0,0);
     JO = sparse(0,0);
@@ -330,7 +330,7 @@ JO = sparse(double(JOID1),double(JOID2),double(JOVal),length(ErrorO),nPoseVar);
 clear JOID1 JOID2 JOVal;
 
 if isempty(ErrorS)
-    Mean_Error = 0;
+    Mean_Error = inf;
 else
     Sum_Error = ErrorS'*ErrorS;
     Mean_Error = Sum_Error/length(ErrorS);
@@ -446,7 +446,7 @@ end
 clear JMID1 JMID2 JMVal;
 
 if isempty(ErrorS)
-    Mean_Error = 0;
+    Mean_Error = inf;
 else
     Mean_Error = (ErrorS' * ErrorS) / length(ErrorS);
 end

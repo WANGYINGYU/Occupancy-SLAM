@@ -11,6 +11,7 @@ MinRange = Param.MinRange;
 UseVoxelDownsample = isfield(Param,'UseVoxelDownsample') && Param.UseVoxelDownsample;
 UseAdaptiveVoxelDownsample = isfield(Param,'UseAdaptiveVoxelDownsample') && Param.UseAdaptiveVoxelDownsample;
 UseGlobalVoxelDensityFilter = isfield(Param,'UseGlobalVoxelDensityFilter') && Param.UseGlobalVoxelDensityFilter;
+UseCoarseOccStabilityFilter = isfield(Param,'UseCoarseOccupancyStabilityFilter') && Param.UseCoarseOccupancyStabilityFilter;
 VoxelSize = 0.15;
 if isfield(Param,'VoxelSize')
     VoxelSize = Param.VoxelSize;
@@ -53,6 +54,20 @@ for i=1:NumPose
         TotalOutput = TotalOutput + Stats.NumOutput;
     end
     HitLocal{i} = HitPi';
+end
+
+if UseCoarseOccStabilityFilter
+    HasPose = ~isempty(Pose) && size(Pose,1) >= NumPose;
+    if HasPose
+        [HitLocal, CoarseOccStats] = FuncCoarseOccupancyStabilityFilter(HitLocal, Pose, Param);
+        if VoxelVerbose && CoarseOccStats.NumInput > 0
+            fprintf('[CoarseOccFilter][Total] in=%d, out=%d, compression=%.4f, reduction=%.2f%%\n', ...
+                    CoarseOccStats.NumInput, CoarseOccStats.NumOutput, ...
+                    CoarseOccStats.CompressionRatio, 100*CoarseOccStats.ReductionRatio);
+        end
+    elseif VoxelVerbose
+        fprintf('[CoarseOccFilter] skipped (Pose missing or length mismatch)\n');
+    end
 end
 
 if UseGlobalVoxelDensityFilter

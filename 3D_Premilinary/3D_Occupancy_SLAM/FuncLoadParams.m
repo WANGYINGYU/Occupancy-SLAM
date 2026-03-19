@@ -15,8 +15,10 @@ function Param = FuncLoadParams()
     Param.SmoothWeight = 0.00001; % map smoothness term weight
     Param.UseAnisotropicSmoothness = 0; % 1: use xyz anisotropic smoothness
     Param.SmoothnessLambdaXYZ = [1,1,0.5]; % [lambda_x, lambda_y, lambda_z]
-    Param.PoseThreshold = 0.005;
-    Param.ObsThreshold = 0.001;
+    Param.PoseThreshold = 0.00001;
+    Param.ObsThreshold = 0.000001;
+    Param.ScanOnlyDecreaseWindow = 3; % stop if consecutive scan-only decreases are too small
+    Param.ScanOnlyDecreaseTol = 1e-4; % threshold on average decrease of scan-only mean error
 
     Param.ValOddHit = 0.847297860387203;
     Param.ValOddFree = -0.405465108108164;
@@ -31,6 +33,10 @@ function Param = FuncLoadParams()
     Param.AdaptiveVoxelRangeEdges = [0,15,30,inf];
     Param.AdaptiveVoxelSizes = [0.05,0.10,0.15];
     Param.UseGlobalVoxelDensityFilter = 0; % world-frame coarse voxel density filter
+    Param.UseCoarseOccupancyStabilityFilter = 0; % 1: occupancy-value based dynamic-object filtering
+    Param.ReprocessObsEachIter = 0; % 1: rerun filtering + observation generation each iteration
+    Param.CoarseOccVoxelSize = 1.0; % coarse occupancy voxel size (m)
+    Param.CoarseOccFreeProbThreshold = 0.20; % drop hits in voxels with strong free evidence
 
     Param.LambdaO = 1000; % odometry term weight
     Param.InfMatO = [1,1,1,1,1,1];
