@@ -1,226 +1,172 @@
-<h1 align="center">
-    Occupancy-SLAM
-</h1>
+# Occupancy-SLAM
 
-C++ implementation of *<u>[Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map](https://arxiv.org/pdf/2502.06292). Yingyu Wang, Liang Zhao, and Shoudong Huang. In IEEE Transactions on Robotics (T-RO)</u>* and *<u>[Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map](https://www.roboticsproceedings.org/rss18/p003.pdf). Liang Zhao, Yingyu Wang, and Shoudong Huang. In Robotics Science and Systems (RSS), 2022</u>*.
+C++ implementation of:
 
-Joint optimization of poses and features has been extensively studied and demonstrated to yield more accurate results in feature-based SLAM problems. However, research on
-jointly optimizing poses and non-feature-based maps remains limited. This work considers the SLAM problem using 2D laser scans (and odometry). We propose an optimization based SLAM approach to optimize the robot trajectory and the occupancy map simultaneously. **The key novelty is that he key novelty lies in optimizing both robot poses and occupancy values at different cell vertices simultaneously, a significant departure from existing methods where the robot poses need to be optimized first before the map can be estimated.** This paper focuses on 2D laser-based SLAM to investigate how to jointly optimize robot poses and the occupancy map. In our formulation, the state variables in optimization include all the robot poses and the occupancy values at discrete cell vertices in the occupancy map. Based on this formulation, a multi-resolution optimization framework that uses occupancy maps with different resolutions in different stages is introduced. A variation of Gauss-Newton method is proposed to solve the optimization problem in different stages to obtain the optimized occupancy map and robot trajectory. The proposed algorithm is very efficient and can easily converge with initialization from either odometry inputs or scan matching, even when only limited key frame scans are used. Furthermore, we propose an occupancy submap joining method so that large-scale problems can be more effectively handled by integrating the submap joining method with the proposed Occupancy-SLAM. Evaluations using simulations and practical 2D laser datasets demonstrate that the proposed approach can robustly obtain more accurate robot trajectories and occupancy maps than state-of-the-art techniques with comparable computational time. Preliminary results in the 3D case further confirm the potential of the proposed method in practical 3D applications, achieving more accurate results than existing methods. 
+- [Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map (IEEE T-RO)](https://arxiv.org/pdf/2502.06292)
+- [Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map (RSS 2022)](https://www.roboticsproceedings.org/rss18/p003.pdf)
 
+Authors: Yingyu Wang, Liang Zhao, Shoudong Huang.
 
+## Overview
 
-Please download and compile the C++ code for 2D mode. If you are interested in the 3D mode, please download the MATLAB code from the `3D_Preliminary` folder. 
+Occupancy-SLAM jointly optimizes:
 
+- robot poses
+- occupancy values on map grid vertices
 
+Unlike pipelines that optimize poses first and then build maps, this method solves pose and occupancy together in one optimization framework.
+
+This repository mainly provides:
+
+- **2D Occupancy-SLAM (C++)**
+- **Preliminary 3D Occupancy-SLAM (MATLAB)** in `3D_Preliminary/`
+
+## Repository Structure
+
+- `Main_Occupancy_SLAM.cpp`: main entry for 2D
+- `FuncLeastSquares.cpp`: optimization core
+- `FuncConvertObs.cpp`: observation conversion
+- `MyStruct.h/.cpp`: parameters and structures
+- `SubFuncs.h/.cpp`: utilities
+- `config.txt`: runtime configuration
+- `Data/`: example datasets
+- `3D_Preliminary/`: MATLAB 3D preliminary implementation
 
 ## Dependencies
 
-1. [Eigen >= 3.4.0](https://eigen.tuxfamily.org/index.php?title=Main_Page)
-2. [CMake >= 3.16](https://cmake.org)
-3. [OpenMP](https://www.openmp.org)
-4. [OpenCV](https://opencv.org)
-5. [libigl](https://libigl.github.io)
-6. [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html) (Option)
+Minimum requirements:
 
-#### Eigen 3.4.0 
+1. Eigen >= 3.4.0
+2. CMake >= 3.16
+3. OpenMP
+4. OpenCV
+5. libigl
+6. Intel MKL (optional)
 
-Download [Eigen 3.4.0](https://gitlab.com/libeigen/eigen/-/releases/3.4.0) 
+## Build (2D C++)
 
-```
-cd eigen-3.4.0
-mkdir build
-cd build
-cmake ..
-sudo make install
-```
-
-#### CMake
-
-`sudo apt-get install cmake`
-
-#### OpenMP
-
-```
-sudo apt-get install libomp-dev
-```
-
-#### OpenCV
-
-```
-git clone https://github.com/opencv/opencv.git
-mkdir build
-cd build
-cmake ..
-make
-sudo make install
-```
-
-#### libigl
-
-Download [libigl](https://libigl.github.io) and put it in the project root floder or set the path in CMakeList.txt
-
-
-
-## Showcase Video
-
-[![Alt text](https://img.youtube.com/vi/-_-39SrPxKk/maxresdefault.jpg)](https://www.youtube.com/watch?v=-_-39SrPxKk&t=4s)
-
-
-
-## Quickstart
-
-### Modify the path of libigl
-
-Specify the path to libigl in `CMakeLists.txt`.
-
-### Modify the path of MKL or disable
-
-Specify the path to mkl or remove all contents about mkl in `CMakeLists.txt`.
-
-### Compile
+### 1) Clone
 
 ```bash
-git https://github.com/WANGYINGYU/Occupancy-SLAM.git
+git clone https://github.com/WANGYINGYU/Occupancy-SLAM.git
 cd Occupancy-SLAM
-mkdir build
+```
+
+### 2) Configure dependencies
+
+- Set `libigl` path in `CMakeLists.txt`.
+- If you use MKL, set MKL path in `CMakeLists.txt`.
+- If you do not use MKL, disable/remove MKL-related CMake parts.
+
+### 3) Compile
+
+```bash
+mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
 ```
 
-### Run
+On macOS, replace `$(nproc)` with `$(sysctl -n hw.ncpu)`.
+
+## Run (2D C++)
 
 ```bash
 ./Occupancy_SLAM
 ```
 
-and then input
+Then input (example):
 
-`../Data/Museum_b0/Range.txt ../Data/Museum_b0/Pose.txt `
-
-
-
-
-
-## Guidance (For Your Own Datasets)
-
-### Data Format
-
-Preprocess the required data into the following format and store them as txt files.
-
-#### Laser Scan
-
-$m \times n$ matrix, where $m$ is the number of scans and $n$ is the number of beams. The range of the laser beam corresponds to each column of the matrix in the order of the corresponding angle from smallest to largest. 
-
-#### Pose
-
-$m \times 3$ matrix, where $m$ is the number of poses. The three elements of each row of the matrix correspond to x, y and angle.
-
-#### Odometry (Option)
-
-$m \times 3$ matrix with the same format as poses. In addition, this input must be in increments format.
-
-### Parameters Setting
-
-Set parameters in `config.txt`. Refer to the comments in `MyStruct.cpp` for the effect of each parameter.
-
-
-
-## Citation
-
-If you find our work useful to your research, please cite the following papers:
-
-```
-@article{wang2025occupancy,
-  author={Wang, Yingyu and Zhao, Liang and Huang, Shoudong},
-  journal={IEEE Transactions on Robotics}, 
-  title={Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map}, 
-  year={2025},
-  pages={1-20},
-  doi={10.1109/TRO.2025.3578227}}
+```text
+../Data/Museum_b0/Range.txt ../Data/Museum_b0/Pose.txt
 ```
 
-```
-  
-@INPROCEEDINGS{Zhao-RSS-22, 
-    AUTHOR    = {Liang Zhao AND Yingyu Wang AND Shoudong Huang}, 
-    TITLE     = {{Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map}}, 
-    BOOKTITLE = {Proceedings of Robotics: Science and Systems}, 
-    YEAR      = {2022}, 
-    ADDRESS   = {New York City, NY, USA}, 
-    MONTH     = {June}, 
-    DOI       = {10.15607/RSS.2022.XVIII.003} 
-} 
-```
+## Input Data Format
 
+Prepare text files as below.
 
+### Laser Scan
 
-## License
+- Matrix size: `m x n`
+- `m`: number of scans
+- `n`: number of beams
+- Each row is one scan; columns follow beam angles from small to large.
 
-Our code is under [MIT](./LICENSE.txt) License. 
+### Pose
 
+- Matrix size: `m x 3`
+- Columns: `x, y, yaw`
 
+### Odometry (optional)
 
-## More Results for Our Method
+- Matrix size: `m x 3`
+- Same format as pose, but in **incremental** form.
+
+## Parameters
+
+- Edit runtime parameters in `config.txt`.
+- Parameter definitions are in `MyStruct.cpp`.
+
+## 3D Preliminary (MATLAB)
+
+The preliminary 3D implementation is under:
+
+- `3D_Preliminary/`
+
+Use MATLAB scripts in that folder for 3D experiments.
+
+## Showcase Video
+
+[![Occupancy-SLAM Video](https://img.youtube.com/vi/-_-39SrPxKk/maxresdefault.jpg)](https://www.youtube.com/watch?v=-_-39SrPxKk&t=4s)
+
+## More Results
 
 ### More datasets
 
-<table border="1" width="100%">
-  <tr>
-    <th>Dataset</th>
-    <th>Initialization</th> 
-    <th>Ours</th>
-  </tr>
-  <tr>
-    <td width="0.5%">ACES</td>
-    <td width="49%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/ACES_Ini.jpg?raw=true"></td> 
-    <td width="50.5%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/ACES_Our.jpg?raw=true"></td>
-  </tr>
-  <tr>
-    <td>Intel Lab</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Intel_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Intel_Our.jpg?raw=true"></td>
-  </tr>
-  	<td>C5</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/C5_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/C5_Our.jpg?raw=true"></td>
-  </tr>
-    <td>Museum b0</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/b0_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/b0_Our.jpg?raw=true"></td>
-	</tr>
-    <td>Freiburg Building 079</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/fr079_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/fr079_Our.jpg?raw=true"></td>
-</tr>
-    <td>Garage</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Our.jpg?raw=true"></td>
-</tr>
-    <td>MIT</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Our.jpg?raw=true"></td>
-	</tr>
-    <td>Simu 1</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu1_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu1_Our.jpg?raw=true"></td> 
-	</tr>
-    <td>Simu 2</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu2_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu2_Our.jpg?raw=true"></td>
-	</tr>
-    <td>Simu 3</td>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Ini.jpg?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Our.jpg?raw=true"></td>
-</table>
+| Dataset | Initialization | Ours |
+|---|---|---|
+| ACES | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/ACES_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/ACES_Our.jpg?raw=true) |
+| Intel Lab | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Intel_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Intel_Our.jpg?raw=true) |
+| C5 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/C5_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/C5_Our.jpg?raw=true) |
+| Museum b0 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/b0_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/b0_Our.jpg?raw=true) |
+| Freiburg Building 079 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/fr079_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/fr079_Our.jpg?raw=true) |
+| Garage | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Our.jpg?raw=true) |
+| MIT | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Our.jpg?raw=true) |
+| Simu 1 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu1_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu1_Our.jpg?raw=true) |
+| Simu 2 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu2_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu2_Our.jpg?raw=true) |
+| Simu 3 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Our.jpg?raw=true) |
 
+### High-frequency scan comparison
 
-### Comparisons between different methods using high-frequency scans
-
-We use one of the simulated datasets to compare the performance of different methods using high-frequency scans as inputs. 
-
-Below compares occupancy grid maps generated by Cartographer, initial guess poses used in our method with high-frequency scans (2680 scans), the result of our method using high-frequency scans (i.e., only the first stage of our method using 2680 scans), and the result of our method using low-frequency scans (268 scans). 
-
-It should be noted that although Cartographer takes 2680 scans as input, it only outputs keyframe poses, which are far fewer than the 2680 inputs, so we align its output poses to the ground truth poses using timestamps before building the occupancy grid maps. The results demonstrate that our method achieves superior outcomes in high-frequency settings and similar performance compared with low-frequency settings.
+We compare different methods using high-frequency scans on one simulation dataset.
 
 ![High-Frequency Scan Results](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/High_Frequency.png?raw=true)
+
+## Citation
+
+```bibtex
+@article{wang2025occupancy,
+  author={Wang, Yingyu and Zhao, Liang and Huang, Shoudong},
+  journal={IEEE Transactions on Robotics},
+  title={Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map},
+  year={2025},
+  pages={1-20},
+  doi={10.1109/TRO.2025.3578227}
+}
+```
+
+```bibtex
+@INPROCEEDINGS{Zhao-RSS-22,
+  AUTHOR    = {Liang Zhao AND Yingyu Wang AND Shoudong Huang},
+  TITLE     = {{Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map}},
+  BOOKTITLE = {Proceedings of Robotics: Science and Systems},
+  YEAR      = {2022},
+  ADDRESS   = {New York City, NY, USA},
+  MONTH     = {June},
+  DOI       = {10.15607/RSS.2022.XVIII.003}
+}
+```
+
+## License
+
+This project is released under the [MIT License](./LICENSE.txt).
