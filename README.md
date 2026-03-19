@@ -4,9 +4,12 @@
 
 C++ implementation of *<u>[Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map](https://arxiv.org/pdf/2502.06292). Yingyu Wang, Liang Zhao, and Shoudong Huang. In IEEE Transactions on Robotics (T-RO)</u>* and *<u>[Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map](https://www.roboticsproceedings.org/rss18/p003.pdf). Liang Zhao, Yingyu Wang, and Shoudong Huang. In Robotics Science and Systems (RSS), 2022</u>*.
 
-
 Joint optimization of poses and features has been extensively studied and demonstrated to yield more accurate results in feature-based SLAM problems. However, research on
 jointly optimizing poses and non-feature-based maps remains limited. This work considers the SLAM problem using 2D laser scans (and odometry). We propose an optimization based SLAM approach to optimize the robot trajectory and the occupancy map simultaneously. **The key novelty is that he key novelty lies in optimizing both robot poses and occupancy values at different cell vertices simultaneously, a significant departure from existing methods where the robot poses need to be optimized first before the map can be estimated.** This paper focuses on 2D laser-based SLAM to investigate how to jointly optimize robot poses and the occupancy map. In our formulation, the state variables in optimization include all the robot poses and the occupancy values at discrete cell vertices in the occupancy map. Based on this formulation, a multi-resolution optimization framework that uses occupancy maps with different resolutions in different stages is introduced. A variation of Gauss-Newton method is proposed to solve the optimization problem in different stages to obtain the optimized occupancy map and robot trajectory. The proposed algorithm is very efficient and can easily converge with initialization from either odometry inputs or scan matching, even when only limited key frame scans are used. Furthermore, we propose an occupancy submap joining method so that large-scale problems can be more effectively handled by integrating the submap joining method with the proposed Occupancy-SLAM. Evaluations using simulations and practical 2D laser datasets demonstrate that the proposed approach can robustly obtain more accurate robot trajectories and occupancy maps than state-of-the-art techniques with comparable computational time. Preliminary results in the 3D case further confirm the potential of the proposed method in practical 3D applications, achieving more accurate results than existing methods. 
+
+
+
+Please download and compile the C++ code for 2D mode. If you are interested in the 3D mode, please download the MATLAB code from the `3D_Preliminary` folder. 
 
 
 
