@@ -1,50 +1,128 @@
-Preliminary MATLAB code for 3D Occupancy-SLAM. To get started, run *3D_Occupancy_SLAM* for standard-scale datasets, and *3D_Occupancy_Joining* for large-scale environments. Please read the comments on the code for your own data preparation. 
+# 3D Preliminary (MATLAB)
 
-Our approach produces consistent maps and poses without making any assumptions about the environment. Furthermore, it is robust to initialization errors, allowing the use of noisy initial poses. The results below demonstrate its performance in an unstructured environment captured by a UAV. More details are shown in our video and paper.
+Preliminary MATLAB implementation of 3D Occupancy-SLAM.
 
-If your 3D map is large, you can use PCG to solve the sparse system by setting `Param.UsePCGSolver = 1`. In addition, if your initial poses are already very accurate and you want to improve accuracy further, you can use truncated mode by setting `Param.UseTruncatedRegionOptimization = 1`.
+This folder contains two modules:
 
-<table border="1" width="100%">
-  <tr>
-    <th>Odometry</th> 
-    <th>Ours</th>
-  </tr>
-  <tr>
-    <td width="50%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_1.png?raw=true"></td> 
-    <td width="50%"><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_1.png?raw=true"></td>
-  </tr>
-  <tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_2.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_2.png?raw=true"></td>
-  </tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_3.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_3.png?raw=true"></td>
-  </tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_4.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_4.png?raw=true"></td>
-	</tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_5.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_5.png?raw=true"></td>
-</tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_6.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_6.png?raw=true"></td>
-</tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_7.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_7.png?raw=true"></td>
-	</tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_8.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_8.png?raw=true"></td> 
-	</tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_9.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_9.png?raw=true"></td>
-	</tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_10.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_10.png?raw=true"></td>
-</tr>
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Odom_11.png?raw=true"></td> 
-    <td><img src="https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_ Preliminary/Ours_11.png?raw=true"></td>
-</table>
+- `3D_Occupancy_SLAM/`: single-map joint optimization of pose and occupancy
+- `3D_Occupancy_Joining/`: submap joining for larger environments
 
+## References
 
+- [Occupancy-SLAM (IEEE T-RO)](https://arxiv.org/pdf/2502.06292)
+- Video: [YouTube](https://www.youtube.com/watch?v=-_-39SrPxKk&t=4s)
 
-A more efficient implementation and C++ code is being developed and will be released in the future.
+## Environment
+
+Recommended:
+
+- MATLAB R2022b or newer
+- Robotics System Toolbox (for occupancy map visualization utilities)
+- Parallel Computing Toolbox (optional, for `parfor` acceleration)
+
+## Quick Start
+
+### A) 3D Occupancy-SLAM (recommended first)
+
+1. Open MATLAB and set working directory to:
+   `3D_Preliminary/3D_Occupancy_SLAM`
+2. Run:
+
+```matlab
+Main_3D_Occpancy
+```
+
+Default demo input:
+
+- `3D_Occupancy_SLAM/Data/Demo.mat`
+
+Expected variables in the dataset:
+
+- `Pose`: `N x 6` (`x,y,z,roll,pitch,yaw`)
+- `Scan`: `1 x N` cell, each cell is a point cloud in the local LiDAR frame
+
+### B) 3D Occupancy Joining (large-scale)
+
+1. Set working directory to:
+   `3D_Preliminary/3D_Occupancy_Joining`
+2. Run:
+
+```matlab
+Main_3D_Occupancy_Joining
+```
+
+Note:
+
+- This module assumes submap internal poses are already optimized.
+- `Main_3D_Occupancy_Joining.m` references `Data/Voxgraph_Demo.mat`; this file is not included in the current repository snapshot, so prepare your own data with a matching format.
+
+## Key Parameters (3D_Occupancy_SLAM)
+
+Edit in `3D_Occupancy_SLAM/FuncLoadParams.m`.
+
+Core optimization:
+
+- `Param.MaxIter`: max iterations
+- `Param.SmoothWeight`: map smoothness weight
+- `Param.OptimizerType`: `'GN'` or `'LM'`
+- `Param.UsePCGSolver`: `1` enables PCG solver for large sparse systems
+
+Observation preprocessing:
+
+- `Param.UseVoxelDownsample`
+- `Param.UseAdaptiveVoxelDownsample`
+- `Param.UseGlobalVoxelDensityFilter`
+- `Param.UseCoarseOccupancyStabilityFilter`
+- `Param.ReprocessObsEachIter`
+
+Truncated optimization:
+
+- `Param.UseTruncatedRegionOptimization`
+- `Param.TruncatedRegionLayers`
+- `Param.TruncatedObsClipExtraLayers`
+
+Robustness:
+
+- `Param.UseRobustKernel`
+- `Param.RobustKernel` (`huber`, etc.)
+- `Param.RobustDelta`
+
+Convergence:
+
+- `Param.PoseThreshold`
+- `Param.ObsThreshold`
+- `Param.ScanOnlyDecreaseWindow`
+- `Param.ScanOnlyDecreaseTol`
+
+## Outputs
+
+Typical outputs are controlled in `FuncLoadParams.m`:
+
+- `Param.FileDict`: output directory
+- `Param.SavePCD`: save reconstructed point cloud
+- `Param.VisualizationPC`: point cloud visualization
+- `Param.VisualizationOGM`: occupancy-map visualization
+
+## Data Preparation Notes
+
+For your own dataset:
+
+- Keep strict time alignment between `Pose(i,:)` and `Scan{i}`.
+- Use consistent units (meters, radians).
+- Ensure each scan is in the local LiDAR frame expected by the scripts.
+- Start with conservative settings (`UseTruncatedRegionOptimization=0`, `UsePCGSolver=0`) and then enable acceleration modes.
+
+## Example Qualitative Results
+
+| Odometry | Ours |
+|---|---|
+| ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Odom_1.png?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Ours_1.png?raw=true) |
+| ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Odom_2.png?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Ours_2.png?raw=true) |
+| ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Odom_3.png?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Ours_3.png?raw=true) |
+| ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Odom_4.png?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Ours_4.png?raw=true) |
+| ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Odom_5.png?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Ours_5.png?raw=true) |
+| ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Odom_6.png?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/3D_%20Preliminary/Ours_6.png?raw=true) |
+
+## Status
+
+This MATLAB version is a preliminary implementation. A more optimized C++ implementation is planned.
