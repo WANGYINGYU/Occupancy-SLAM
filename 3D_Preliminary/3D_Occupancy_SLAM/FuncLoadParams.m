@@ -38,8 +38,8 @@ function Param = FuncLoadParams()
     Param.CoarseOccVoxelSize = 1.0; % coarse occupancy voxel size (m)
     Param.CoarseOccFreeProbThreshold = 0.20; % drop hits in voxels with strong free evidence
 
-    Param.LambdaO = 1000; % odometry term weight
-    Param.OdomSigma = [1,1,1,1,1,1]; % [sx, sy, sz, sroll, spitch, syaw]
+    Param.LambdaO = 50; % odometry term weight
+    Param.OdomSigma = [0.08, 0.08, 0.05, pi/180, pi/180, pi/180]; % [sx, sy, sz, sroll, spitch, syaw]
 
     Param.UseRobustKernel = 0;
     Param.RobustKernel = 'huber';
