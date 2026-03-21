@@ -66,6 +66,8 @@ Core optimization:
 - `Param.SmoothWeight`: map smoothness weight
 - `Param.OptimizerType`: `'GN'` or `'LM'`
 - `Param.UsePCGSolver`: `1` enables PCG solver for large sparse systems
+- `Param.LambdaO`: overall weight of the odometry term
+- `Param.OdomSigma`: odometry standard deviations `[sx, sy, sz, sroll, spitch, syaw]` in meters/radians; smaller means a stronger odometry prior on that axis
 
 Observation preprocessing:
 

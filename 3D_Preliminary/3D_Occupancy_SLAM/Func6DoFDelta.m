@@ -12,9 +12,9 @@ Size_j = Map.Size_j;
 Size_h = Map.Size_h;
 
 LambdaO = Param.LambdaO;
-InfMatO = Param.InfMatO;
+OdomSigma = Param.OdomSigma;
 
-IO = FuncGet3DIO(ErrorO,InfMatO(1),InfMatO(2),InfMatO(3),InfMatO(4),InfMatO(5),InfMatO(6));
+IO = FuncGet3DIO(ErrorO,OdomSigma(1),OdomSigma(2),OdomSigma(3),OdomSigma(4),OdomSigma(5),OdomSigma(6));
 
 JP = JP(:,7:end);
 JO = JO(:,7:end);

@@ -39,7 +39,7 @@ function Param = FuncLoadParams()
     Param.CoarseOccFreeProbThreshold = 0.20; % drop hits in voxels with strong free evidence
 
     Param.LambdaO = 1000; % odometry term weight
-    Param.InfMatO = [1,1,1,1,1,1];
+    Param.OdomSigma = [1,1,1,1,1,1]; % [sx, sy, sz, sroll, spitch, syaw]
 
     Param.UseRobustKernel = 0;
     Param.RobustKernel = 'huber';

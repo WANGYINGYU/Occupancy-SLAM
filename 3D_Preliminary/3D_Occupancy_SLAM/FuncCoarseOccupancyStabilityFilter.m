@@ -1,6 +1,7 @@
 function [HitOut, Stats] = FuncCoarseOccupancyStabilityFilter(HitIn, Pose, Param)
 % One-shot coarse occupancy filter in world frame:
 % remove hit points falling into voxels with strong free-space evidence.
+% Each ray contributes to a voxel at most once.
 
 NumPose = length(HitIn);
 HitOut = HitIn;
@@ -19,6 +20,20 @@ end
 VoxelSize = 1.0;
 if isfield(Param,'CoarseOccVoxelSize') && isfinite(Param.CoarseOccVoxelSize) && Param.CoarseOccVoxelSize > 0
     VoxelSize = double(Param.CoarseOccVoxelSize);
+end
+
+SampleDistance = 0.1;
+if isfield(Param,'SampleDistance') && isfinite(Param.SampleDistance) && Param.SampleDistance > 0
+    SampleDistance = double(Param.SampleDistance);
+end
+
+ValOddHit = 0.847297860387203;
+if isfield(Param,'ValOddHit') && isfinite(Param.ValOddHit)
+    ValOddHit = double(Param.ValOddHit);
+end
+ValOddFree = -0.405465108108164;
+if isfield(Param,'ValOddFree') && isfinite(Param.ValOddFree)
+    ValOddFree = double(Param.ValOddFree);
 end
 
 FreeProbTh = 0.30;
@@ -60,19 +75,7 @@ for i = 1:NumPose
     LocalPts{i} = Pi;
     NumInput = NumInput + size(Pi,1);
 
-    [RayLocal, RayOdd] = FuncEqualDistanceSample3DLines(Pi, Param);
-    if isempty(RayLocal)
-        RayIdxCells{i} = zeros(0,3,'int32');
-        RayOddCells{i} = zeros(0,1);
-        continue;
-    end
-
-    PRayW = (R * RayLocal' + T)';
-    IRay = int32(floor(PRayW ./ VoxelSize));
-    [Uid,~,G] = unique(IRay,'rows');
-    SumOdd = accumarray(G, double(RayOdd), [], @sum);
-    RayIdxCells{i} = Uid;
-    RayOddCells{i} = SumOdd;
+    [RayIdxCells{i}, RayOddCells{i}] = LocalBuildRayVoxelContribFast(Pi, R, T, VoxelSize, SampleDistance, ValOddFree, ValOddHit);
 end
 
 if NumInput == 0
@@ -131,6 +134,54 @@ Stats.NumOutput = NumOutput;
 Stats.CompressionRatio = NumOutput / max(NumInput,1);
 Stats.ReductionRatio = 1 - Stats.CompressionRatio;
 
+end
+
+function [RayIdx, RayOdd] = LocalBuildRayVoxelContribFast(Pi, R, T, VoxelSize, SampleDistance, ValOddFree, ValOddHit)
+% Faster per-ray voxel contribution:
+% 1) sample along each ray
+% 2) convert to coarse voxel ids
+% 3) remove consecutive duplicated voxels (keep last in each run)
+% Keeping last ensures terminal voxel gets hit contribution.
+
+NumRay = size(Pi,1);
+IdxCell = cell(NumRay,1);
+OddCell = cell(NumRay,1);
+SensorW = double(T(:)');
+
+for k = 1:NumRay
+    p = Pi(k,:);
+    Dist = sqrt(sum(p.^2));
+    NumSample = fix(Dist / SampleDistance) + 1;
+    if NumSample < 1
+        NumSample = 1;
+    end
+
+    DirW = (R * p')';
+    t = (1:NumSample)' / NumSample;
+    SegWorld = SensorW + t .* DirW;
+    SegIdx = int32(floor(SegWorld ./ VoxelSize));
+
+    if NumSample == 1
+        KeepLast = true;
+    else
+        Change = any(diff(SegIdx,1,1) ~= 0, 2);
+        KeepLast = [Change; true];
+    end
+
+    Uid = SegIdx(KeepLast,:);
+    OddOnce = repmat(ValOddFree, size(Uid,1), 1);
+    OddOnce(end) = ValOddHit;
+
+    IdxCell{k} = Uid;
+    OddCell{k} = OddOnce;
+end
+
+RayIdx = vertcat(IdxCell{:});
+RayOdd = vertcat(OddCell{:});
+if isempty(RayIdx)
+    RayIdx = zeros(0,3,'int32');
+    RayOdd = zeros(0,1);
+end
 end
 
 function [R, T] = LocalPoseRT(Posei)
