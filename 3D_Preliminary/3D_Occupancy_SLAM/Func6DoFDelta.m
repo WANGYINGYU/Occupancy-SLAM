@@ -12,7 +12,7 @@ Size_j = Map.Size_j;
 Size_h = Map.Size_h;
 
 LambdaO = Param.LambdaO;
-OdomSigma = Param.OdomSigma;
+OdomSigma = FuncResolveOdomSigma(Param);
 
 IO = FuncGet3DIO(ErrorO,OdomSigma(1),OdomSigma(2),OdomSigma(3),OdomSigma(4),OdomSigma(5),OdomSigma(6));
 

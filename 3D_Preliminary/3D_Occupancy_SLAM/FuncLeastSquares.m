@@ -79,6 +79,16 @@ if isfield(Param,'ScanOnlyDecreaseTol') && Param.ScanOnlyDecreaseTol >= 0
     ScanOnlyDecreaseTol = Param.ScanOnlyDecreaseTol;
 end
 
+ParamSolve = Param;
+[ResolvedOdomSigma, OdomSigmaInfo] = FuncResolveOdomSigma(Param, Pose);
+ParamSolve.OdomSigma = ResolvedOdomSigma;
+if isfield(Param,'VoxelVerbose') && Param.VoxelVerbose && OdomSigmaInfo.Auto
+    fprintf('[OdomSigma][Auto] trans=[%.4f %.4f %.4f] m, rot=[%.3f %.3f %.3f] deg, leverage=%.3f m\n', ...
+        ResolvedOdomSigma(1), ResolvedOdomSigma(2), ResolvedOdomSigma(3), ...
+        ResolvedOdomSigma(4)*180/pi, ResolvedOdomSigma(5)*180/pi, ResolvedOdomSigma(6)*180/pi, ...
+        OdomSigmaInfo.LeverageLength);
+end
+
 while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Param.ObsThreshold
     fprintf('Iter Time is %i\n\n',Iter);
 
@@ -96,8 +106,7 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
     else
         MapWork = Map;
     end
-
-    ParamIter = Param;
+    ParamIter = ParamSolve;
     if UseTruncatedHH && UseFixedTruncVarId
         ParamIter.FixedTruncatedVarId = FixedTruncVarId;
     end
@@ -137,7 +146,7 @@ while Iter<=MaxIter && MeanDeltaPose >= Param.PoseThreshold && MeanError >= Para
         end
     end
 
-    [DeltaP,DeltaM,~,MeanDeltaPose] = Func6DoFDelta(JP,JM,JO,ErrorS,ErrorO,MapWork,HHi,Param,MapVarId,RegEHOffset);
+    [DeltaP,DeltaM,~,MeanDeltaPose] = Func6DoFDelta(JP,JM,JO,ErrorS,ErrorO,MapWork,HHi,ParamSolve,MapVarId,RegEHOffset);
     fprintf('Mean Pose Delta is %3d\n\n',MeanDeltaPose);
 
     clear JP JM JO;

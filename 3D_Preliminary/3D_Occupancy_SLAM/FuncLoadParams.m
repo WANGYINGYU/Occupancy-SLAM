@@ -39,7 +39,10 @@ function Param = FuncLoadParams()
     Param.CoarseOccFreeProbThreshold = 0.20; % drop hits in voxels with strong free evidence
 
     Param.LambdaO = 50; % odometry term weight
-    Param.OdomSigma = [0.08, 0.08, 0.05, pi/180, pi/180, pi/180]; % [sx, sy, sz, sroll, spitch, syaw]
+    Param.OdomSigma = [0.08, 0.08, 0.08, pi/180, pi/180, pi/180]; % [sx, sy, sz, sroll, spitch, syaw]
+    Param.AutoSetOdomSigmaFromTranslation = 1; % 1: infer roll/pitch/yaw sigma from translation sigma
+    Param.OdomSigmaTranslation = 0.1; % translation sigma (m), scalar or [sx,sy,sz]
+    Param.OdomSigmaLeverageLength = 0; % leverage length (m). 0 -> auto by median pose step
 
     Param.UseRobustKernel = 0;
     Param.RobustKernel = 'huber';
