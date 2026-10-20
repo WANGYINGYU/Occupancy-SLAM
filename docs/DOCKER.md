@@ -15,7 +15,7 @@ The workspace defaults to `~/occupancy-slam-workspace`. It is created automatica
 
 Inputs are mounted read-only at their original absolute paths. The workspace stores outputs, temporary files, caches, ROS logs, and RViz settings. The wrapper uses the Docker daemon's existing storage configuration; there is no required Docker `data-root`, disk label, mount point, or username. On a new Linux machine, install [Docker Engine](https://docs.docker.com/engine/install/ubuntu/) and verify that `docker info` works as the current user before running the wrapper. The tested host is Ubuntu 24.04 x86_64; the container supplies ROS2 Jazzy and Python dependencies.
 
-The default image is `occupancy-slam:jazzy`, based on `ros:jazzy-ros-base-noble`, with libigl v2.5.0. `--image` selects another tag. The image compiles the backends and RViz extension from source; host `build/`, `.venv`, datasets, and third-party directories are excluded. Rebuild after implementation changes. Editing a mounted input configuration does not require a rebuild.
+The default image is `occupancy-slam:jazzy`, based on `ros:jazzy-ros-base-noble`, with libigl v2.5.0. `--image` selects another tag. The default image compiles the backends and RViz extension with `BUILD_TESTING=OFF` and omits `tests/` and test binaries; host `build/`, `.venv`, datasets, and third-party directories are excluded. Rebuild after implementation changes. Editing a mounted input configuration does not require a rebuild.
 
 ## 2D text data
 
@@ -81,9 +81,10 @@ Containers use host networking. Subscribers must use the same ROS domain and com
 ./tools/docker.sh --run-name simulation_conversion exec \
   python3 /opt/occupancy-slam/tools/convert_matlab_simulations.py \
   --source /absolute/simulation --output converted
-./tools/docker.sh test unit
-./tools/docker.sh test inputs
-./tools/docker.sh test architecture
+./tools/docker.sh --image occupancy-slam:test build --build-arg BUILD_TESTING=ON
+./tools/docker.sh --image occupancy-slam:test test unit
+./tools/docker.sh --image occupancy-slam:test test inputs
+./tools/docker.sh --image occupancy-slam:test test architecture
 ```
 
 Simulation conversion uses Python MAT readers; no MATLAB runtime is required. Full benchmark and evaluation commands are in [VALIDATION.md](VALIDATION.md).

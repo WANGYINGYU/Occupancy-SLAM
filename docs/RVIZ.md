@@ -56,5 +56,3 @@ A 2D input directory contains the prepared observations, poses, timestamps, back
 The generated manifest records source files, point counts, message types, frame, colors, thresholds, and display grids. Messages use the current publication time (`use_sim_time=false`); original timestamps remain in the saved data. The static display TF registers a reference origin and does not represent robot odometry.
 
 Closing RViz or pressing Ctrl+C stops its publisher and child RViz process. `--duration 20` limits execution; `--no-rviz` publishes without opening a window. For a separate RViz instance, use the same ROS domain and compatible QoS.
-
-Graphical checks are in `tests/test_rviz.py` and `tests/test_rviz_topics.py`; they require actual result directories and an X11 session. Earlier Jazzy/Mesa checks observed an isolated MapDisplay shader startup diagnostic with successful rendering and clean exit. Persistent rendering errors should be investigated separately.

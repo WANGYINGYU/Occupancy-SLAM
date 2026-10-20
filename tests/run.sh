@@ -2,7 +2,11 @@
 set -eo pipefail
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ -z "${OCCUPANCY_RUN_DIR:-}" ]]; then
- exec python3 "$project_dir/tools/run.py" --name "occupancy_test_$(date +%Y%m%d_%H%M%S)_$$" -- bash "$project_dir/tools/test.sh" "$@"
+ exec python3 "$project_dir/tools/run.py" --name "occupancy_test_$(date +%Y%m%d_%H%M%S)_$$" -- bash "$project_dir/tests/run.sh" "$@"
+fi
+if [[ ! -f "$project_dir/build/CTestTestfile.cmake" || ! -x "$project_dir/build/occupancy_core_tests" ]]; then
+ echo "Tests are disabled. Rebuild with -DBUILD_TESTING=ON; see docs/VALIDATION.md." >&2
+ exit 2
 fi
 suite="${1:-unit}"; if [[ $# -gt 0 ]]; then shift; fi
 case "$suite" in
@@ -16,5 +20,5 @@ INNER
  ;;
  inputs|integration) source "$project_dir/tools/env.sh"; if [[ "$suite" == inputs ]]; then script=test_inputs_2d.py; else script=integration.py; fi; exec python3 "$project_dir/tests/$script" "$@" ;;
  architecture) exec python3 "$project_dir/tests/test_architecture.py" "$@" ;;
- *) echo 'Usage: tools/test.sh {unit|inputs|integration|architecture}'; exit 2 ;;
+ *) echo 'Usage: tests/run.sh {unit|inputs|integration|architecture}'; exit 2 ;;
 esac

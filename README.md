@@ -96,7 +96,7 @@ python3 tools/run.py --name native_build -- \
 python3 tools/run.py --name rviz_build -- bash "$PWD/tools/build_rviz.sh"
 ```
 
-Each run name must be unused. `BUILD_3D=OFF` omits PCL; `LIBIGL_INCLUDE_DIR` selects an existing libigl include directory. Native usage is through `./tools/occupancy-slam`; see [pipeline details](docs/PIPELINES.md). Keep the virtual environment active in each new terminal. `--system-site-packages` makes the system ROS2 Python modules available to it; do not use a different Python minor version.
+Each run name must be unused. Regression tests are disabled by default; `BUILD_TESTING=ON` enables them. `BUILD_3D=OFF` omits PCL; `LIBIGL_INCLUDE_DIR` selects an existing libigl include directory. Native usage is through `./tools/occupancy-slam`; see [pipeline details](docs/PIPELINES.md). Keep the virtual environment active in each new terminal. `--system-site-packages` makes the system ROS2 Python modules available to it; do not use a different Python minor version.
 
 | Python dependency file | Purpose |
 | --- | --- |
@@ -206,13 +206,18 @@ Initial and reintegrated 2D display maps default to **0.05 m** resolution; **0.1
 
 ## Reproducibility and evaluation
 
+The optional tests check solver behavior, the N approximation, input adapters, and map exports. They generate their own fixtures and do not require personal datasets, historical results, or a desktop session. Normal builds and the default Docker image omit the test binaries; the default image also omits `tests/`.
+
+To build a separate test image and run the checks:
+
 ```bash
-./tools/docker.sh test unit
-./tools/docker.sh test inputs
-./tools/docker.sh test architecture
+./tools/docker.sh --image occupancy-slam:test build --build-arg BUILD_TESTING=ON
+./tools/docker.sh --image occupancy-slam:test test unit
+./tools/docker.sh --image occupancy-slam:test test inputs
+./tools/docker.sh --image occupancy-slam:test test architecture
 ```
 
-Native equivalents are `./tools/test.sh unit`, `inputs`, and `architecture`. Tests generate their TXT/bag/PCD fixtures in the workspace and cover the normalization approximation, solvers, scan geometry, input adapters, evaluation conventions, and map export. They do not require bundled datasets or network access. They do not establish reproduction of all paper benchmarks.
+Native test setup and suite coverage are in the [validation guide](docs/VALIDATION.md). These checks do not establish reproduction of all paper benchmarks.
 
 The simulation workflow converts the original MATLAB data while preserving stored observations and supplied initializations, runs the C++ optimizer, and evaluates trajectories and maps against independent ground truth. It uses one shared initial-pose SE(2) alignment for the primary trajectory comparison, excludes the fixed first pose, and reports the final accepted state. The conversion, benchmark, map evaluation, and aggregation commands are in the [reproducibility guide](docs/VALIDATION.md). Raw simulation data and external MATLAB functions must be supplied separately.
 

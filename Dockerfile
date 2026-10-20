@@ -21,10 +21,12 @@ ENV PATH="/opt/occupancy-venv/bin:/opt/occupancy-slam/build:${PATH}" \
 RUN git clone --depth 1 --branch "${LIBIGL_VERSION}" https://github.com/libigl/libigl.git third_party/libigl \
     && rm -rf third_party/libigl/.git
 COPY . .
+ARG BUILD_TESTING=OFF
 RUN source /opt/ros/jazzy/setup.bash \
     && cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-       -DBUILD_3D=ON -DBUILD_TESTING=ON \
+       -DBUILD_3D=ON -DBUILD_TESTING="${BUILD_TESTING}" \
     && cmake --build build --parallel "${BUILD_JOBS}" \
-    && bash tools/build_rviz.sh
+    && bash tools/build_rviz.sh \
+    && if [[ ! -x build/occupancy_core_tests ]]; then rm -rf tests; fi
 ENTRYPOINT ["/bin/bash", "/opt/occupancy-slam/docker/entrypoint.sh"]
 CMD ["--help"]

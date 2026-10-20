@@ -16,8 +16,7 @@ INPUT_OPTIONS = {
     '--dataset', '--bag', '--poses', '--ranges', '--odom', '--timestamps',
     '--manifest', '--config', '--backend-config', '--slam-config', '--backend',
     '--result', '--initial', '--source', '--converted', '--samples', '--results',
-    '--maps', '--reference-binaries', '--reference-2d-pipeline',
-    '--result2d', '--result3d', '--initial2d', '--initial3d',
+    '--maps', '--ground-truth', '--indices',
 }
 
 

@@ -47,7 +47,7 @@ The C++ implementation includes sparse grid allocation, interpolated occupancy r
 
 ## Build and runtime environments
 
-`tools/build.sh` builds the C++ applications and tests. `tools/build_rviz.sh` builds the optional ROS2 grayscale Map display. CMake supports `BUILD_3D`, `BUILD_TESTING`, and `LIBIGL_INCLUDE_DIR`; see the main README for dependencies.
+`tools/build.sh` builds the C++ applications. Optional regression tests require `BUILD_TESTING=ON` and run through `tests/run.sh`; see [validation](VALIDATION.md). `tools/build_rviz.sh` builds the optional ROS2 grayscale Map display. CMake supports `BUILD_3D`, `BUILD_TESTING`, and `LIBIGL_INCLUDE_DIR`; see the main README for dependencies.
 
 `tools/env.sh` loads the system ROS2 setup at `/opt/ros/${ROS_DISTRO:-jazzy}/setup.bash`. Set `OCCUPANCY_RUNTIME_SETUP` explicitly for a different ROS installation. The built RViz overlay is loaded from `build/rviz_install` or `OCCUPANCY_RVIZ_PREFIX`. No local `.runtime` directory is needed.
 

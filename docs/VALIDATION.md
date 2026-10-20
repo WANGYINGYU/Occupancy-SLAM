@@ -4,21 +4,37 @@ This guide specifies the supported tests, simulation workflow, and evaluation co
 
 ## Functional and numerical tests
 
+Tests are optional and live in `tests/`. They generate all fixtures in the configured workspace. The default CMake build uses `BUILD_TESTING=OFF`; the default Docker image omits the test sources and binaries.
+
+For Docker:
+
 ```bash
-./tools/docker.sh test unit
-./tools/docker.sh test inputs
-./tools/docker.sh test architecture
+./tools/docker.sh --image occupancy-slam:test build --build-arg BUILD_TESTING=ON
+./tools/docker.sh --image occupancy-slam:test test unit
+./tools/docker.sh --image occupancy-slam:test test inputs
+./tools/docker.sh --image occupancy-slam:test test architecture
 ```
 
-Native equivalents use `./tools/test.sh`. Test fixtures are generated locally in the workspace; no dataset checkout or download is required. Install `requirements.txt` for native functional tests, or `requirements-evaluation.txt` for simulation conversion and research figures.
+For a native checkout, after the installation steps in the README:
+
+```bash
+python3 tools/run.py --name build_tests -- \
+  bash "$PWD/tools/build.sh" -DBUILD_TESTING=ON -DBUILD_3D=ON
+bash tests/run.sh unit
+bash tests/run.sh inputs
+bash tests/run.sh architecture
+```
+
+Use an unused build run name. Install `requirements.txt` for native functional tests, or `requirements-evaluation.txt` for simulation conversion and research figures. The tests need no downloaded dataset, previous executable, saved experiment result, or desktop session.
 
 | Suite | Coverage |
 | --- | --- |
-| `unit` | Eight CTest cases: portable workspace/launcher, N approximation/refresh and solvers, scan I/O, display classification, pose metrics, Cartesian endpoints, multi-resolution execution, and simulator geometry. |
+| `unit` | Eight CTest cases: workspace/launcher, N approximation and solvers, scan I/O, display classification and resolution, pose metrics, Cartesian endpoints, multi-resolution execution, and simulator geometry. |
 | `inputs` | TXT initialization variants; actual slam_toolbox processing of renamed LaserScan/PointCloud2, odometry, and TF topics; rejection of incorrect configured topics. |
-| `architecture` | 2D/3D execution, solver configuration, PCD manifests, 3D Jacobian check, and 0.05/0.1 m map export. |
+| `architecture` | 2D/3D execution, solver configuration, PCD manifests, 3D Jacobian check, independent map reintegration checks, and 0.05/0.1 m map export. |
+| `integration` | Bag scan-matching priors, full 3D pose updates, and rejection of invalid 3D inputs. |
 
-`architecture --reference-binaries /absolute/bin_directory` additionally compares the current backends with supplied reference binaries under the test's existing numerical tolerances. Graphical topic/window checks are provided by `tests/test_rviz.py` and `tests/test_rviz_topics.py`; supply their required result paths and an X11 session. Functional checks are distinct from dataset accuracy evaluation.
+`integration` is available through the same test runner. Functional checks are distinct from dataset accuracy evaluation. RViz is used interactively through the viewer documented in [RVIZ.md](RVIZ.md).
 
 ## Simulation inputs
 
