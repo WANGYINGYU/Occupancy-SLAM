@@ -1,22 +1,22 @@
 # Occupancy-SLAM
 
-Research code for **joint optimization of robot trajectories and occupancy maps**.
+C++ implementation of:
+
+- [Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map (IEEE T-RO)](https://arxiv.org/pdf/2502.06292)
+- [Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map (RSS 2022)](https://www.roboticsproceedings.org/rss18/p003.pdf)
+
+Authors: Yingyu Wang, Liang Zhao, Shoudong Huang.
 
 **For the standalone version without ROS2, use the [C_plus_plus branch](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus).** The `main` branch provides the ROS2 integration and Docker workflow.
 
-**Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map**<br>
-Yingyu Wang, Liang Zhao, and Shoudong Huang<br>
-*IEEE Transactions on Robotics*, vol. 41, pp. 4057-4077, 2025.<br>
-[Paper](https://doi.org/10.1109/TRO.2025.3578227) | [Preprint](https://arxiv.org/abs/2502.06292) | [Video](https://www.youtube.com/watch?v=-_-39SrPxKk)
-
-**Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map**<br>
-Liang Zhao, Yingyu Wang, and Shoudong Huang<br>
-*Robotics: Science and Systems (RSS)*, 2022.<br>
-[Paper and supplementary material](https://www.roboticsproceedings.org/rss18/p003.html)
-
 ## Overview
 
-Occupancy-SLAM estimates robot poses and occupancy values at grid vertices in a common optimization problem. The 2D backend operates on a batch of scans and supports coarse-to-fine optimization. The normalization term N is held fixed when computing pose Jacobians and is recomputed after each accepted update, retaining the approximation used in the method.
+Occupancy-SLAM jointly optimizes:
+
+- robot poses
+- occupancy values on map grid vertices
+
+Unlike pipelines that optimize poses first and then build maps, this method solves pose and occupancy together in one optimization framework.
 
 This branch provides ROS2 integration around the C++ backends: ROS1/ROS2 bag input, original 2D text input, 3D PCD/trajectory input, Docker execution, and RViz2 visualization. This branch contains the ROS2 workflows and their C++ backends, configuration, tests, and documentation. The standalone C++ application and preliminary MATLAB 3D implementation are maintained in [C_plus_plus](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus).
 
@@ -220,56 +220,55 @@ The simulation workflow converts the original MATLAB data while preserving store
 
 The original interactive 2D C++ application is available in [C_plus_plus](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus). That branch also retains the [preliminary MATLAB 3D optimizer and submap joining code](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus/3D_Preliminary), their data conventions, parameters, and execution instructions. Their supported options differ from the ROS2 C++ pipeline in this branch.
 
-## Showcase video
+## Showcase Video
 
-[![Occupancy-SLAM video](https://img.youtube.com/vi/-_-39SrPxKk/maxresdefault.jpg)](https://www.youtube.com/watch?v=-_-39SrPxKk&t=4s)
+[![Occupancy-SLAM Video](https://img.youtube.com/vi/-_-39SrPxKk/maxresdefault.jpg)](https://www.youtube.com/watch?v=-_-39SrPxKk&t=4s)
 
-## Qualitative results
+## More Results
 
-The following images are referenced from the original research implementation on `C_plus_plus`. Dataset-level quantitative results and experimental protocols are reported in the papers.
+### More datasets
 
-| Dataset | Initialization | Occupancy-SLAM |
+| Dataset | Initialization | Ours |
 |---|---|---|
-| ACES | ![Initial ACES map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/ACES_Ini.jpg) | ![Optimized ACES map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/ACES_Our.jpg) |
-| Intel Lab | ![Initial Intel Lab map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Intel_Ini.jpg) | ![Optimized Intel Lab map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Intel_Our.jpg) |
-| C5 | ![Initial C5 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/C5_Ini.jpg) | ![Optimized C5 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/C5_Our.jpg) |
-| Museum b0 | ![Initial b0 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/b0_Ini.jpg) | ![Optimized b0 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/b0_Our.jpg) |
-| Freiburg Building 079 | ![Initial fr079 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/fr079_Ini.jpg) | ![Optimized fr079 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/fr079_Our.jpg) |
-| Garage | ![Initial garage map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/garage_Ini.jpg) | ![Optimized garage map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/garage_Our.jpg) |
-| MIT | ![Initial MIT map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/MIT_Ini.jpg) | ![Optimized MIT map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/MIT_Our.jpg) |
-| Simu 1 | ![Initial Simu1 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu1_Ini.jpg) | ![Optimized Simu1 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu1_Our.jpg) |
-| Simu 2 | ![Initial Simu2 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu2_Ini.jpg) | ![Optimized Simu2 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu2_Our.jpg) |
-| Simu 3 | ![Initial Simu3 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu3_Ini.jpg) | ![Optimized Simu3 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu3_Our.jpg) |
+| ACES | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/ACES_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/ACES_Our.jpg?raw=true) |
+| Intel Lab | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Intel_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Intel_Our.jpg?raw=true) |
+| C5 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/C5_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/C5_Our.jpg?raw=true) |
+| Museum b0 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/b0_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/b0_Our.jpg?raw=true) |
+| Freiburg Building 079 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/fr079_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/fr079_Our.jpg?raw=true) |
+| Garage | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/garage_Our.jpg?raw=true) |
+| MIT | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/MIT_Our.jpg?raw=true) |
+| Simu 1 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu1_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu1_Our.jpg?raw=true) |
+| Simu 2 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu2_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu2_Our.jpg?raw=true) |
+| Simu 3 | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Ini.jpg?raw=true) | ![](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/Simu3_Our.jpg?raw=true) |
 
 ### High-frequency scan comparison
 
-Comparison of different methods using high-frequency scans on a simulation dataset, as distributed with the original implementation.
+We compare different methods using high-frequency scans on one simulation dataset.
 
-![High-Frequency Scan Results](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/High_Frequency.png)
+![High-Frequency Scan Results](https://github.com/WANGYINGYU/Occupancy-SLAM/blob/master/images/High_Frequency.png?raw=true)
 
 ## Citation
 
-If you use this work, please cite the relevant publication:
-
 ```bibtex
 @article{wang2025occupancy,
-  author  = {Wang, Yingyu and Zhao, Liang and Huang, Shoudong},
-  title   = {Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map},
-  journal = {IEEE Transactions on Robotics},
-  volume  = {41},
-  pages   = {4057--4077},
-  year    = {2025},
-  doi     = {10.1109/TRO.2025.3578227}
+  author={Wang, Yingyu and Zhao, Liang and Huang, Shoudong},
+  journal={IEEE Transactions on Robotics},
+  title={Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map},
+  year={2025},
+  pages={1-20},
+  doi={10.1109/TRO.2025.3578227}
 }
+```
 
-@inproceedings{zhao2022occupancy,
-  author    = {Zhao, Liang and Wang, Yingyu and Huang, Shoudong},
-  title     = {Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map},
-  booktitle = {Proceedings of Robotics: Science and Systems},
-  address   = {New York City, NY, USA},
-  month     = {June},
-  year      = {2022},
-  doi       = {10.15607/RSS.2022.XVIII.003}
+```bibtex
+@INPROCEEDINGS{Zhao-RSS-22,
+  AUTHOR    = {Liang Zhao AND Yingyu Wang AND Shoudong Huang},
+  TITLE     = {{Occupancy-SLAM: Simultaneously Optimizing Robot Poses and Continuous Occupancy Map}},
+  BOOKTITLE = {Proceedings of Robotics: Science and Systems},
+  YEAR      = {2022},
+  ADDRESS   = {New York City, NY, USA},
+  MONTH     = {June},
+  DOI       = {10.15607/RSS.2022.XVIII.003}
 }
 ```
 
