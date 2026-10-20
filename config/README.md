@@ -1,98 +1,80 @@
-# 输入与运行参数
+# Configuration reference
 
-统一入口为 `tools/run_2d.sh txt` 或 `tools/run_2d.sh bag`。本机入口自动调用数据盘启动器，打印本次输出目录。YAML 中的参数名使用下划线，与命令行的连字符参数对应；命令行覆盖 YAML。未知键、非法类型或不存在的明确指定话题会报错。
+The public entry point is `tools/occupancy-slam {txt|bag|pcd}`. YAML keys use underscores; corresponding CLI options use hyphens. CLI values override YAML. Input paths in YAML are relative to the YAML file; CLI input paths are relative to the calling directory. Relative outputs are resolved inside a newly created data-disk run directory. Explicit unknown keys, invalid types, and missing configured topics are errors.
 
-| 配置文件 | 用途 |
-|---|---|
-| [inputs/txt.yaml](inputs/txt.yaml) | 原始 Range/Pose/Odom TXT 路径、初始化方式、抽帧、时间间隔 |
-| [inputs/rosbag_laserscan.yaml](inputs/rosbag_laserscan.yaml) | LaserScan bag 的输入 topic、TF、里程计、采样、优化和运行参数 |
-| [inputs/rosbag_pointcloud.yaml](inputs/rosbag_pointcloud.yaml) | PointCloud2 bag 的输入 topic、投影坐标系、高度切片和角度分箱 |
-| [backend/museum_b0.txt](backend/museum_b0.txt) | 原版键值格式；Museum_b0 的 1079 束扫描参数 |
-| [backend/intel.txt](backend/intel.txt) | 原版键值格式；Intel 的 180 束扫描参数及 odometry 权重 |
-| [slam_toolbox.yaml](slam_toolbox.yaml) | 本地可编辑的 scan matching、回环、求解器参数 |
+## Input profiles
 
-## 更换 rosbag 话题
+| Profile | Purpose |
+| --- | --- |
+| [inputs/txt.yaml](inputs/txt.yaml) | Original 2D text data, initialization source, frame selection, and display resolution. |
+| [inputs/rosbag_laserscan.yaml](inputs/rosbag_laserscan.yaml) | LaserScan bags, odometry, TF topics, and frontend settings. |
+| [inputs/rosbag_pointcloud.yaml](inputs/rosbag_pointcloud.yaml) | PointCloud2 bags, projection frame, height interval, and angular bins. |
+| [inputs/pcd.yaml](inputs/pcd.yaml) | 3D PCD/TUM or manifest inputs, sampling, voxel size, and solver limits. |
 
-修改输入 YAML 中的实际 bag 话题，例如：
+## Bag topics and frames
+
+For example:
 
 ```yaml
-scan_topic: /robot/front/scan       # LaserScan；PointCloud2 时填写点云 topic
-odom_source: odom                  # 明确使用 odom；也可 tf、scan-match、auto
+scan_topic: /robot/front/scan
+odom_source: odom
 odom_topic: /robot/wheel/odometry
 tf_topic: /robot/tf
 tf_static_topic: /robot/tf_static
-odom_frame: robot_odom             # frame_id，不是 topic
-projection_frame: null             # 默认传感器坐标系；需要投影时填写有 TF 的目标 frame
+odom_frame: robot_odom
+projection_frame: null
 ```
 
-```bash
-cd ~/Documents/Occupancy-SLAM
-./tools/run_2d.sh bag --config config/inputs/rosbag_laserscan.yaml --bag /absolute/input.bag
-./tools/run_2d.sh bag --config config/inputs/rosbag_pointcloud.yaml --bag /absolute/cloud.bag
-```
+`scan_topic: auto` selects a topic only when the bag contains exactly one supported scan topic. With multiple sensors, specify the topic. `odom_source` accepts `auto`, `odom`, `tf`, or `scan-match`. Automatic selection uses configured Odometry, available TF, then scan matching. Explicit `odom` rejects a topic without usable Odometry messages. TF frame identifiers and topic names are independent settings.
 
-`scan_topic: auto` 仅在 bag 中只有一个 LaserScan/PointCloud2 topic 时自动选择；有多个时必须明确指定。`odom_source: auto` 按已配置 Odometry → 可用 TF → 扫描匹配的顺序选择。要确保使用某个里程计，设为 `odom`；指定话题没有 Odometry 消息时不会静默替换。输入话题不要求带固定命名空间。TF 的 frame 名和 topic 名独立设置。
+For PointCloud2, `projection_frame` selects a frame available through TF; use a level frame when necessary. `min_height`, `max_height`, and `bins` control the projected scan. The range and time-gap parameters must match the sensor and TF frequency.
 
-bag 话题在 `inputs/*.yaml` 中修改。驱动会将输入转换到内部虚拟扫描 topic/frame，再交给 slam_toolbox；不要通过修改 `slam_toolbox.yaml` 中的 scan_topic 来选 bag 话题。驱动固定 sim time、内部 frame/topic、逐帧处理、TF 发布和范围等设置；运行目录里的 `slam_toolbox.yaml` 是最终生效参数。其余扫描匹配、回环和 Ceres 参数来自这里的可编辑配置。
+Select bag topics in the input YAML. [slam_toolbox.yaml](slam_toolbox.yaml) controls scan matching, loop closure, and the Ceres solver. The adapter overrides internal scan/frame names, simulation time, TF publication, sequential processing, and range settings. The effective frontend configuration is saved in the run directory.
 
-## 原始 TXT
+## Original 2D text data
 
-```bash
-./tools/run_2d.sh txt --config config/inputs/txt.yaml --max-scans 20 --resolution 0.3 --iterations 3
-./tools/run_2d.sh txt --dataset Data/Intel --backend-config config/backend/intel.txt --max-scans 20
-# 仅有 Range.txt 和 Odom.txt 时，auto 自动由里程计生成初值：
-./tools/run_2d.sh txt --dataset /absolute/txt_directory --backend-config /absolute/config.txt --pose-source odom
-```
+- `Range.txt`: one scan per row, ranges in metres. The number of columns must match `NumBeam` in the backend profile.
+- `Pose.txt`: absolute sensor poses `x y yaw`, with yaw in radians.
+- `Odom.txt`: optional; the first row is an absolute initial pose and subsequent rows are SE(2) increments in the preceding frame.
+- `timestamps.txt`: optional increasing timestamps in seconds. Otherwise, display timestamps are generated from the original frame index and `scan_period` and recorded as synthetic.
 
-- `Range.txt`：每行一帧，每列一束距离，单位 m；列数必须等于后端 `NumBeam`。
-- `Pose.txt`：每行 `x y yaw` 绝对传感器位姿，角度为 rad。
-- `Odom.txt`：可选；第 0 行是绝对初始位姿，之后每行是前一帧坐标系下的 SE(2) 增量。与原 `FuncPosefromOdom` 约定相同。
-- `timestamps.txt`：可选，每行一个递增秒时间戳。缺失时按原始帧号 × `scan_period` 生成仅用于显示／文件索引的时间，记录为 synthetic。
-- 可用 `--ranges`、`--poses`、`--odom`、`--timestamps` 覆盖目录内同名文件；`pose_source: auto` 优先遵从原配置 `PosefromOdom`，没有 Pose 而有 Odom 时也会选择里程计初始化。
-- `WeightO > 0` 要求提供 Odom。仅有 Pose 时使用 `WeightO 0`，不会擅自将 Pose 差分当成独立里程计。
+`--ranges`, `--poses`, `--odom`, and `--timestamps` override dataset filenames. `pose_source: auto` respects `PosefromOdom` in the backend profile and can initialize from odometry when poses are absent. `WeightO > 0` requires odometry; use `WeightO 0` when only poses are available. Pose differences are not substituted for independent odometry.
 
-根据数据集修改原版键值参数中的 `NumBeam/MinAngle/MaxAngle/MinRange/MaxRange`；输入格式相同不表示不同雷达共用同一几何参数。新 TXT 入口按 `ModeMulti` 选择单分辨率或粗到细 C++ 后端，抽帧由 `start/scan_stride/max_scans` 控制；抽帧后的 odometry 会按 SE(2) 组合跨越的增量。`ModeMulti` 原样传递；`ModeKeyFrame/EvaluateGT/ModeShowMap` 在该入口关闭；原交互式程序仍保留。
+Set `NumBeam`, `MinAngle`, `MaxAngle`, `MinRange`, and `MaxRange` for the scan geometry. [backend/intel.txt](backend/intel.txt) uses 180 beams; [backend/museum_b0.txt](backend/museum_b0.txt) uses 1079. The TXT adapter composes skipped odometry increments in SE(2). It honors `ModeMulti`; its batch path disables the legacy interactive options `ModeKeyFrame`, `EvaluateGT`, and `ModeShowMap`.
 
-## 路径、输出和显示
+## Resolution and optimization
 
-YAML 中的输入路径相对 YAML 文件目录，命令行输入路径相对调用命令的目录。`output` 的相对路径落在新的数据盘实验目录。输出目录必须为空；原数据不会覆盖。
+| Setting | Meaning |
+| --- | --- |
+| `frontend_resolution` | Optional override of the slam_toolbox map resolution. |
+| `resolution` / backend `Scale` | 2D optimization grid spacing in metres. |
+| `display_resolution` | Initial/final-pose display integration spacing; default 0.05 m. |
+| `voxel` | 3D optimization grid spacing. |
+| `point_voxel`, `point_stride` | 3D input downsampling, independent of the map grid. |
+| `step_policy: legacy` | Original update policy. |
+| `step_policy: decrease` | Optional cost-decrease check with the current N held fixed. |
+| `max_observations` | Limit on generated observations; not a process memory limit. |
 
-两种输入均产出相同的 `pipeline/Range.txt`、`Pose.txt`、可选 `Odom.txt`、`timestamps.txt`、`backend_config.txt` 和 `optimized/{initial,joint,reintegrated}/`。保留输入配置副本、生效参数、实际后端命令和日志，TXT 另保存原始帧索引。TXT 直接调用 C++，bag 先调用 ROS2 slam_toolbox。
+N pose derivatives remain omitted. N is recomputed from zero and smoothed after each accepted update. The optional decrease policy does not guarantee monotonic cost after N is refreshed.
 
-计算完成后：
+`ModeSparseSolver=true` selects CG and uses `SolverFirstMaxIter` / `SolverFirstTolerance` for the full-grid stage and `SolverSecondMaxIter` / `SolverSecondTolerance` for the fine stage. `false` selects direct solving. `ModeMulti=true` uses coarse spacing `Scale * DownRate` followed by a selected fine grid. `DownTime` controls the coarse budget; `MaxIter` is the total iteration limit. Early stopping follows the configured update thresholds.
 
-```bash
-./tools/view_rviz.sh 2d --result /absolute/run/pipeline --display-resolution 0.05
-```
+`FixedGrid` selects explicit `Sizei`, `Sizej`, `OriginX`, and `OriginY` instead of automatic bounds. `InitialMapRound` controls initial/reintegrated binning; `NormalizationRound` controls N refresh. Legacy defaults are floor/round. `WeightSmoothN` and `WeightSmoothNSecond` are separate from the map regularization weights.
 
-初始／重建显示分辨率仍独立于优化网格，可改为 0.1。原始优化变量保持自身网格。详细操作见 [RViz 指南](../docs/RVIZ.md)。
+## Simulation profiles
 
-## 重构后的参数边界（2026-10-20）
+| Profile | Intended use |
+| --- | --- |
+| [simulation_multires_extended.txt](backend/simulation_multires_extended.txt) | Complete coarse-to-fine simulation runs: at most 40 coarse and 10 fine updates, with configured early stopping. |
+| [simulation_multires.txt](backend/simulation_multires.txt) | Short-budget diagnostic: at most 8 coarse and 3 fine updates. |
+| [simulation_matlab.txt](backend/simulation_matlab.txt) | Single-resolution compatibility with the supplied MATLAB reference configuration. |
 
-- `inputs/pcd.yaml`：三维 PCD/TUM 或 manifest，使用 `tools/run_3d.sh --config ...`。
-- `backend/bag.txt`：bag 的后端设置；TXT 与 bag 都经 `backend_config.py` 校验，再由 `backend_runner.py` 执行。`--backend-config` 可切换此文件。
-- `frontend_resolution`：可选，只覆盖 slam_toolbox 地图分辨率；null 保留 `slam_toolbox.yaml` 原值。
-- `resolution` / 后端 `Scale`：优化变量分辨率；`display_resolution`：初始和固定最终 pose 重建图的分辨率，默认 0.05 m。
-- `step_policy: legacy`：默认，保留论文近似更新；`decrease` 为可选的固定当前 N 的代价下降检查。两者均不加入 N 的 pose 导数，并在接受更新后重算 N；重算后的总代价不保证单调。
-- `max_observations`：二维在展开射线前检查，三维在生成该帧观测前检查；与地图格点限制分别作用。默认 20000000。它不是总进程内存上限。
+The single-resolution profile uses a 0.1 m, 500 x 500 grid with origin (-25,-25), up to 20 updates, direct solving, initial round / iterative N floor binning, N smoothing weight 10, active map regularization 1e-7, and update threshold 300. These describe the reference configuration, not every experiment in the papers.
 
-`ModeSparseSolver`、`SolverFirstMaxIter`、`SolverFirstTolerance` 现在对二维含/不含 odometry 的完整网格路径都生效；不再有隐藏的 sqrt(系统大小) 迭代上限。批量入口的精细阶段使用 `SolverSecondMaxIter/SolverSecondTolerance`；`ModeSparseSolver=false` 在两阶段都使用直接求解。原交互式程序仍是独立 legacy 实现。使用以前的参数文件可能因此改变结果，这是参数开始生效带来的变化。有效设置保存在输出目录。
+Simulation conversion preserves exact `Scan.xy` and `Scan.Odd` samples. The benchmark defaults to those samples and the extended profile, with a 100000000-observation limit. `--resample-endpoints` selects a different observation model explicitly. Ground truth is used only for evaluation.
 
-`input_manifest.json` 区分外部 odometry、slam_toolbox 因果轨迹和从该轨迹差分得到的相关先验；本次没有把因果轨迹替换成最终回环图节点。`run_status.json` 和 `summary.json` 分别描述执行状态和求解停止原因。
+## Records and outputs
 
-## MATLAB simulation 精度对齐
+`input_manifest.json` identifies input poses and odometry provenance. Bag results distinguish external odometry from the slam_toolbox trajectory and increments derived from that trajectory. `run_status.json` records execution status; `summary.json` records the solver stop reason. Completion does not imply convergence.
 
-`backend/simulation_matlab.txt` 对应 Downloads 中 `2D_Occupancy_SLAM_MATLAB/loadParam.m` 当前实际活动的单层路径：0.1 m、500×500、原点 (-25,-25)、20 步上限、直接求解、N 平滑权重 10。`DOWN_TIME=0` 使活动地图正则使用 `SecondSmoothWeigh=1e-7`，停止阈值使用 `MinMeanDeltaSecond=300`，因此映射到 C++ 的 `MapSmoothingWeightFirst/MinDelta` 是这两个实际值。数据使用无损 `--samples`，不按网格重采样；原 Main 中的 `Pose=Pose_GT` 不进入噪声初值测试。
-
-- `FixedGrid=true`：使用显式 `Sizei/Sizej/OriginX/OriginY`；false 根据输入自动计算范围。
-- `InitialMapRound=true`：初始及最终 pose 重建使用 round；false 使用 floor。
-- `NormalizationRound=false`：每次更新后从零按 floor 重算 N；true 使用 round。两者都不对 N 求 pose 导数。
-- `WeightSmoothN`：完整网格 N 的平滑权重；`WeightSmoothNSecond`：选区 N 的平滑权重（默认 1），与地图 M 的正则权重分开。
-- `ModeMulti=true`：`Scale` 为精细网格，粗网格为 `Scale*DownRate`；`DownTime` 是粗阶段预算，`MaxIter` 是总上限。较小总预算会保留至少一次精细更新，粗阶段也可因配置阈值提前结束。
-- `--save-iterations poses` 保存每次接受更新的位姿；`true` 同时保存 M/N。三类最终地图始终输出。
-
-默认 `config.txt` 的两阶段 CG 设置改为 2000 / 1e-8；已有显式数据集配置不会被覆盖。运行状态区分迭代达到上限与收敛。
-
-`backend/simulation_multires.txt` 保留 8 次粗阶段 + 3 次细阶段的短预算诊断；`backend/simulation_multires_extended.txt` 将上限统一扩大为 40 + 10，其他数值设置相同，仍按原有步长阈值提前停止。simulation 完整流程使用后一份；`simulation_matlab.txt` 只用于当前 MATLAB 保存状态的单层一致性参考。较充足预算不是强制执行 50 次，也不依据 GT 决定停止。
-
-Simulation 转换默认生成 `samples.bin`；批量验证优先读取它，旧转换目录则根据 `conversion.json` 自动无损导出到本次数据盘运行目录。`--samples` 可复用已有导出；`--resample-endpoints` 才会显式按网格重新生成自由空间样本。批量验证默认使用 `simulation_multires_extended.txt` 和 100000000 样本上限；其他二维入口的默认上限保持 20000000。
+The frontend trajectory is collected during processing; it is not replaced by final loop-closed graph poses. Output states and visualization resolution are documented in [map outputs](../docs/MAP_OUTPUTS.md) and [RViz](../docs/RVIZ.md).

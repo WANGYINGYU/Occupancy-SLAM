@@ -5,8 +5,8 @@ from pathlib import Path
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--source',type=Path,default=Path('/home/yingyuwang/Downloads/2D_Occupancy_SLAM_MATLAB'))
-    ap.add_argument('--converted',type=Path,default=Path('/media/yingyuwang/Data/experiments/sdf_ba/codex_runs/occupancy_matlab_conversion_20261020_01/converted'))
+    ap.add_argument('--source',type=Path,required=True,help='Directory containing the original 2D MATLAB numerical functions')
+    ap.add_argument('--converted',type=Path,required=True,help='Converted simulation dataset directory')
     ap.add_argument('--matlab',type=Path,default=Path('/usr/local/bin/matlab'))
     ap.add_argument('--scene',required=True);ap.add_argument('--case',required=True)
     ap.add_argument('--iterations',type=int,default=20)
@@ -25,7 +25,7 @@ def main():
     here=Path(__file__).resolve().parents[1]
     shutil.copy2(here/'tests/run_matlab_reference.m',root/'run_matlab_reference.m');shutil.copy2(__file__,root/'runner.py')
     env=dict(os.environ,SIM_CONVERTED_ROOT=str(args.converted.resolve()),SIM_SCENE=args.scene,SIM_CASE=args.case,SIM_MAX_ITER=str(args.iterations),MATLAB_PREFDIR=str(root/'matlab_prefs'))
-    short=tempfile.mkdtemp(prefix='m.',dir='/media/yingyuwang/Data/experiments/sdf_ba');env.update(TMPDIR=short,TMP=short,TEMP=short)
+    short=tempfile.mkdtemp(prefix='m.',dir=os.environ['SDF_BA_STORAGE_ROOT']);env.update(TMPDIR=short,TMP=short,TEMP=short)
     cmd=[str(args.matlab),'-nojvm','-nodisplay','-batch',"run('"+str(root/'run_matlab_reference.m')+"')"]
     (root/'command.json').write_text(json.dumps(cmd,indent=2));start=time.monotonic();peak=swap=0;stopped=False
     with (root/'matlab.log').open('w') as log:

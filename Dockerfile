@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake ninja-build git ca-certificates libeigen3-dev libpcl-dev \
     python3-pip python3-venv python3-numpy python3-scipy python3-yaml \
-    python3-pil python3-matplotlib python3-h5py python3-plotly \
+    python3-pil python3-matplotlib python3-h5py \
     ros-jazzy-slam-toolbox ros-jazzy-rviz2 ros-jazzy-rmw-fastrtps-cpp \
     libgl1-mesa-dri libglx-mesa0 x11-utils xauth \
     && rm -rf /var/lib/apt/lists/*
