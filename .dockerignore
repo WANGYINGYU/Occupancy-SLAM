@@ -11,6 +11,5 @@ images
 *.pcd
 docs
 README.md
-docker/README.md
 
 .venv

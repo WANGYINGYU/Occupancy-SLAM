@@ -18,7 +18,7 @@ Liang Zhao, Yingyu Wang, and Shoudong Huang<br>
 
 Occupancy-SLAM estimates robot poses and occupancy values at grid vertices in a common optimization problem. The 2D backend operates on a batch of scans and supports coarse-to-fine optimization. The normalization term N is held fixed when computing pose Jacobians and is recomputed after each accepted update, retaining the approximation used in the method.
 
-This branch provides ROS2 integration around the C++ backends: ROS1/ROS2 bag input, original 2D text input, 3D PCD/trajectory input, Docker execution, and RViz2 visualization. The sparse C++ 3D backend is an additional implementation; the preliminary MATLAB 3D optimizer and submap joining code are provided separately in [3D_Preliminary/](3D_Preliminary/). Their supported options differ.
+This branch provides ROS2 integration around the C++ backends: ROS1/ROS2 bag input, original 2D text input, 3D PCD/trajectory input, Docker execution, and RViz2 visualization. This branch contains the ROS2 workflows and their C++ backends, configuration, tests, and documentation. The standalone C++ application and preliminary MATLAB 3D implementation are maintained in [C_plus_plus](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus).
 
 ## Branch selection
 
@@ -48,15 +48,12 @@ Follow the installation and execution instructions in that branch's README. The 
 | Path | Purpose |
 | --- | --- |
 | [cpp/](cpp/), [src/](src/), [include/occupancy/](include/occupancy/) | Batch C++ applications, optimization, scan I/O, map export, and backend interfaces. |
-| [Main_Occupancy_SLAM.cpp](Main_Occupancy_SLAM.cpp), [FuncLeastSquares.cpp](FuncLeastSquares.cpp) | Original interactive 2D application and optimization driver, built with `BUILD_LEGACY=ON`. |
 | [FuncConvertObs.cpp](FuncConvertObs.cpp) | 2D observation conversion. |
 | [MyStruct.h](MyStruct.h), [MyStruct.cpp](MyStruct.cpp) | 2D parameter structures and defaults. |
 | [SubFuncs.h](SubFuncs.h), [SubFuncs.cpp](SubFuncs.cpp) | Shared 2D optimization and mapping utilities, including configuration loading. |
-| [config.txt](config.txt), [config/](config/) | Original 2D configuration and profiles for input adapters, backends, and `slam_toolbox`. |
+| [config/](config/) | Defaults and profiles for input adapters, C++ backends, RViz2, and `slam_toolbox`. |
 | [tools/](tools/), [ros2/](ros2/), [docker/](docker/) | Pipeline commands, data conversion and evaluation, ROS2 visualization, and container setup. |
 | [tests/](tests/), [docs/](docs/) | Correctness checks and detailed usage documentation. |
-| [Data/](Data/), [images/](images/) | Example datasets and qualitative results from the original research release. |
-| [3D_Preliminary/](3D_Preliminary/) | Preliminary MATLAB 3D optimization and submap joining. |
 
 ## Installation
 
@@ -93,21 +90,29 @@ python3 -m pip install -r requirements-matlab.txt
 source /opt/ros/jazzy/setup.bash
 export OCCUPANCY_DATA_ROOT=/mnt/data
 python3 tools/run_on_data.py --name native_build -- \
-  bash "$PWD/tools/build.sh" -DBUILD_3D=ON -DBUILD_LEGACY=OFF
+  bash "$PWD/tools/build.sh" -DBUILD_3D=ON
 python3 tools/run_on_data.py --name rviz_build -- bash "$PWD/tools/build_rviz.sh"
 ```
 
-Each run name must be unused. `BUILD_3D=OFF` omits PCL; `LIBIGL_INCLUDE_DIR` selects an existing libigl include directory. `BUILD_LEGACY=ON` additionally requires OpenCV and builds the original interactive application. Native usage is through `./tools/occupancy-slam`; see [pipeline details](docs/PIPELINES.md).
+Each run name must be unused. `BUILD_3D=OFF` omits PCL; `LIBIGL_INCLUDE_DIR` selects an existing libigl include directory. Native usage is through `./tools/occupancy-slam`; see [pipeline details](docs/PIPELINES.md).
 
 ## Running the examples
 
 ### 2D text input
 
-The repository includes example laser scans and initial trajectories in [Data/](Data/).
+Example scans and trajectories are stored in the [standalone branch](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus/Data). Download only the dataset needed for a run; datasets are not bundled with `main` or the Docker image.
+
+```bash
+./tools/docker.sh --run-name example_intel exec \
+  python3 /opt/occupancy-slam/tools/download_example.py --dataset Intel
+export OCCUPANCY_INTEL_DATA="$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/example_intel/Intel"
+```
+
+For native use, run `tools/download_example.py` through `tools/run_on_data.py`. The downloader records the versioned source URLs alongside the data.
 
 ```bash
 ./tools/docker.sh --run-name intel_demo txt \
-  --dataset Data/Intel --backend-config config/backend/intel.txt \
+  --dataset "$OCCUPANCY_INTEL_DATA" --backend-config config/backend/intel.txt \
   --max-scans 20 --iterations 5 --display-resolution 0.05
 ./tools/docker.sh --gui view 2d \
   --result "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/intel_demo/pipeline"
@@ -116,8 +121,11 @@ The repository includes example laser scans and initial trajectories in [Data/](
 The Museum b0 example from the original implementation is also supported:
 
 ```bash
+./tools/docker.sh --run-name example_museum exec \
+  python3 /opt/occupancy-slam/tools/download_example.py --dataset Museum_b0
 ./tools/docker.sh --run-name museum_demo txt \
-  --dataset Data/Museum_b0 --backend-config config/backend/museum_b0.txt \
+  --dataset "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/example_museum/Museum_b0" \
+  --backend-config config/backend/museum_b0.txt \
   --max-scans 20 --iterations 5 --display-resolution 0.05
 ```
 
@@ -161,7 +169,7 @@ For 2D text input, `m` is the number of scans and `n` is the number of beams. Sc
 
 ### Parameters
 
-The original [config.txt](config.txt) is retained. Parameter structures are defined in [MyStruct.h](MyStruct.h), with defaults in [MyStruct.cpp](MyStruct.cpp) and configuration loading in [SubFuncs.cpp](SubFuncs.cpp). For the batch pipeline, select a dataset-specific file with `--backend-config`; configure that file rather than assuming the original defaults match every sensor.
+The key/value backend defaults are in [config/backend/default.txt](config/backend/default.txt). Parameter structures are defined in [MyStruct.h](MyStruct.h), with defaults in [MyStruct.cpp](MyStruct.cpp) and configuration loading in [SubFuncs.cpp](SubFuncs.cpp). For the batch pipeline, select a dataset-specific file with `--backend-config`; configure that file rather than assuming the original defaults match every sensor.
 
 Input profiles are in [config/inputs/](config/inputs/); C++ 2D profiles are in [config/backend/](config/backend/); frontend settings are in [config/slam_toolbox.yaml](config/slam_toolbox.yaml). CLI options override YAML. YAML input paths are relative to the configuration file; CLI input paths are relative to the calling directory. Detailed conventions and solver settings are documented in [config/README.md](config/README.md).
 
@@ -195,18 +203,13 @@ Initial and reintegrated 2D display maps default to **0.05 m** resolution; **0.1
 ./tools/docker.sh test architecture
 ```
 
-Native equivalents are `./tools/test.sh unit`, `inputs`, and `architecture`. Tests cover the normalization approximation, solvers, scan geometry, input adapters, evaluation conventions, and map export. They do not establish reproduction of all paper benchmarks.
+Native equivalents are `./tools/test.sh unit`, `inputs`, and `architecture`. Tests generate their TXT/bag/PCD fixtures on the data disk and cover the normalization approximation, solvers, scan geometry, input adapters, evaluation conventions, and map export. They do not require bundled datasets or network access. They do not establish reproduction of all paper benchmarks.
 
 The simulation workflow converts the original MATLAB data while preserving stored observations and supplied initializations, runs the C++ optimizer, and evaluates trajectories and maps against independent ground truth. It uses one shared initial-pose SE(2) alignment for the primary trajectory comparison, excludes the fixed first pose, and reports the final accepted state. The conversion, benchmark, map evaluation, and aggregation commands are in the [reproducibility guide](docs/VALIDATION.md). Raw simulation data and external MATLAB functions must be supplied separately.
 
-## Preliminary 3D implementation (MATLAB)
+## Original standalone and MATLAB implementations
 
-The original MATLAB implementation remains available in [3D_Preliminary/](3D_Preliminary/):
-
-- [3D_Occupancy_SLAM/](3D_Preliminary/3D_Occupancy_SLAM/) jointly optimizes a trajectory and a single occupancy map; the entry point is `Main_3D_Occpancy.m`.
-- [3D_Occupancy_Joining/](3D_Preliminary/3D_Occupancy_Joining/) joins submaps whose internal poses have already been optimized; the entry point is `Main_3D_Occupancy_Joining.m`.
-
-See the [MATLAB README](3D_Preliminary/README.md) for dependencies, data conventions, parameters, and execution instructions. These scripts are separate from the C++ 3D pipeline described above.
+The original interactive 2D C++ application is available in [C_plus_plus](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus). That branch also retains the [preliminary MATLAB 3D optimizer and submap joining code](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus/3D_Preliminary), their data conventions, parameters, and execution instructions. Their supported options differ from the ROS2 C++ pipeline in this branch.
 
 ## Showcase video
 
@@ -214,26 +217,26 @@ See the [MATLAB README](3D_Preliminary/README.md) for dependencies, data convent
 
 ## Qualitative results
 
-The following images are examples distributed with the original research implementation. Dataset-level quantitative results and experimental protocols are reported in the papers.
+The following images are referenced from the original research implementation on `C_plus_plus`. Dataset-level quantitative results and experimental protocols are reported in the papers.
 
 | Dataset | Initialization | Occupancy-SLAM |
 |---|---|---|
-| ACES | ![Initial ACES map](images/ACES_Ini.jpg) | ![Optimized ACES map](images/ACES_Our.jpg) |
-| Intel Lab | ![Initial Intel Lab map](images/Intel_Ini.jpg) | ![Optimized Intel Lab map](images/Intel_Our.jpg) |
-| C5 | ![Initial C5 map](images/C5_Ini.jpg) | ![Optimized C5 map](images/C5_Our.jpg) |
-| Museum b0 | ![Initial b0 map](images/b0_Ini.jpg) | ![Optimized b0 map](images/b0_Our.jpg) |
-| Freiburg Building 079 | ![Initial fr079 map](images/fr079_Ini.jpg) | ![Optimized fr079 map](images/fr079_Our.jpg) |
-| Garage | ![Initial garage map](images/garage_Ini.jpg) | ![Optimized garage map](images/garage_Our.jpg) |
-| MIT | ![Initial MIT map](images/MIT_Ini.jpg) | ![Optimized MIT map](images/MIT_Our.jpg) |
-| Simu 1 | ![Initial Simu1 map](images/Simu1_Ini.jpg) | ![Optimized Simu1 map](images/Simu1_Our.jpg) |
-| Simu 2 | ![Initial Simu2 map](images/Simu2_Ini.jpg) | ![Optimized Simu2 map](images/Simu2_Our.jpg) |
-| Simu 3 | ![Initial Simu3 map](images/Simu3_Ini.jpg) | ![Optimized Simu3 map](images/Simu3_Our.jpg) |
+| ACES | ![Initial ACES map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/ACES_Ini.jpg) | ![Optimized ACES map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/ACES_Our.jpg) |
+| Intel Lab | ![Initial Intel Lab map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Intel_Ini.jpg) | ![Optimized Intel Lab map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Intel_Our.jpg) |
+| C5 | ![Initial C5 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/C5_Ini.jpg) | ![Optimized C5 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/C5_Our.jpg) |
+| Museum b0 | ![Initial b0 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/b0_Ini.jpg) | ![Optimized b0 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/b0_Our.jpg) |
+| Freiburg Building 079 | ![Initial fr079 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/fr079_Ini.jpg) | ![Optimized fr079 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/fr079_Our.jpg) |
+| Garage | ![Initial garage map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/garage_Ini.jpg) | ![Optimized garage map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/garage_Our.jpg) |
+| MIT | ![Initial MIT map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/MIT_Ini.jpg) | ![Optimized MIT map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/MIT_Our.jpg) |
+| Simu 1 | ![Initial Simu1 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu1_Ini.jpg) | ![Optimized Simu1 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu1_Our.jpg) |
+| Simu 2 | ![Initial Simu2 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu2_Ini.jpg) | ![Optimized Simu2 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu2_Our.jpg) |
+| Simu 3 | ![Initial Simu3 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu3_Ini.jpg) | ![Optimized Simu3 map](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/Simu3_Our.jpg) |
 
 ### High-frequency scan comparison
 
 Comparison of different methods using high-frequency scans on a simulation dataset, as distributed with the original implementation.
 
-![High-Frequency Scan Results](images/High_Frequency.png)
+![High-Frequency Scan Results](https://raw.githubusercontent.com/WANGYINGYU/Occupancy-SLAM/C_plus_plus/images/High_Frequency.png)
 
 ## Citation
 

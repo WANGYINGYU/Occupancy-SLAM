@@ -23,7 +23,7 @@ def parser():
     p.add_argument('--dataset',type=Path,help='Directory with Range.txt, Pose.txt and optional Odom.txt')
     for key in ('ranges','poses','odom','timestamps'):
         p.add_argument('--'+key,type=Path)
-    p.add_argument('--backend-config',type=Path,default=ROOT/'config.txt',help='Original key/value config.txt format')
+    p.add_argument('--backend-config',type=Path,default=ROOT/'config/backend/default.txt',help='Original key/value config.txt format')
     p.add_argument('--backend',type=Path,default=backend_path('occupancy_slam_2d'))
     p.add_argument('--output',type=Path,default=Path('pipeline'))
     p.add_argument('--pose-source',choices=('auto','file','odom'),default='auto')

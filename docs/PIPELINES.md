@@ -43,11 +43,11 @@ For a public bag example, see the [Cartographer Revo LDS dataset](https://google
 
 `tools/pcd_pipeline.py` accepts an NC20-style directory or an explicit PCD timestamp manifest with TUM poses. `occupancy_slam_3d` reads sensor-frame scans through PCL, applies the configured filtering/downsampling, and constructs sparse occupancy observations. The optimization jointly estimates SE(3) poses and grid variables.
 
-The C++ implementation includes sparse grid allocation, interpolated occupancy residuals, pose constraints, regularization, fixed gauge, and iterative linear solving. It is distinct from the preliminary MATLAB implementation in [3D_Preliminary/](../3D_Preliminary/), which includes additional research options and joining code. These implementations should be identified separately in reported experiments.
+The C++ implementation includes sparse grid allocation, interpolated occupancy residuals, pose constraints, regularization, fixed gauge, and iterative linear solving. It is distinct from the preliminary MATLAB implementation in [C_plus_plus/3D_Preliminary](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus/3D_Preliminary), which includes additional research options and joining code. These implementations should be identified separately in reported experiments.
 
 ## Build and runtime environments
 
-`tools/build.sh` builds the C++ applications and tests. `tools/build_rviz.sh` builds the optional ROS2 grayscale Map display. CMake supports `BUILD_3D`, `BUILD_LEGACY`, and `LIBIGL_INCLUDE_DIR`; see the main README for dependencies.
+`tools/build.sh` builds the C++ applications and tests. `tools/build_rviz.sh` builds the optional ROS2 grayscale Map display. CMake supports `BUILD_3D`, `BUILD_TESTING`, and `LIBIGL_INCLUDE_DIR`; see the main README for dependencies.
 
 `tools/env.sh` loads `OCCUPANCY_RUNTIME_SETUP` when supplied, otherwise a local `.runtime/setup.bash` if present, then the standard `/opt/ros/jazzy/setup.bash` fallback. `.runtime` is optional local configuration and is excluded from Git and Docker. The built RViz overlay is loaded from `build/rviz_install` or `OCCUPANCY_RVIZ_PREFIX`.
 
@@ -65,4 +65,4 @@ python3 tools/run_on_data.py --name evaluation_run -- \
 
 CMake installation includes executables, public headers, libraries, profiles, Python tools, and the `occupancy-slam` entry point. Consumers may use `find_package(OccupancySLAM REQUIRED)` and link `OccupancySLAM::occupancy_2d_core` or `OccupancySLAM::occupancy_3d_core`.
 
-The main modules are `src/optimization/`, `src/io/`, `src/mapping/`, and `src/apps/`. Original 2D numerical functions remain in `SubFuncs.cpp` and `FuncConvertObs.cpp`. The optional interactive GUI is in `src/legacy/`.
+The main modules are `src/optimization/`, `src/io/`, `src/mapping/`, and `src/apps/`. Original 2D numerical functions remain in `SubFuncs.cpp` and `FuncConvertObs.cpp`. The standalone interactive GUI is maintained on `C_plus_plus`.

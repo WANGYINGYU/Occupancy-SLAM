@@ -33,6 +33,8 @@ Select bag topics in the input YAML. [slam_toolbox.yaml](slam_toolbox.yaml) cont
 
 ## Original 2D text data
 
+Set `dataset` in `inputs/txt.yaml` or pass `--dataset`; datasets are external to this branch. The common key/value defaults are in [backend/default.txt](backend/default.txt), overridden by the selected backend profile.
+
 - `Range.txt`: one scan per row, ranges in metres. The number of columns must match `NumBeam` in the backend profile.
 - `Pose.txt`: absolute sensor poses `x y yaw`, with yaw in radians.
 - `Odom.txt`: optional; the first row is an absolute initial pose and subsequent rows are SE(2) increments in the preceding frame.

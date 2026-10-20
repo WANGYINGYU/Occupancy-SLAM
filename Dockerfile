@@ -23,7 +23,7 @@ RUN git clone --depth 1 --branch "${LIBIGL_VERSION}" https://github.com/libigl/l
 COPY . .
 RUN source /opt/ros/jazzy/setup.bash \
     && cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-       -DBUILD_3D=ON -DBUILD_LEGACY=OFF -DBUILD_TESTING=ON \
+       -DBUILD_3D=ON -DBUILD_TESTING=ON \
     && cmake --build build --parallel "${BUILD_JOBS}" \
     && bash tools/build_rviz.sh
 ENTRYPOINT ["/bin/bash", "/opt/occupancy-slam/docker/entrypoint.sh"]

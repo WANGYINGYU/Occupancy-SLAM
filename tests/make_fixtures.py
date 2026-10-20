@@ -1,4 +1,4 @@
-"""Small deterministic ROS1 bags and ASCII/binary_compressed PCD sequences."""
+"""Deterministic TXT scans, ROS1 bags and ASCII/binary_compressed PCD sequences."""
 from pathlib import Path
 import math
 import struct
@@ -83,4 +83,34 @@ def make_pcds(root):
         poses.append([1000+i,*noisy,*q])
     np.savetxt(root/'odometry.txt',poses,fmt='%.12g')
     (root/'scans.txt').write_text(''.join(f'{1000+i} PCD/full{i}.pcd\n' for i in range(4)))
+    return root
+
+
+def make_txt(root, with_odometry=True):
+    """Generate a small room scan sequence without external datasets or downloads."""
+    root.mkdir()
+    angles=np.linspace(-np.pi, np.pi, 181, endpoint=False)
+    i=np.arange(32)
+    truth=np.column_stack((.025*i, .12*np.sin(i/8), .005*i))
+    initial=truth+np.column_stack((.02*i, -.01*i, .002*i))
+    ranges=[]
+    for x,y,yaw in truth:
+        dx,dy=np.cos(angles+yaw),np.sin(angles+yaw)
+        with np.errstate(divide='ignore',invalid='ignore'):
+            ranges.append(np.minimum(np.where(dx>0,(5-x)/dx,(-4-x)/dx),
+                                     np.where(dy>0,(4-y)/dy,(-3-y)/dy)))
+    np.savetxt(root/'Range.txt', ranges, fmt='%.17g')
+    np.savetxt(root/'Pose.txt', initial, fmt='%.17g')
+    np.savetxt(root/'timestamps.txt', 1000+i*.1, fmt='%.17g')
+    if with_odometry:
+        prior=truth+np.column_stack((.015*i, .008*i, -.001*i))
+        increments=[prior[0]]
+        for a,b in zip(prior[:-1],prior[1:]):
+            delta=b[:2]-a[:2];c,s=np.cos(a[2]),np.sin(a[2])
+            increments.append([c*delta[0]+s*delta[1], -s*delta[0]+c*delta[1], b[2]-a[2]])
+        np.savetxt(root/'Odom.txt', increments, fmt='%.17g')
+    params=dict(NumBeam=len(angles),MinAngle=angles[0],MaxAngle=angles[-1],
+                MinRange=.1,MaxRange=15,Scale=.5,ModeMulti='false',WeightO=0,
+                ModeSparseSolver='true',MinDelta=0,MinDeltaPose=0,MaxIter=2)
+    (root/'backend.txt').write_text(''.join(f'{k} {v}\n' for k,v in params.items()))
     return root

@@ -21,7 +21,7 @@ def main():
             ry=np.where(abs(dy)<1e-12,np.inf,np.where(dy>0,(4-y)/dy,(-3-y)/dy))
             scans.append(np.minimum(rx,ry))
     scans=np.asarray(scans);np.savetxt(data/'Range.txt',scans);np.savetxt(data/'Pose.txt',poses)
-    p=load_parameters(ROOT/'config.txt',dict(ModeMulti='true',DownRate=2,DownTime=2,MaxIter=4,Scale=.2,NumBeam=len(angles),MinAngle=angles[0],MaxAngle=angles[-1],MinRange=0,MaxRange=20,ModeSparseSolver='false',MinDelta=0,MinDeltaPose=0,MinMeanDeltaFirst=0,MinMeanDeltaPoseFirst=0,WeightSmoothN=1,WeightSmoothNSecond=1))
+    p=load_parameters(ROOT/'config/backend/default.txt',dict(ModeMulti='true',DownRate=2,DownTime=2,MaxIter=4,Scale=.2,NumBeam=len(angles),MinAngle=angles[0],MaxAngle=angles[-1],MinRange=0,MaxRange=20,ModeSparseSolver='false',MinDelta=0,MinDeltaPose=0,MinMeanDeltaFirst=0,MinMeanDeltaPoseFirst=0,WeightSmoothN=1,WeightSmoothNSecond=1))
     config=root/'config.txt';config.write_text(''.join(f'{k} {v}\n' for k,v in p.items()))
     command=[sys.executable,str(ROOT/'tools/txt_pipeline.py'),'--dataset',str(data),'--backend-config',str(config),'--output',str(root/'pipeline'),'--display-resolution','.05']
     with (root/'pipeline.log').open('w') as log:subprocess.run(command,check=True,stdout=log,stderr=subprocess.STDOUT)

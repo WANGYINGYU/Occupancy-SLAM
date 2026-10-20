@@ -5,3 +5,8 @@ __pycache__/
 *.pyc
 /.runtime
 /.venv/
+
+# External datasets and archived standalone resources do not belong on main.
+/Data/
+/3D_Preliminary/
+/images/

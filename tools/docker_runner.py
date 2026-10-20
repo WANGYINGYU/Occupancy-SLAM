@@ -139,7 +139,6 @@ def main():
         command += ['--group-add', str(group)]
     command += bind(data, readonly=True) + bind(storage)
     for path in mounts: command += bind(path, readonly=True)
-    if (ROOT/'Data').is_dir(): command += bind(ROOT/'Data', IMAGE_ROOT/'Data', readonly=True)
     for name, target in [('tmp', '/tmp'), ('var_tmp', '/var/tmp'), ('shm', '/dev/shm')]:
         folder = run/'scratch'/name; folder.mkdir(parents=True, exist_ok=True)
         command += bind(folder, target)

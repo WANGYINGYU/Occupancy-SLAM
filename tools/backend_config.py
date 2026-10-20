@@ -13,7 +13,7 @@ def read_parameters(path):
 
 
 def load_parameters(path, overrides=None):
-    params=read_parameters(ROOT/'config.txt')
+    params=read_parameters(ROOT/'config/backend/default.txt')
     supplied=read_parameters(path)
     known=set(params)|{'Sizei','Sizej','OriginX','OriginY','FixedGrid','InitialMapRound','NormalizationRound','WeightSmoothNSecond'}
     if supplied.keys()-known: raise ValueError(f'Unknown backend parameters: {sorted(supplied.keys()-known)}')

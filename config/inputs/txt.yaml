@@ -1,5 +1,5 @@
 # Legacy text input. Change dataset and backend_config together for your scan geometry.
-dataset: ../../Data/Museum_b0
+dataset: null  # Set an external dataset path here, or pass --dataset.
 backend_config: ../backend/museum_b0.txt
 # Explicit ranges/poses/odom/timestamps paths override dataset filenames.
 # ranges: /absolute/path/Range.txt

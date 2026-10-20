@@ -1,6 +1,6 @@
 # Docker
 
-The image contains ROS2 Jazzy, slam_toolbox, the C++ 2D/3D applications, RViz2 with the grayscale Map extension, and Python input/evaluation dependencies. The original interactive OpenCV application and the MATLAB interpreter are not included.
+The image contains ROS2 Jazzy, slam_toolbox, the C++ 2D/3D applications, RViz2 with the grayscale Map extension, and Python input/evaluation dependencies. Standalone and MATLAB optimizers are maintained on `C_plus_plus`. Python readers support MATLAB-format simulation data without a MATLAB installation.
 
 ## Build and storage
 
@@ -20,8 +20,11 @@ The default image is `occupancy-slam:jazzy`, based on `ros:jazzy-ros-base-noble`
 ## 2D text data
 
 ```bash
+./tools/docker.sh --run-name example_intel exec \
+  python3 /opt/occupancy-slam/tools/download_example.py --dataset Intel
 ./tools/docker.sh --run-name intel_demo txt \
-  --dataset Data/Intel --backend-config config/backend/intel.txt \
+  --dataset "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/example_intel/Intel" \
+  --backend-config config/backend/intel.txt \
   --max-scans 20 --iterations 5 --display-resolution 0.05
 ```
 
@@ -83,7 +86,7 @@ Containers use host networking. Subscribers must use the same ROS domain and com
 ./tools/docker.sh test architecture
 ```
 
-Simulation conversion uses Python MAT readers. Running the separate MATLAB reference requires a MATLAB installation outside this image. Full benchmark and evaluation commands are in [VALIDATION.md](VALIDATION.md).
+Simulation conversion uses Python MAT readers; no MATLAB runtime is required. Full benchmark and evaluation commands are in [VALIDATION.md](VALIDATION.md).
 
 ## Argument and filesystem conventions
 

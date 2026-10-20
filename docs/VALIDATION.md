@@ -1,6 +1,6 @@
 # Reproducibility and evaluation
 
-This guide specifies the supported tests, simulation workflow, and evaluation conventions. Preserve the input data, initialization, effective configuration, software revision, and final accepted state when reporting results. The ROS2 frontend, sparse C++ 3D backend, and preliminary MATLAB implementation have distinct scopes and should be identified explicitly.
+This guide specifies the supported tests, simulation workflow, and evaluation conventions. Preserve the input data, initialization, effective configuration, software revision, and final accepted state when reporting results. Identify the ROS2 frontend and C++ backend configurations separately when reporting results. Standalone MATLAB optimizers are outside this branch.
 
 ## Functional and numerical tests
 
@@ -10,7 +10,7 @@ This guide specifies the supported tests, simulation workflow, and evaluation co
 ./tools/docker.sh test architecture
 ```
 
-Native equivalents use `./tools/test.sh`. Install `requirements-test.txt` for native tests, or `requirements-matlab.txt` for simulation conversion and evaluation as well.
+Native equivalents use `./tools/test.sh`. Test fixtures are generated locally on the data disk; no dataset checkout or download is required. Install `requirements-test.txt` for native tests, or `requirements-matlab.txt` for simulation conversion and evaluation as well.
 
 | Suite | Coverage |
 | --- | --- |
@@ -92,20 +92,6 @@ Map evaluation uses native M/N fields and the simulator's independent geometry, 
 
 All three map states use the same trajectory alignment. No map ICP or method-specific map alignment is performed. The aggregation tool writes per-case/group CSV, LaTeX, and PNG/PDF outputs. Report grouping and repeated initializations explicitly. The stored grid resolution and observation sampling are part of the experimental setup.
 
-## Optional MATLAB reference
-
-The original 2D MATLAB numerical functions must be supplied externally. A licensed native MATLAB installation is required:
-
-```bash
-python3 tools/run_on_data.py --name matlab_reference -- \
-  python3 "$PWD/tools/run_matlab_reference.py" \
-  --source /absolute/2D_Occupancy_SLAM_MATLAB \
-  --converted "$occupancy_converted" --scene Simu2680 --case odom_1 \
-  --matlab /absolute/path/to/matlab --iterations 20
-```
-
-This adapter is for the specific supplied single-resolution MATLAB function layout, not arbitrary MATLAB implementations. It copies the functions, removes display/information output, executes `parfor` serially, and supplies the recorded noisy initialization. Mathematical functions and original source files remain unchanged. The corresponding C++ comparison uses `simulation_matlab.txt`, exact samples, and the same frame selection. Record the supplied MATLAB source and effective parameters; agreement on this path does not imply equality across different optimization profiles.
-
 ## Scope of reported evidence
 
-Repository tests establish the covered software behavior. Dataset-level accuracy requires matched observations, initialization, parameter settings, and evaluation conventions. A smaller optimization objective or a visually cleaner classified map is insufficient evidence of a ground-truth improvement. The qualitative images in the README belong to the original research release; quantitative results for the publications should be interpreted using their stated protocols.
+Repository tests establish the covered software behavior. Dataset-level accuracy requires matched observations, initialization, parameter settings, and evaluation conventions. A smaller optimization objective or a visually cleaner classified map is insufficient evidence of a ground-truth improvement. The qualitative images linked in the README belong to the original research release; quantitative results for the publications should be interpreted using their stated protocols.

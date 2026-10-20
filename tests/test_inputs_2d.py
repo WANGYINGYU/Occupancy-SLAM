@@ -7,7 +7,7 @@ import subprocess
 import sys
 import numpy as np
 import yaml
-from make_fixtures import make_bags
+from make_fixtures import make_bags, make_txt
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
 from pipeline_config import parse_config
@@ -27,26 +27,26 @@ def invoke(name,command,expected=True,contains=None):
     print(name,'PASS',flush=True)
 
 
-def check_txt(name,dataset,profile,pose_source):
+def check_txt(name,dataset,pose_source):
     out=run/name
     extra=[]
     if pose_source=='odom':
         empty=run/'no_pose_file';empty.mkdir()
-        extra=['--dataset',empty,'--ranges',ROOT/'Data'/dataset/'Range.txt',
-               '--odom',ROOT/'Data'/dataset/'Odom.txt','--pose-source','auto']
-    invoke(name,['bash',ROOT/'tools/run_2d.sh','txt','--dataset',ROOT/'Data'/dataset,
-                 '--backend-config',ROOT/'config/backend'/profile,'--pose-source',pose_source,
+        extra=['--dataset',empty,'--ranges',dataset/'Range.txt',
+               '--odom',dataset/'Odom.txt','--pose-source','auto']
+    invoke(name,['bash',ROOT/'tools/occupancy-slam','txt','--dataset',dataset,
+                 '--backend-config',dataset/'backend.txt','--pose-source',pose_source,
                  '--output',out,'--start',2,'--scan-stride',3,'--max-scans',8,'--iterations',2,'--resolution',.5]+extra)
     summary=json.loads((out/'summary.json').read_text())
     assert summary['accepted_scans']==8
     indices=np.loadtxt(out/'selected_indices.txt',dtype=int)
     np.testing.assert_array_equal(indices,np.arange(2,26,3))
-    np.testing.assert_array_equal(np.loadtxt(out/'Range.txt'),np.loadtxt(ROOT/'Data'/dataset/'Range.txt')[indices])
-    source_poses=np.loadtxt(ROOT/'Data'/dataset/'Pose.txt')
+    np.testing.assert_array_equal(np.loadtxt(out/'Range.txt'),np.loadtxt(dataset/'Range.txt')[indices])
+    source_poses=np.loadtxt(dataset/'Pose.txt')
     if pose_source=='file':
         np.testing.assert_array_equal(np.loadtxt(out/'Pose.txt'),source_poses[indices])
-    if (ROOT/'Data'/dataset/'Odom.txt').exists():
-        original=np.loadtxt(ROOT/'Data'/dataset/'Odom.txt')
+    if (dataset/'Odom.txt').exists():
+        original=np.loadtxt(dataset/'Odom.txt')
         # Independently compose the selected odometry using scalar SE2 formulas.
         absolute=[original[0].copy()]
         for dx,dy,theta in original[1:]:
@@ -81,9 +81,11 @@ for content in (dict(scan_topik='/typo'),dict(max_scans=2.5),dict(odom_source='t
     try: parse_config(bag_parser(),['--config',str(profile),'--bag','dummy'],path_keys=('bag','backend','slam_config'))
     except ValueError: pass
     else: raise AssertionError(content)
-check_txt('txt_museum','Museum_b0','museum_b0.txt','file')
-check_txt('txt_intel_pose_odom','Intel','intel.txt','file')
-check_txt('txt_intel_odom_only','Intel','intel.txt','odom')
+pose_fixture = make_txt(run/'fixture_txt_pose', with_odometry=False)
+odom_fixture = make_txt(run/'fixture_txt_odom')
+check_txt('txt_pose',pose_fixture,'file')
+check_txt('txt_pose_odom',odom_fixture,'file')
+check_txt('txt_odom_only',odom_fixture,'odom')
 
 topics=dict(laser='/robot/front/ranges',cloud='/lidar/filtered_cloud',odom='/robot/wheel/odometry',
             tf='/robot/transforms',tf_static='/robot/static_transforms')
@@ -99,7 +101,7 @@ for i,(name,bag,source,topic) in enumerate([
                   tf_max_gap=1.1,iterations=1,resolution=.4,beam_stride=2,bins=360,max_range=15.,
                   scan_timeout=1.,domain_id=160+i,output=str(out),slam_config=str(ROOT/'config/slam_toolbox.yaml'))
     config=run/(name+'.yaml');config.write_text(yaml.safe_dump(settings))
-    invoke(name,['bash',ROOT/'tools/run_2d.sh','bag','--config',config])
+    invoke(name,['bash',ROOT/'tools/occupancy-slam','bag','--config',config])
     summary=json.loads((out/'summary.json').read_text())
     assert summary['accepted_scans']>=20 and summary['input_topics']['scan']==topic
     np.testing.assert_allclose(np.loadtxt(out/'input_odometry.txt')[0],[.4,-.1,.3],atol=1e-9)
@@ -118,9 +120,9 @@ np.testing.assert_allclose(np.loadtxt(run/'renamed_laser_tf/Range.txt'),
 bad=run/'bad_topic.yaml'
 settings.update(odom_source='odom',odom_topic='/does_not_exist',output=str(run/'bad_topic'))
 bad.write_text(yaml.safe_dump(settings))
-invoke('reject_wrong_odom',['bash',ROOT/'tools/run_2d.sh','bag','--config',bad],False,'No Odometry')
+invoke('reject_wrong_odom',['bash',ROOT/'tools/occupancy-slam','bag','--config',bad],False,'No Odometry')
 settings.update(scan_topic='/does_not_exist',odom_topic=topics['odom'],output=str(run/'bad_scan'))
 bad.write_text(yaml.safe_dump(settings))
-invoke('reject_wrong_scan',['bash',ROOT/'tools/run_2d.sh','bag','--config',bad],False,'No scan topic')
+invoke('reject_wrong_scan',['bash',ROOT/'tools/occupancy-slam','bag','--config',bad],False,'No scan topic')
 (run/'verification.json').write_text(json.dumps(results,indent=2))
 print('All TXT and renamed-topic pipeline checks passed',flush=True)

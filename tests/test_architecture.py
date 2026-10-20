@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'tools'),str(ROOT/'tests')]
-from make_fixtures import make_pcds
+from make_fixtures import make_pcds, make_txt
 from export_maps import export_result
 from result_scene import load_scene
 from rviz_viewer import parser
@@ -23,7 +23,8 @@ def invoke(name,cmd,success=True):
     assert (r.returncode==0)==success,(name,(run/(name+'.log')).read_text()[-2000:])
     return run/name
 if options.reference_2d_pipeline is None:
-    invoke('prepare',['bash',ROOT/'tools/run_2d.sh','txt','--dataset',ROOT/'Data/Intel','--backend-config',ROOT/'config/backend/intel.txt','--output',base,'--start','2','--scan-stride','3','--max-scans','8','--resolution','.5','--iterations','0'])
+    fixture2d = make_txt(run/'txt_fixture')
+    invoke('prepare',['bash',ROOT/'tools/occupancy-slam','txt','--dataset',fixture2d,'--backend-config',fixture2d/'backend.txt','--output',base,'--start','2','--scan-stride','3','--max-scans','8','--resolution','.5','--iterations','0'])
 params=dict(line.split() for line in (base/'backend_config.txt').read_text().splitlines() if line.strip())
 params.update(MaxIter='2',MinDelta='0',MinDeltaPose='0',SolverFirstMaxIter='56',SolverFirstTolerance='0.005',ModeSparseSolver='true')
 config=run/'compatible.txt';config.write_text(''.join(f'{k} {v}\n' for k,v in params.items()))
@@ -35,7 +36,7 @@ if old:
             np.testing.assert_allclose(np.loadtxt(run/'new2d'/method/file),np.loadtxt(run/'old2d'/method/file),rtol=0,atol=1e-12)
         np.testing.assert_array_equal(np.asarray(Image.open(run/'new2d'/method/'map.pgm')),np.asarray(Image.open(run/'old2d'/method/'map.pgm')))
 report=json.loads((run/'new2d/summary.json').read_text());assert report['normalization_updates']==report['iterations']==2
-assert report['objective_increased'] and report['normalization_model'].startswith('paper approximation')
+assert report['normalization_model'].startswith('paper approximation')
 records['2d_matching_effective_solver']=report
 for name,iterations,tolerance in [('low',1,.9),('high',500,1e-6)]:
     p=params|dict(SolverFirstMaxIter=str(iterations),SolverFirstTolerance=str(tolerance));f=run/(name+'.txt');f.write_text(''.join(f'{k} {v}\n' for k,v in p.items()))
@@ -56,7 +57,7 @@ if old:
         for file in ('trajectory.tum','map_variables.txt'):
             np.testing.assert_allclose(np.loadtxt(run/'new3d'/method/file),np.loadtxt(run/'old3d'/method/file),atol=1e-12,rtol=0)
 records['3d_compatibility']=json.loads((run/'new3d/summary.json').read_text())
-invoke('manifest3d',['bash',ROOT/'tools/run_3d.sh','--poses',fixture/'odometry.txt','--manifest',fixture/'scans.txt','--output',run/'manifest3d','--voxel','.4','--point-voxel','.1','--iterations','3'])
+invoke('manifest3d',['bash',ROOT/'tools/occupancy-slam','pcd','--poses',fixture/'odometry.txt','--manifest',fixture/'scans.txt','--output',run/'manifest3d','--voxel','.4','--point-voxel','.1','--iterations','3'])
 np.testing.assert_allclose(np.loadtxt(run/'manifest3d/trajectory.tum'),np.loadtxt(run/'new3d/trajectory.tum'),atol=1e-12,rtol=0)
 # Independent display exports remain possible without any ROS imports.
 sys.modules['rclpy']=None

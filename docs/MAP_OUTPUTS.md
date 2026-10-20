@@ -55,6 +55,6 @@ Reintegration accumulates trilinear interpolation weight times observation targe
 
 ## Interpretation and visualization
 
-RViz topic method `optimized` refers to the `joint/` state. All states share the display coordinate frame. [RViz](RVIZ.md) documents topic selection and visual thresholds. `tools/compare_maps.py` provides static map comparison plots; quantitative simulation evaluation uses native fields and independent geometry as described in [VALIDATION.md](VALIDATION.md).
+RViz topic method `optimized` refers to the `joint/` state. All states share the display coordinate frame. [RViz](RVIZ.md) documents topic selection and visual thresholds. Quantitative simulation evaluation uses native fields and independent geometry as described in [VALIDATION.md](VALIDATION.md).
 
 `run_status.json` distinguishes completed, failed, and interrupted execution. `summary.json` records the solver stop reason and iteration statistics. Neither successful completion nor a lower optimization objective establishes improved ground-truth accuracy.
