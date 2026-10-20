@@ -2,6 +2,8 @@
 
 Research code for **joint optimization of robot trajectories and occupancy maps**.
 
+**For the standalone version without ROS2, use the [C_plus_plus branch](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus).** The `main` branch provides the ROS2 integration and Docker workflow.
+
 **Occupancy-SLAM: An Efficient and Robust Algorithm for Simultaneously Optimizing Robot Poses and Occupancy Map**<br>
 Yingyu Wang, Liang Zhao, and Shoudong Huang<br>
 *IEEE Transactions on Robotics*, vol. 41, pp. 4057-4077, 2025.<br>
@@ -18,10 +20,43 @@ Occupancy-SLAM estimates robot poses and occupancy values at grid vertices in a 
 
 This branch provides ROS2 integration around the C++ backends: ROS1/ROS2 bag input, original 2D text input, 3D PCD/trajectory input, Docker execution, and RViz2 visualization. The sparse C++ 3D backend is an additional implementation; the preliminary MATLAB 3D optimizer and submap joining code are provided separately in [3D_Preliminary/](3D_Preliminary/). Their supported options differ.
 
+## Branch selection
+
 | Branch | Implementation |
 | --- | --- |
 | [main](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/main) | C++ backends with ROS2 input and visualization interfaces, Docker, and evaluation tools. |
 | [C_plus_plus](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus) | Original standalone C++ implementation. **Use this branch if you do not use ROS2.** |
+
+To obtain the original standalone C++ version without ROS2:
+
+```bash
+git clone --branch C_plus_plus https://github.com/WANGYINGYU/Occupancy-SLAM.git
+cd Occupancy-SLAM
+```
+
+For an existing clone, switch branches from the repository directory:
+
+```bash
+git fetch origin
+git switch C_plus_plus
+```
+
+Follow the installation and execution instructions in that branch's README. The instructions below apply to `main`.
+
+## Repository structure
+
+| Path | Purpose |
+| --- | --- |
+| [cpp/](cpp/), [src/](src/), [include/occupancy/](include/occupancy/) | Batch C++ applications, optimization, scan I/O, map export, and backend interfaces. |
+| [Main_Occupancy_SLAM.cpp](Main_Occupancy_SLAM.cpp), [FuncLeastSquares.cpp](FuncLeastSquares.cpp) | Original interactive 2D application and optimization driver, built with `BUILD_LEGACY=ON`. |
+| [FuncConvertObs.cpp](FuncConvertObs.cpp) | 2D observation conversion. |
+| [MyStruct.h](MyStruct.h), [MyStruct.cpp](MyStruct.cpp) | 2D parameter structures and defaults. |
+| [SubFuncs.h](SubFuncs.h), [SubFuncs.cpp](SubFuncs.cpp) | Shared 2D optimization and mapping utilities, including configuration loading. |
+| [config.txt](config.txt), [config/](config/) | Original 2D configuration and profiles for input adapters, backends, and `slam_toolbox`. |
+| [tools/](tools/), [ros2/](ros2/), [docker/](docker/) | Pipeline commands, data conversion and evaluation, ROS2 visualization, and container setup. |
+| [tests/](tests/), [docs/](docs/) | Correctness checks and detailed usage documentation. |
+| [Data/](Data/), [images/](images/) | Example datasets and qualitative results from the original research release. |
+| [3D_Preliminary/](3D_Preliminary/) | Preliminary MATLAB 3D optimization and submap joining. |
 
 ## Installation
 
@@ -78,7 +113,15 @@ The repository includes example laser scans and initial trajectories in [Data/](
   --result "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/intel_demo/pipeline"
 ```
 
-For a complete dataset, omit `--max-scans`. Select the scan geometry and optimization parameters appropriate to that dataset. The short command above is a functional example.
+The Museum b0 example from the original implementation is also supported:
+
+```bash
+./tools/docker.sh --run-name museum_demo txt \
+  --dataset Data/Museum_b0 --backend-config config/backend/museum_b0.txt \
+  --max-scans 20 --iterations 5 --display-resolution 0.05
+```
+
+For a complete dataset, omit `--max-scans`. Select the scan geometry and optimization parameters appropriate to that dataset. These short commands are functional examples.
 
 ### ROS1 or ROS2 bag input
 
@@ -107,12 +150,18 @@ The NC20 layout uses `odometry.txt` and `PCD/full0.pcd`, `full1.pcd`, etc. Gener
 
 | Input | Convention |
 | --- | --- |
-| `Range.txt` | One scan per row; one range in metres per beam, in increasing angular order. |
-| `Pose.txt` | Absolute sensor poses `x y yaw`, in metres and radians. |
-| `Odom.txt` | Optional: an absolute first pose, followed by SE(2) increments in the preceding sensor frame. |
+| `Range.txt` | `m x n`: one scan per row; one range in metres per beam, in increasing angular order. |
+| `Pose.txt` | `m x 3`: absolute sensor poses `x y yaw`, in metres and radians. |
+| `Odom.txt` | Optional `m x 3`: an absolute first pose, followed by SE(2) increments in the preceding sensor frame. |
 | `timestamps.txt` | Optional strictly increasing timestamps in seconds. |
 | 3D poses | TUM rows `timestamp x y z qx qy qz qw`; poses transform sensor coordinates into world coordinates. |
 | PCD | Individual scans in sensor coordinates. |
+
+For 2D text input, `m` is the number of scans and `n` is the number of beams. Scan and pose rows must correspond one-to-one; optional odometry and timestamp files must have the same number of rows. Set `NumBeam`, `MinAngle`, and `MaxAngle` in the backend configuration to match the scan geometry.
+
+### Parameters
+
+The original [config.txt](config.txt) is retained. Parameter structures are defined in [MyStruct.h](MyStruct.h), with defaults in [MyStruct.cpp](MyStruct.cpp) and configuration loading in [SubFuncs.cpp](SubFuncs.cpp). For the batch pipeline, select a dataset-specific file with `--backend-config`; configure that file rather than assuming the original defaults match every sensor.
 
 Input profiles are in [config/inputs/](config/inputs/); C++ 2D profiles are in [config/backend/](config/backend/); frontend settings are in [config/slam_toolbox.yaml](config/slam_toolbox.yaml). CLI options override YAML. YAML input paths are relative to the configuration file; CLI input paths are relative to the calling directory. Detailed conventions and solver settings are documented in [config/README.md](config/README.md).
 
@@ -150,20 +199,27 @@ Native equivalents are `./tools/test.sh unit`, `inputs`, and `architecture`. Tes
 
 The simulation workflow converts the original MATLAB data while preserving stored observations and supplied initializations, runs the C++ optimizer, and evaluates trajectories and maps against independent ground truth. It uses one shared initial-pose SE(2) alignment for the primary trajectory comparison, excludes the fixed first pose, and reports the final accepted state. The conversion, benchmark, map evaluation, and aggregation commands are in the [reproducibility guide](docs/VALIDATION.md). Raw simulation data and external MATLAB functions must be supplied separately.
 
+## Preliminary 3D implementation (MATLAB)
+
+The original MATLAB implementation remains available in [3D_Preliminary/](3D_Preliminary/):
+
+- [3D_Occupancy_SLAM/](3D_Preliminary/3D_Occupancy_SLAM/) jointly optimizes a trajectory and a single occupancy map; the entry point is `Main_3D_Occpancy.m`.
+- [3D_Occupancy_Joining/](3D_Preliminary/3D_Occupancy_Joining/) joins submaps whose internal poses have already been optimized; the entry point is `Main_3D_Occupancy_Joining.m`.
+
+See the [MATLAB README](3D_Preliminary/README.md) for dependencies, data conventions, parameters, and execution instructions. These scripts are separate from the C++ 3D pipeline described above.
+
+## Showcase video
+
+[![Occupancy-SLAM video](https://img.youtube.com/vi/-_-39SrPxKk/maxresdefault.jpg)](https://www.youtube.com/watch?v=-_-39SrPxKk&t=4s)
+
 ## Qualitative results
 
 The following images are examples distributed with the original research implementation. Dataset-level quantitative results and experimental protocols are reported in the papers.
 
-| Intel Lab initialization | Occupancy-SLAM |
-| --- | --- |
-| ![Initial Intel Lab map](images/Intel_Ini.jpg) | ![Optimized Intel Lab map](images/Intel_Our.jpg) |
-
-<details>
-<summary>Additional qualitative examples</summary>
-
 | Dataset | Initialization | Occupancy-SLAM |
 |---|---|---|
 | ACES | ![Initial ACES map](images/ACES_Ini.jpg) | ![Optimized ACES map](images/ACES_Our.jpg) |
+| Intel Lab | ![Initial Intel Lab map](images/Intel_Ini.jpg) | ![Optimized Intel Lab map](images/Intel_Our.jpg) |
 | C5 | ![Initial C5 map](images/C5_Ini.jpg) | ![Optimized C5 map](images/C5_Our.jpg) |
 | Museum b0 | ![Initial b0 map](images/b0_Ini.jpg) | ![Optimized b0 map](images/b0_Our.jpg) |
 | Freiburg Building 079 | ![Initial fr079 map](images/fr079_Ini.jpg) | ![Optimized fr079 map](images/fr079_Our.jpg) |
@@ -175,11 +231,9 @@ The following images are examples distributed with the original research impleme
 
 ### High-frequency scan comparison
 
-High-frequency scan comparison distributed with the original implementation.
+Comparison of different methods using high-frequency scans on a simulation dataset, as distributed with the original implementation.
 
 ![High-Frequency Scan Results](images/High_Frequency.png)
-
-</details>
 
 ## Citation
 
