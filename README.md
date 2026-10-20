@@ -7,7 +7,7 @@ C++ implementation of:
 
 Authors: Yingyu Wang, Liang Zhao, Shoudong Huang.
 
-**For the original version without ROS2, use the [C_plus_plus branch](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus) and its installation instructions.** The instructions below are for the ROS2 `main` branch.
+**For the original version without ROS, use the [C_plus_plus branch](https://github.com/WANGYINGYU/Occupancy-SLAM/tree/C_plus_plus) and its installation instructions.** The instructions below are for the ROS2 `main` branch.
 
 ## Overview
 
