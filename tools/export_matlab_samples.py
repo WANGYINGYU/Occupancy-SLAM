@@ -27,5 +27,5 @@ def export_all(converted,root,scenes=None):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--converted',type=Path,required=True);a=p.parse_args()
-    root=Path(os.environ['SDF_BA_RUN_ROOT']);shutil.copy2(__file__,root/'export_source.py');export_all(a.converted,root)
+    root=Path(os.environ['OCCUPANCY_RUN_DIR']);shutil.copy2(__file__,root/'export_source.py');export_all(a.converted,root)
 if __name__=='__main__':main()

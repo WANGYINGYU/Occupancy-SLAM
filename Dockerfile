@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /opt/occupancy-slam
 COPY requirements*.txt ./
 RUN python3 -m venv --system-site-packages /opt/occupancy-venv \
-    && /opt/occupancy-venv/bin/pip install --no-cache-dir -r requirements-matlab.txt
+    && /opt/occupancy-venv/bin/pip install --no-cache-dir -r requirements-evaluation.txt
 ENV PATH="/opt/occupancy-venv/bin:/opt/occupancy-slam/build:${PATH}" \
     PYTHONDONTWRITEBYTECODE=1 \
     OCCUPANCY_RUNTIME_SETUP=/opt/ros/jazzy/setup.bash \

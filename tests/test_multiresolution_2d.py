@@ -9,7 +9,7 @@ sys.path.insert(0,str(ROOT/'tools'))
 from backend_config import load_parameters
 
 def main():
-    root=Path(os.environ['SDF_BA_RUN_ROOT']);data=root/'input';data.mkdir()
+    root=Path(os.environ['OCCUPANCY_RUN_DIR']);data=root/'input';data.mkdir()
     angles=np.linspace(-np.pi,np.pi,90,endpoint=False)
     truth=np.array([[0,0,0],[.12,.03,.02],[.25,.06,.04],[.38,.04,.05]])
     poses=truth.copy();poses[1:,:2]+=[[.02,-.01],[-.01,.02],[.03,.01]];poses[1:,2]+=[.004,-.003,.006]
@@ -42,7 +42,7 @@ def main():
     # Cached display maps survive a new viewer output and invalidate on source edits.
     import export_maps
     from unittest.mock import patch
-    os.environ['SDF_BA_STORAGE_ROOT']=str(root)
+    os.environ['OCCUPANCY_WORKSPACE']=str(root)
     cached=export_maps.prepare_display(root/'pipeline',.05,root/'viewer_a')
     with patch.object(export_maps,'export_result',side_effect=AssertionError('Cache was not reused')):
         assert export_maps.prepare_display(root/'pipeline',.05,root/'viewer_b')==cached

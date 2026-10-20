@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build/run Occupancy-SLAM containers with persistent data-disk outputs."""
+"""Build/run Occupancy-SLAM containers with a configurable output workspace."""
 import argparse
 import json
 import os
@@ -47,7 +47,7 @@ def bind(source, target=None, readonly=False):
     return ['--mount', f'type=bind,src={source},dst={target}' + (',readonly' if readonly else '')]
 
 
-def prepare_arguments(arguments, caller, data, storage, run):
+def prepare_arguments(arguments, caller, storage, run):
     args = list(arguments); inputs = []
     for i, item in enumerate(args):
         key, sep, value = item.partition('=')
@@ -59,7 +59,7 @@ def prepare_arguments(arguments, caller, data, storage, run):
             value = args[i+1]
         if key == '--output':
             if not absolute(value, run).is_relative_to(storage):
-                raise ValueError('Output must be inside the experiment data directory')
+                raise ValueError('Output must be inside OCCUPANCY_WORKSPACE')
             continue
         path = absolute(value, caller)
         if path.is_relative_to(IMAGE_ROOT):
@@ -95,49 +95,43 @@ def main():
     a = parser().parse_args()
     caller = Path(os.environ.get('OCCUPANCY_DOCKER_CALLER_DIR', os.getcwd())).resolve()
     # Preserve the caller before the launcher's chdir. Never write outputs in the checkout.
-    if not os.environ.get('SDF_BA_RUN_ROOT'):
+    if not os.environ.get('OCCUPANCY_RUN_DIR'):
         env = dict(os.environ, OCCUPANCY_DOCKER_CALLER_DIR=str(caller))
-        launcher = Path(os.environ.get('OCCUPANCY_DATA_LAUNCHER', str(ROOT/'tools/run_on_data.py')))
+        launcher = Path(os.environ.get('OCCUPANCY_RUNNER', str(ROOT/'tools/run.py')))
         name = a.run_name or f'occupancy_docker_{a.command}_{time.strftime("%Y%m%d_%H%M%S")}_{os.getpid()}'
         command = [sys.executable, str(launcher), '--name', name, '--', sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]]
         os.execvpe(command[0], command, env)
-    from run_on_data import require_data_disk, DATA, STORAGE
-    require_data_disk()
-    data = DATA.resolve(); storage = STORAGE.resolve(); run = Path(os.environ['SDF_BA_RUN_ROOT']).resolve()
-    if not run.is_relative_to(storage):
-        raise ValueError('Container run directory must be on the experiment data disk')
+    from workspace import require_workspace, current_run
+    storage = require_workspace(); run = current_run()
+    if storage.is_relative_to(IMAGE_ROOT) or IMAGE_ROOT.is_relative_to(storage):
+        raise ValueError('Workspace must not overlap the container application directory')
     if a.command == 'build':
-        docker_root = Path(subprocess.check_output(['docker', 'info', '--format', '{{.DockerRootDir}}'], text=True).strip()).resolve()
-        if not docker_root.is_relative_to(data):
-            raise ValueError(f'Docker image/build storage must be on the data disk; current root is {docker_root}')
         return execute(['docker', 'build', '--progress=plain', '--tag', a.image, *a.arguments, str(ROOT)], run, 'build')
-    args, inputs = prepare_arguments(a.arguments, caller, data, storage, run)
+    args, inputs = prepare_arguments(a.arguments, caller, storage, run)
     if a.command == 'inspect' and args and args[0] not in ('--help', '-h'):
         bag = absolute(args[0], caller)
         if not bag.exists(): raise ValueError(f'Bag does not exist: {bag}')
         args[0] = str(bag); inputs.append(bag if bag.is_dir() else bag.parent)
     inputs += [absolute(p, caller) for p in a.mount_input]
-    # Preserve host config/data path semantics, while executing the source built into the image.
-    if not ROOT.is_relative_to(data): inputs.append(ROOT)
+    # A bundled YAML can reference sibling backend/slam profiles.
+    config_root = ROOT/'config'
+    if any(path.is_relative_to(config_root) for path in inputs): inputs.append(config_root)
     inputs = sorted(set(inputs), key=lambda p: len(p.parts))
     mounts = []
     for path in inputs:
         if not path.exists(): raise ValueError(f'Mount input does not exist: {path}')
         if path == Path('/') or path.is_relative_to(IMAGE_ROOT):
             raise ValueError(f'Refusing input mount over system/image paths: {path}')
-        if path.is_relative_to(data) and not path.is_relative_to(storage): continue
         if any(path.is_relative_to(p) for p in mounts): continue
         if run.is_relative_to(path):
             raise ValueError(f'Input mount would cover this run output; use a narrower directory: {path}')
-        if data.is_relative_to(path):
-            raise ValueError(f'Use a narrower input directory than {path}')
         mounts.append(path)
     command = ['docker', 'run', '--rm', '--init', '--read-only', '--network', 'host',
                '--user', f'{os.getuid()}:{os.getgid()}', '--cap-drop', 'ALL',
                '--security-opt', 'no-new-privileges', '--workdir', str(run)]
     for group in sorted(set(os.getgroups()) - {os.getgid()}):
         command += ['--group-add', str(group)]
-    command += bind(data, readonly=True) + bind(storage)
+    command += bind(storage)
     for path in mounts: command += bind(path, readonly=True)
     for name, target in [('tmp', '/tmp'), ('var_tmp', '/var/tmp'), ('shm', '/dev/shm')]:
         folder = run/'scratch'/name; folder.mkdir(parents=True, exist_ok=True)
@@ -151,14 +145,14 @@ def main():
     for name in ('XDG_CONFIG_HOME', 'XDG_RUNTIME_DIR'):
         folder = run/'scratch'/name.lower(); folder.mkdir(parents=True, exist_ok=True, mode=0o700)
         command += ['--env', f'{name}={folder}']
-    keys = ['SDF_BA_RUN_ROOT', 'SDF_BA_STORAGE_ROOT', 'SDF_BA_OUTPUT_DIR', 'TMPDIR', 'TMP', 'TEMP',
+    keys = ['OCCUPANCY_RUN_DIR', 'OCCUPANCY_WORKSPACE', 'TMPDIR', 'TMP', 'TEMP',
             'ROS_LOG_DIR', 'ROS_HOME', 'XDG_CACHE_HOME', 'MPLCONFIGDIR', 'JOBLIB_TEMP_FOLDER',
-            'NUMBA_CACHE_DIR', 'PIP_CACHE_DIR', 'CUDA_CACHE_PATH', 'TORCH_EXTENSIONS_DIR', 'PYTHONPYCACHEPREFIX']
+            'NUMBA_CACHE_DIR', 'PIP_CACHE_DIR', 'PYTHONPYCACHEPREFIX']
     for key in keys:
         if key in os.environ: command += ['--env', f'{key}={os.environ[key]}']
     for key in ('OCCUPANCY_INPUT_CALLER_DIR', 'OCCUPANCY_VIEWER_CALLER_DIR'):
         command += ['--env', f'{key}={caller}']
-    command += ['--env', f'OCCUPANCY_DATA_ROOT={data}', '--env', 'PYTHONDONTWRITEBYTECODE=1']
+    command += ['--env', 'PYTHONDONTWRITEBYTECODE=1']
     if a.gui:
         display = os.environ.get('DISPLAY')
         if not display: raise ValueError('--gui requires a local X11/XWayland DISPLAY')

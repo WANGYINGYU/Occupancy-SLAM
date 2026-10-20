@@ -7,28 +7,28 @@ The image contains ROS2 Jazzy, slam_toolbox, the C++ 2D/3D applications, RViz2 w
 Run from the repository root on Linux with Docker Engine and Python 3 available:
 
 ```bash
-export OCCUPANCY_DATA_ROOT=/mnt/data
+export OCCUPANCY_WORKSPACE="$HOME/occupancy-slam-workspace"
 ./tools/docker.sh build
 ```
 
-The data root must be an existing writable disk mount. Each command creates a new directory below `$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/`. Use `--run-name` to name it, or let the wrapper generate a name. Existing run names are rejected. Inputs are mounted read-only; outputs, temporary files, caches, ROS logs, and RViz settings are stored on the data disk.
+The workspace defaults to `~/occupancy-slam-workspace`. It is created automatically and can be any writable directory, including a directory on the system disk. Set `OCCUPANCY_WORKSPACE` to an absolute path to use another location. Paths containing spaces are supported; quote shell arguments. Each command creates a new directory below `$OCCUPANCY_WORKSPACE/runs/`. Use `--run-name` to name it, or let the wrapper generate a name. Existing run names are rejected.
 
-Docker image/build storage must also be on that disk. The wrapper checks `docker info`'s Docker Root Dir and does not modify host service settings. Configure Docker's `data-root`; installations using the containerd image store also need a separate containerd storage root. Follow the official [Docker daemon storage documentation](https://docs.docker.com/engine/daemon/#daemon-data-directory).
+Inputs are mounted read-only at their original absolute paths. The workspace stores outputs, temporary files, caches, ROS logs, and RViz settings. The wrapper uses the Docker daemon's existing storage configuration; there is no required Docker `data-root`, disk label, mount point, or username. On a new Linux machine, install [Docker Engine](https://docs.docker.com/engine/install/ubuntu/) and verify that `docker info` works as the current user before running the wrapper. The tested host is Ubuntu 24.04 x86_64; the container supplies ROS2 Jazzy and Python dependencies.
 
-The default image is `occupancy-slam:jazzy`, based on `ros:jazzy-ros-base-noble`, with libigl v2.5.0. `--image` selects another tag. The image compiles the backends and RViz extension from source; host `build/`, `.runtime`, `.venv`, datasets, and third-party directories are excluded. Rebuild after implementation changes. Editing a mounted input configuration does not require a rebuild.
+The default image is `occupancy-slam:jazzy`, based on `ros:jazzy-ros-base-noble`, with libigl v2.5.0. `--image` selects another tag. The image compiles the backends and RViz extension from source; host `build/`, `.venv`, datasets, and third-party directories are excluded. Rebuild after implementation changes. Editing a mounted input configuration does not require a rebuild.
 
 ## 2D text data
 
 ```bash
 ./tools/docker.sh --run-name example_intel exec \
-  python3 /opt/occupancy-slam/tools/download_example.py --dataset Intel
+  python3 /opt/occupancy-slam/tools/download_example.py --example Intel
 ./tools/docker.sh --run-name intel_demo txt \
-  --dataset "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/example_intel/Intel" \
+  --dataset "$OCCUPANCY_WORKSPACE/runs/example_intel/Intel" \
   --backend-config config/backend/intel.txt \
   --max-scans 20 --iterations 5 --display-resolution 0.05
 ```
 
-The output is `.../codex_runs/intel_demo/pipeline/`. Native map states are in `optimized/{initial,joint,reintegrated}/`; display exports are in `display_maps/`.
+The output is `.../runs/intel_demo/pipeline/`. Native map states are in `optimized/{initial,joint,reintegrated}/`; display exports are in `display_maps/`.
 
 ## ROS1/ROS2 bags
 
@@ -57,10 +57,10 @@ On a Linux X11 or XWayland desktop:
 
 ```bash
 ./tools/docker.sh --gui view 2d \
-  --result "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/intel_demo/pipeline" \
+  --result "$OCCUPANCY_WORKSPACE/runs/intel_demo/pipeline" \
   --display-resolution 0.05
 ./tools/docker.sh --gui view 3d \
-  --result "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/pcd_demo/optimized"
+  --result "$OCCUPANCY_WORKSPACE/runs/pcd_demo/optimized"
 ```
 
 The wrapper forwards the current DISPLAY, X11 socket, and available Xauthority, and uses Mesa software rendering. It does not require `xhost +`, privileged containers, or NVIDIA Container Toolkit. Pure Wayland without XWayland and Docker Desktop GUI forwarding have not been validated.
@@ -90,8 +90,8 @@ Simulation conversion uses Python MAT readers; no MATLAB runtime is required. Fu
 
 ## Argument and filesystem conventions
 
-Wrapper options (`--gui`, `--image`, `--run-name`, `--mount-input`) precede the subcommand. Common CLI input paths are resolved on the host and mounted at the same absolute location. Paths inside custom YAML/manifests may require additional explicit mounts. Relative output paths belong to the new run; absolute outputs must remain within the experiment storage root and must be empty.
+Wrapper options (`--gui`, `--image`, `--run-name`, `--mount-input`) precede the subcommand. Common CLI input paths are resolved on the host and mounted at the same absolute location. Paths inside custom YAML/manifests may require additional explicit mounts. Relative output paths belong to the new run; absolute outputs must remain within the configured workspace and must be empty.
 
-The container runs with the host UID/GID, a read-only root filesystem, dropped capabilities, and `no-new-privileges`. The data disk is mounted at the same absolute path, with the experiment subtree writable. Container home, `/tmp`, `/var/tmp`, and `/dev/shm` are backed by the run's data-disk scratch directories.
+The container runs with the host UID/GID, a read-only root filesystem, dropped capabilities, and `no-new-privileges`. The workspace is mounted at the same absolute path. Container home, `/tmp`, `/var/tmp`, and `/dev/shm` are backed by the run's scratch directories. No host home or whole data disk is mounted implicitly.
 
 `container_command.json`, `container.log`, `container_status.json`, and `image.json` record runtime execution. Builds record `build_command.json`, `build.log`, and `build_status.json`. See Docker's [bind mount](https://docs.docker.com/engine/storage/bind-mounts/) and [run](https://docs.docker.com/reference/cli/docker/container/run/) references for the underlying options.

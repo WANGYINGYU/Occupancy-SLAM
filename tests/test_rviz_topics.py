@@ -2,7 +2,7 @@
 """Exercise native RViz Topic dropdown selection on X11; record DDS changes and real screenshots.
 
 Requires the checked-in 1500x950 RViz templates and standard desktop scaling.
-Run through run_on_data.py with DISPLAY/XAUTHORITY set, without concurrent GUI input.
+Run through tools/run.py with DISPLAY/XAUTHORITY set, without concurrent GUI input.
 """
 import argparse
 import ctypes

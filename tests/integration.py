@@ -8,7 +8,7 @@ import numpy as np
 from make_fixtures import make_bags,make_pcds
 
 ROOT=Path(__file__).resolve().parents[1]
-run=Path(os.environ['SDF_BA_RUN_ROOT'])/'integration'
+run=Path(os.environ['OCCUPANCY_RUN_DIR'])/'integration'
 run.mkdir()
 
 def command(name,args,success=True):

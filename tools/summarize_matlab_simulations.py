@@ -36,7 +36,7 @@ def main():
         p.add_argument('--'+name, type=Path, required=True)
     p.add_argument('--wait', action='store_true')
     a = p.parse_args()
-    out = Path(os.environ['SDF_BA_RUN_ROOT'])
+    out = Path(os.environ['OCCUPANCY_RUN_DIR'])
     shutil.copy2(__file__,out/'report_source.py')
     inventory = json.loads((a.converted/'inventory.json').read_text())
     expected = {(s['scene'], c['name']) for s in inventory for c in s['cases']}

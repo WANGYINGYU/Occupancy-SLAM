@@ -56,7 +56,7 @@ def run_case(source,case,run,options):
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--converted',type=Path,required=True);p.add_argument('--jobs',type=int,default=2);p.add_argument('--case',action='append',help='scene/case selection for adapter validation only')
     p.add_argument('--backend-config',type=Path,default=ROOT/'config/backend/simulation_multires_extended.txt');mode=p.add_mutually_exclusive_group();mode.add_argument('--samples',type=Path,help='Lossless Scan binary export root; defaults to converted samples or a fresh lossless export');mode.add_argument('--resample-endpoints',action='store_true',help='Explicit legacy experiment: reconstruct free samples at optimizer resolution');p.add_argument('--max-observations',type=int,default=100000000)
-    a=p.parse_args();run=Path(os.environ['SDF_BA_RUN_ROOT']);inventory=json.loads((a.converted/'inventory.json').read_text())
+    a=p.parse_args();run=Path(os.environ['OCCUPANCY_RUN_DIR']);inventory=json.loads((a.converted/'inventory.json').read_text())
     selected=[(a.converted/s['scene'],c) for s in inventory for c in s['cases'] if not a.case or s['scene']+'/'+c['name'] in a.case]
     if not selected:raise ValueError('No matching simulation cases')
     if not a.samples and not a.resample_endpoints:

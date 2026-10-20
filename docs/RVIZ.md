@@ -7,7 +7,7 @@ The viewer publishes saved results as standard ROS2 messages in one coordinate f
 ./tools/occupancy-slam view 3d --result /absolute/optimized
 ```
 
-For Docker, use `./tools/docker.sh --gui view ...`. Build the native display extension with `bash tools/build_rviz.sh` through the data-disk launcher before running the native viewer.
+For Docker, use `./tools/docker.sh --gui view ...`. Build the native display extension with `bash tools/build_rviz.sh` through `tools/run.py` before running the native viewer.
 
 ## Topics
 

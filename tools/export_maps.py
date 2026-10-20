@@ -5,9 +5,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from result_scene import load_scene,save_display_maps
 from result_layout import ResultLayout
+from workspace import require_workspace
 
 CACHE_VERSION=1
-DATA=Path(os.environ.get('OCCUPANCY_DATA_ROOT','/media/yingyuwang/Data')).resolve()
 
 def source_signature(result):
     """Invalidate on source/renderer edits, without hashing large scan payloads."""
@@ -52,7 +52,7 @@ def valid_cache(folder,resolution,signature):
     except (OSError,ValueError,KeyError,TypeError):return False
 
 def prepare_display(result,resolution,viewer_output):
-    """Reuse a complete map across viewer runs; keep all cache data on the data disk.
+    """Reuse a complete map across viewer runs; keep all cache data in the configured workspace.
 
     Immutable generations let an existing viewer continue reading while another
     builds a new resolution/source state. The per-entry lock serializes writers.
@@ -62,12 +62,9 @@ def prepare_display(result,resolution,viewer_output):
     result=Path(result).resolve();signature=source_signature(result)
     candidate=result/'display_maps'
     if valid_cache(candidate,resolution,signature):return candidate
-    storage=Path(os.environ.get('SDF_BA_STORAGE_ROOT',str(DATA/'experiments/sdf_ba'))).resolve()
-    if not DATA.is_mount() or not storage.is_relative_to((DATA/'experiments/sdf_ba').resolve()):
-        raise RuntimeError('Display cache requires the experiment data disk')
-    if os.statvfs(storage).f_flag & os.ST_RDONLY:raise RuntimeError('Experiment data disk is read-only')
+    storage=require_workspace()
     # Preserve path components as the cache key; no content hash or source-tree writes.
-    parent=storage/'occupancy_display_cache'/result.relative_to(result.anchor)/('resolution_'+float(resolution).hex())
+    parent=storage/'cache/display'/result.relative_to(result.anchor)/('resolution_'+float(resolution).hex())
     parent.mkdir(parents=True,exist_ok=True)
     with (parent/'.lock').open('a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX)

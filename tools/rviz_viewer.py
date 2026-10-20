@@ -277,9 +277,9 @@ def main():
         if value is not None:
             setattr(args, key, (base/value).resolve())
     if args.output is None:
-        if not os.environ.get('SDF_BA_RUN_ROOT'):
-            p.error('Use the data-disk launcher or specify --output for viewer logs/config')
-        args.output = Path(os.environ['SDF_BA_RUN_ROOT'])/'rviz'
+        if not os.environ.get('OCCUPANCY_RUN_DIR'):
+            p.error('Use tools/run.py or specify --output for viewer logs/config')
+        args.output = Path(os.environ['OCCUPANCY_RUN_DIR'])/'rviz'
     if not math.isfinite(args.display_resolution) or args.display_resolution <= 0:
         p.error('--display-resolution must be finite and positive')
     if args.max_points < 0 or not math.isfinite(args.duration) or args.duration < 0 or not 0 <= args.occupancy_threshold <= 1 or not 0 <= args.domain_id <= 232:

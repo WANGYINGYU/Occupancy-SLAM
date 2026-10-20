@@ -1,6 +1,6 @@
 # Configuration reference
 
-The public entry point is `tools/occupancy-slam {txt|bag|pcd}`. YAML keys use underscores; corresponding CLI options use hyphens. CLI values override YAML. Input paths in YAML are relative to the YAML file; CLI input paths are relative to the calling directory. Relative outputs are resolved inside a newly created data-disk run directory. Explicit unknown keys, invalid types, and missing configured topics are errors.
+The public entry point is `tools/occupancy-slam {txt|bag|pcd}`. YAML keys use underscores; corresponding CLI options use hyphens. CLI values override YAML. Input paths in YAML are relative to the YAML file; CLI input paths are relative to the calling directory. Relative outputs are resolved inside a newly created workspace run directory. Explicit unknown keys, invalid types, and missing configured topics are errors.
 
 ## Input profiles
 

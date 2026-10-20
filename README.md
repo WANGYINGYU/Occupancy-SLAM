@@ -66,35 +66,44 @@ cd Occupancy-SLAM
 
 ### Docker
 
-The image includes ROS2, the C++ backends, RViz2, and the Python conversion and evaluation dependencies. The host requires Linux, Python 3, and Docker Engine; a host ROS2 installation is unnecessary.
+The image includes ROS2, the C++ backends, RViz2, and the Python conversion and evaluation dependencies. The host requires Linux, Python >= 3.10, and [Docker Engine](https://docs.docker.com/engine/install/ubuntu/) accessible to the current user (`docker info` must succeed). A host ROS2 installation is unnecessary.
 
 ```bash
-export OCCUPANCY_DATA_ROOT=/mnt/data   # Existing writable data-disk mount
+export OCCUPANCY_WORKSPACE="$HOME/occupancy-slam-workspace"
 ./tools/docker.sh build
 ```
 
-The wrappers write results, logs, caches, and temporary files below `$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/`. This variable must identify a mounted data disk. Docker image/build storage must also reside on that disk. Configure Docker's `data-root` and, if applicable, the separate containerd image store before building; see the [Docker guide](docs/DOCKER.md).
+The workspace is an ordinary writable directory, created automatically. It defaults to `~/occupancy-slam-workspace`; set `OCCUPANCY_WORKSPACE` to choose another location. Runs are saved in `runs/` and reusable display maps in `cache/`. No separate disk mount or Docker storage reconfiguration is required. See the [Docker guide](docs/DOCKER.md).
 
 ### Native build
 
-After installing [ROS2 Jazzy](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html):
+On Ubuntu 24.04, install [ROS2 Jazzy](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html) first. Run the following commands from the cloned repository using the system Python 3.12:
 
 ```bash
+sudo apt-get update
 sudo apt-get install build-essential cmake git libeigen3-dev libpcl-dev \
-  python3-venv python3-pip ros-jazzy-slam-toolbox ros-jazzy-rviz2 \
+  python3-venv python3-pip python3-numpy python3-scipy python3-yaml python3-pil \
+  ros-jazzy-slam-toolbox ros-jazzy-rviz2 \
   ros-jazzy-rmw-fastrtps-cpp
 git clone --depth 1 --branch v2.5.0 https://github.com/libigl/libigl.git third_party/libigl
-python3 -m venv --system-site-packages .venv
+/usr/bin/python3 -m venv --system-site-packages .venv
 source .venv/bin/activate
-python3 -m pip install -r requirements-matlab.txt
+python3 -m pip install -r requirements.txt
 source /opt/ros/jazzy/setup.bash
-export OCCUPANCY_DATA_ROOT=/mnt/data
-python3 tools/run_on_data.py --name native_build -- \
+export OCCUPANCY_WORKSPACE="$HOME/occupancy-slam-workspace"
+python3 tools/run.py --name native_build -- \
   bash "$PWD/tools/build.sh" -DBUILD_3D=ON
-python3 tools/run_on_data.py --name rviz_build -- bash "$PWD/tools/build_rviz.sh"
+python3 tools/run.py --name rviz_build -- bash "$PWD/tools/build_rviz.sh"
 ```
 
-Each run name must be unused. `BUILD_3D=OFF` omits PCL; `LIBIGL_INCLUDE_DIR` selects an existing libigl include directory. Native usage is through `./tools/occupancy-slam`; see [pipeline details](docs/PIPELINES.md).
+Each run name must be unused. `BUILD_3D=OFF` omits PCL; `LIBIGL_INCLUDE_DIR` selects an existing libigl include directory. Native usage is through `./tools/occupancy-slam`; see [pipeline details](docs/PIPELINES.md). Keep the virtual environment active in each new terminal. `--system-site-packages` makes the system ROS2 Python modules available to it; do not use a different Python minor version.
+
+| Python dependency file | Purpose |
+| --- | --- |
+| [requirements.txt](requirements.txt) | TXT/bag/PCD workflows, map export, RViz publishing, and functional tests: NumPy, PyYAML, SciPy, rosbags, Pillow, and contourpy. |
+| [requirements-evaluation.txt](requirements-evaluation.txt) | Optional simulation conversion and research figures; includes the runtime requirements and adds h5py and Matplotlib. No MATLAB runtime is required. |
+
+Install the second file only when using those evaluation tools: `python3 -m pip install -r requirements-evaluation.txt`. Docker includes both sets. ROS2 Python packages come from the ROS installation, not pip.
 
 ## Running the examples
 
@@ -104,27 +113,27 @@ Example scans and trajectories are stored in the [standalone branch](https://git
 
 ```bash
 ./tools/docker.sh --run-name example_intel exec \
-  python3 /opt/occupancy-slam/tools/download_example.py --dataset Intel
-export OCCUPANCY_INTEL_DATA="$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/example_intel/Intel"
+  python3 /opt/occupancy-slam/tools/download_example.py --example Intel
+export OCCUPANCY_INTEL_DATA="$OCCUPANCY_WORKSPACE/runs/example_intel/Intel"
 ```
 
-For native use, run `tools/download_example.py` through `tools/run_on_data.py`. The downloader records the versioned source URLs alongside the data.
+For native use, run `tools/download_example.py` through `tools/run.py`. The downloader records the versioned source URLs alongside the data.
 
 ```bash
 ./tools/docker.sh --run-name intel_demo txt \
   --dataset "$OCCUPANCY_INTEL_DATA" --backend-config config/backend/intel.txt \
   --max-scans 20 --iterations 5 --display-resolution 0.05
 ./tools/docker.sh --gui view 2d \
-  --result "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/intel_demo/pipeline"
+  --result "$OCCUPANCY_WORKSPACE/runs/intel_demo/pipeline"
 ```
 
 The Museum b0 example from the original implementation is also supported:
 
 ```bash
 ./tools/docker.sh --run-name example_museum exec \
-  python3 /opt/occupancy-slam/tools/download_example.py --dataset Museum_b0
+  python3 /opt/occupancy-slam/tools/download_example.py --example Museum_b0
 ./tools/docker.sh --run-name museum_demo txt \
-  --dataset "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/example_museum/Museum_b0" \
+  --dataset "$OCCUPANCY_WORKSPACE/runs/example_museum/Museum_b0" \
   --backend-config config/backend/museum_b0.txt \
   --max-scans 20 --iterations 5 --display-resolution 0.05
 ```
@@ -149,7 +158,7 @@ Use [rosbag_pointcloud.yaml](config/inputs/rosbag_pointcloud.yaml) for PointClou
   --config config/inputs/pcd.yaml --dataset /absolute/NC20_sequence \
   --start 20 --stride 3 --max-frames 40
 ./tools/docker.sh --gui view 3d \
-  --result "$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs/pcd_demo/optimized"
+  --result "$OCCUPANCY_WORKSPACE/runs/pcd_demo/optimized"
 ```
 
 The NC20 layout uses `odometry.txt` and `PCD/full0.pcd`, `full1.pcd`, etc. General inputs can use `--poses /absolute/poses.tum --manifest /absolute/scans.txt`. Each manifest row contains `timestamp pcd_path`.
@@ -203,7 +212,7 @@ Initial and reintegrated 2D display maps default to **0.05 m** resolution; **0.1
 ./tools/docker.sh test architecture
 ```
 
-Native equivalents are `./tools/test.sh unit`, `inputs`, and `architecture`. Tests generate their TXT/bag/PCD fixtures on the data disk and cover the normalization approximation, solvers, scan geometry, input adapters, evaluation conventions, and map export. They do not require bundled datasets or network access. They do not establish reproduction of all paper benchmarks.
+Native equivalents are `./tools/test.sh unit`, `inputs`, and `architecture`. Tests generate their TXT/bag/PCD fixtures in the workspace and cover the normalization approximation, solvers, scan geometry, input adapters, evaluation conventions, and map export. They do not require bundled datasets or network access. They do not establish reproduction of all paper benchmarks.
 
 The simulation workflow converts the original MATLAB data while preserving stored observations and supplied initializations, runs the C++ optimizer, and evaluates trajectories and maps against independent ground truth. It uses one shared initial-pose SE(2) alignment for the primary trajectory comparison, excludes the fixed first pose, and reports the final accepted state. The conversion, benchmark, map evaluation, and aggregation commands are in the [reproducibility guide](docs/VALIDATION.md). Raw simulation data and external MATLAB functions must be supplied separately.
 

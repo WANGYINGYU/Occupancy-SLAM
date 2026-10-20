@@ -1,2 +1,9 @@
-numpy>=1.26,<3
+# ROS2 TXT/bag/PCD pipelines, map export, RViz publisher, and functional tests.
+# Use Ubuntu 24.04's Python 3.12 and a venv with --system-site-packages for ROS2.
+numpy>=1.26,<2
 PyYAML>=6,<7
+scipy>=1.11,<2
+rosbags>=0.10,<0.12
+Pillow>=10,<13
+# Map geometry evaluation and its functional test.
+contourpy>=1.0,<2

@@ -1,0 +1,5 @@
+# Optional: MATLAB-format simulation conversion and research figures.
+# These are Python readers; no MATLAB installation is needed.
+-r requirements.txt
+h5py>=3.10,<4
+matplotlib>=3.6,<4

@@ -10,11 +10,11 @@ This guide specifies the supported tests, simulation workflow, and evaluation co
 ./tools/docker.sh test architecture
 ```
 
-Native equivalents use `./tools/test.sh`. Test fixtures are generated locally on the data disk; no dataset checkout or download is required. Install `requirements-test.txt` for native tests, or `requirements-matlab.txt` for simulation conversion and evaluation as well.
+Native equivalents use `./tools/test.sh`. Test fixtures are generated locally in the workspace; no dataset checkout or download is required. Install `requirements.txt` for native functional tests, or `requirements-evaluation.txt` for simulation conversion and research figures.
 
 | Suite | Coverage |
 | --- | --- |
-| `unit` | Seven CTest cases: N approximation/refresh and solvers, scan I/O, display classification, pose metrics, Cartesian endpoints, multi-resolution execution, and simulator geometry. |
+| `unit` | Eight CTest cases: portable workspace/launcher, N approximation/refresh and solvers, scan I/O, display classification, pose metrics, Cartesian endpoints, multi-resolution execution, and simulator geometry. |
 | `inputs` | TXT initialization variants; actual slam_toolbox processing of renamed LaserScan/PointCloud2, odometry, and TF topics; rejection of incorrect configured topics. |
 | `architecture` | 2D/3D execution, solver configuration, PCD manifests, 3D Jacobian check, and 0.05/0.1 m map export. |
 
@@ -31,7 +31,7 @@ The converted directory records source paths, frame associations, geometry, and 
 From the project root, with the Docker image built:
 
 ```bash
-export occupancy_runs="$OCCUPANCY_DATA_ROOT/experiments/sdf_ba/codex_runs"
+export occupancy_runs="$OCCUPANCY_WORKSPACE/runs"
 ./tools/docker.sh --run-name simulation_conversion exec \
   python3 /opt/occupancy-slam/tools/convert_matlab_simulations.py \
   --source /absolute/simulation --output converted

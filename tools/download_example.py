@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download a TXT example from the standalone release into a data-disk run."""
+"""Download a TXT example from the standalone release into a workspace run."""
 import argparse
 import json
 import os
@@ -18,15 +18,15 @@ FILES = {
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--dataset', choices=FILES, default='Intel')
+    parser.add_argument('--example', choices=FILES, default='Intel', help='Name of the published TXT example')
     args = parser.parse_args()
-    if 'SDF_BA_RUN_ROOT' not in os.environ:
-        parser.error('Run through tools/run_on_data.py or tools/docker.sh exec')
-    output = Path(os.environ['SDF_BA_RUN_ROOT']) / args.dataset
+    if 'OCCUPANCY_RUN_DIR' not in os.environ:
+        parser.error('Run through tools/run.py or tools/docker.sh exec')
+    output = Path(os.environ['OCCUPANCY_RUN_DIR']) / args.example
     output.mkdir(exist_ok=False)
     sources = {}
-    for name in FILES[args.dataset]:
-        url = f'{SOURCE_URL}{SOURCE_REVISION}/Data/{args.dataset}/{name}'
+    for name in FILES[args.example]:
+        url = f'{SOURCE_URL}{SOURCE_REVISION}/Data/{args.example}/{name}'
         # Publish each file only after the response has been fully received.
         partial = output / (name + '.part')
         with urlopen(url, timeout=60) as response, partial.open('xb') as stream:

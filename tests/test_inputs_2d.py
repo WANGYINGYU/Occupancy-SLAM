@@ -14,7 +14,7 @@ from pipeline_config import parse_config
 from rosbag_pipeline import parser as bag_parser
 from rviz_viewer import parser as viewer_parser, load_scene
 
-run=Path(os.environ['SDF_BA_RUN_ROOT'])
+run=Path(os.environ['OCCUPANCY_RUN_DIR'])
 results={}
 
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Saved-result viewer. Local workstation runs automatically use the data disk.
+# Saved-result viewer. Outputs and caches use the configured workspace.
 set -eo pipefail
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export OCCUPANCY_VIEWER_CALLER_DIR="${OCCUPANCY_VIEWER_CALLER_DIR:-$PWD}"
-launcher="${OCCUPANCY_DATA_LAUNCHER:-$project_dir/tools/run_on_data.py}"
-if [[ -z "${SDF_BA_RUN_ROOT:-}" && -f "$launcher" && " $* " != *" --help "* ]]; then
+launcher="${OCCUPANCY_RUNNER:-$project_dir/tools/run.py}"
+if [[ -z "${OCCUPANCY_RUN_DIR:-}" && -f "$launcher" && " $* " != *" --help "* ]]; then
   exec python3 "$launcher" --name "occupancy_rviz_$(date +%Y%m%d_%H%M%S)_$$" -- bash "$project_dir/tools/view_rviz.sh" "$@"
 fi
 source "$project_dir/tools/env.sh"

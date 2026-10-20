@@ -8,8 +8,8 @@ mode="${1:-help}"
 if [[ "$mode" == help || "$mode" == --help ]]; then
   echo 'Usage: occupancy-slam {txt|bag|pcd|view|export|inspect} [options]'; exit 0
 fi
-launcher="${OCCUPANCY_DATA_LAUNCHER:-$project_dir/tools/run_on_data.py}"
-if [[ -z "${SDF_BA_RUN_ROOT:-}" && " $* " != *" --help "* ]]; then
+launcher="${OCCUPANCY_RUNNER:-$project_dir/tools/run.py}"
+if [[ -z "${OCCUPANCY_RUN_DIR:-}" && " $* " != *" --help "* ]]; then
   exec python3 "$launcher" --name "occupancy_${mode}_$(date +%Y%m%d_%H%M%S)_$$" -- bash "$project_dir/tools/occupancy-slam" "$@"
 fi
 shift

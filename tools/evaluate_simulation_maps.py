@@ -43,7 +43,7 @@ def compare(predicted,reference,observed,reference_tree=None):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--converted',type=Path,required=True);p.add_argument('--results',type=Path,required=True);p.add_argument('--wait',action='store_true')
-    a=p.parse_args();out=Path(os.environ['SDF_BA_RUN_ROOT']);inventory=json.loads((a.converted/'inventory.json').read_text());rows=[];geometries={}
+    a=p.parse_args();out=Path(os.environ['OCCUPANCY_RUN_DIR']);inventory=json.loads((a.converted/'inventory.json').read_text());rows=[];geometries={}
     for scene in inventory:
         name=scene['scene'];source=a.converted/name
         with np.load(source/'geometry.npz') as d:geometry=dict(d)

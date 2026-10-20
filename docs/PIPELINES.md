@@ -49,17 +49,17 @@ The C++ implementation includes sparse grid allocation, interpolated occupancy r
 
 `tools/build.sh` builds the C++ applications and tests. `tools/build_rviz.sh` builds the optional ROS2 grayscale Map display. CMake supports `BUILD_3D`, `BUILD_TESTING`, and `LIBIGL_INCLUDE_DIR`; see the main README for dependencies.
 
-`tools/env.sh` loads `OCCUPANCY_RUNTIME_SETUP` when supplied, otherwise a local `.runtime/setup.bash` if present, then the standard `/opt/ros/jazzy/setup.bash` fallback. `.runtime` is optional local configuration and is excluded from Git and Docker. The built RViz overlay is loaded from `build/rviz_install` or `OCCUPANCY_RVIZ_PREFIX`.
+`tools/env.sh` loads the system ROS2 setup at `/opt/ros/${ROS_DISTRO:-jazzy}/setup.bash`. Set `OCCUPANCY_RUNTIME_SETUP` explicitly for a different ROS installation. The built RViz overlay is loaded from `build/rviz_install` or `OCCUPANCY_RVIZ_PREFIX`. No local `.runtime` directory is needed.
 
-The public wrappers automatically invoke `tools/run_on_data.py`. Set `OCCUPANCY_DATA_ROOT` to a writable disk mount. Relative outputs, temporary files, caches, and ROS logs are placed in a new run directory. For direct Python tools, use the launcher explicitly:
+The public wrappers automatically invoke `tools/run.py`. Set `OCCUPANCY_WORKSPACE` to a writable directory or use the default `~/occupancy-slam-workspace`. The launcher creates `runs/<name>/`, changes its working directory there, and places temporary files, caches, and ROS logs below that run. Display-map caches are shared under the workspace's `cache/` directory. For direct Python tools, use the launcher explicitly:
 
 ```bash
-python3 tools/run_on_data.py --name evaluation_run -- \
+python3 tools/run.py --name evaluation_run -- \
   python3 "$PWD/tools/evaluate_2d.py" \
   --result /absolute/pipeline --ground-truth /absolute/gt.txt --output evaluation
 ```
 
-`OCCUPANCY_DATA_LAUNCHER` can select an equivalent site launcher. Source/script/input paths passed to a launcher must be absolute because it changes the working directory.
+`tools/run.py --workspace /absolute/output_directory` overrides the environment for that invocation. Source/script/input paths passed to the launcher must be absolute because it changes the working directory. Existing results can be viewed from any readable directory; they need not be moved into the workspace.
 
 ## Installed C++ API
 

@@ -10,7 +10,7 @@ from make_fixtures import make_pcds, make_txt
 from export_maps import export_result
 from result_scene import load_scene
 from rviz_viewer import parser
-run=Path(os.environ['SDF_BA_RUN_ROOT'])
+run=Path(os.environ['OCCUPANCY_RUN_DIR'])
 parser_args=argparse.ArgumentParser(description=__doc__)
 parser_args.add_argument('--reference-2d-pipeline',type=Path)
 parser_args.add_argument('--reference-binaries',type=Path)

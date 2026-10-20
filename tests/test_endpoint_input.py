@@ -10,7 +10,7 @@ from backend_config import load_parameters
 import yaml
 
 def main():
-    run=Path(os.environ['SDF_BA_RUN_ROOT'])/'endpoint_checks';run.mkdir()
+    run=Path(os.environ['OCCUPANCY_RUN_DIR'])/'endpoint_checks';run.mkdir()
     config=load_parameters(ROOT/'config/backend/default.txt',dict(Scale=.2,MaxIter=0,NumBeam=20,MinAngle=-1.,MaxAngle=1.,MaxRange=15.,MinRange=0.,FixedGrid="true",Sizei=80,Sizej=80,OriginX=-3.013,OriginY=-5.017))
     (run/'config.txt').write_text(''.join(f'{k} {v}\n' for k,v in config.items()))
     # Keep this cross-language count check off exact cell boundaries: BLAS and
