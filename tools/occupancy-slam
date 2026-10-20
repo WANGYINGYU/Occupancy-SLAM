@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -eo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$here/txt_pipeline.py" ]]; then project_dir="$(dirname "$here")"; else project_dir="$(cd "$here/../share/occupancy_slam" && pwd)"; fi
+export OCCUPANCY_INPUT_CALLER_DIR="${OCCUPANCY_INPUT_CALLER_DIR:-$PWD}"
+export OCCUPANCY_VIEWER_CALLER_DIR="${OCCUPANCY_VIEWER_CALLER_DIR:-$PWD}"
+mode="${1:-help}"
+if [[ "$mode" == help || "$mode" == --help ]]; then
+  echo 'Usage: occupancy-slam {txt|bag|pcd|view|export|inspect} [options]'; exit 0
+fi
+launcher="${OCCUPANCY_DATA_LAUNCHER:-$project_dir/tools/run_on_data.py}"
+if [[ -z "${SDF_BA_RUN_ROOT:-}" && " $* " != *" --help "* ]]; then
+  exec python3 "$launcher" --name "occupancy_${mode}_$(date +%Y%m%d_%H%M%S)_$$" -- bash "$project_dir/tools/occupancy-slam" "$@"
+fi
+shift
+case "$mode" in
+ txt) exec python3 "$project_dir/tools/txt_pipeline.py" --config "$project_dir/config/inputs/txt.yaml" "$@" ;;
+ pcd) exec python3 "$project_dir/tools/pcd_pipeline.py" --config "$project_dir/config/inputs/pcd.yaml" "$@" ;;
+ export) exec python3 "$project_dir/tools/export_maps.py" "$@" ;;
+ bag) source "$project_dir/tools/env.sh"; exec python3 "$project_dir/tools/rosbag_pipeline.py" --config "$project_dir/config/inputs/rosbag_laserscan.yaml" "$@" ;;
+ view) exec bash "$project_dir/tools/view_rviz.sh" "$@" ;;
+ inspect) source "$project_dir/tools/env.sh"; exec python3 "$project_dir/tools/inspect_bag.py" "$@" ;;
+ *) echo "Unknown command: $mode" >&2; exit 2 ;;
+esac

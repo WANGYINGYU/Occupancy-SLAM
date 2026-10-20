@@ -1,0 +1,42 @@
+# Extended common budget: up to 40 coarse + 10 fine updates; existing thresholds stop early.
+# All other settings match simulation_multires.txt. No GT is read by the optimizer.
+# Use for all simulation initials; the short-budget profile remains a diagnostic reference.
+WeightO 0.0
+EvaluateGT false
+PosefromOdom false
+ModeOdom false
+ModeMulti true
+ModeKeyFrame false
+Scale 0.1
+DownTime 40
+DownRate 5
+SelectDistance 0.5
+SelectKernelSize 3
+KeyframeRate 10
+MaxIter 50
+MinMeanDeltaFirst 100
+MinMeanDeltaPoseFirst 0.0001
+MinDelta 100
+MinDeltaPose 0.0002
+WeightSmoothN 10
+MapSmoothingWeightFirst 1e-7
+MapSmoothingWeightSecond 1e-7
+NumBeam 1081
+MinAngle -2.35183119774
+MaxAngle 2.35183119774
+MaxRange 50
+MinRange 0
+ModeShowMap false
+ModeSparseSolver false
+SolverFirstMaxIter 2000
+SolverFirstTolerance 1e-8
+SolverSecondMaxIter 2000
+SolverSecondTolerance 1e-8
+FixedGrid true
+InitialMapRound true
+NormalizationRound false
+Sizei 500
+Sizej 500
+OriginX -25
+OriginY -25
+WeightSmoothNSecond 1

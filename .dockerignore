@@ -1,0 +1,16 @@
+.git
+build
+third_party
+.runtime
+Data
+images
+3D_Preliminary
+**/__pycache__
+**/*.pyc
+*.bag
+*.pcd
+docs
+README.md
+docker/README.md
+
+.venv

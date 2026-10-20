@@ -1,0 +1,96 @@
+Panels:
+- Class: rviz_common/Displays
+  Name: Displays
+  Property Tree Widget:
+    Expanded:
+    - /Global Options1
+    - /PointCloud21
+    - /Path1
+    Splitter Ratio: 0.36
+- Class: rviz_common/Views
+  Name: Views
+Visualization Manager:
+  Class: ''
+  Enabled: true
+  Name: root
+  Global Options:
+    Fixed Frame: map
+    Background Color: 32; 35; 40
+    Frame Rate: 30
+  Displays:
+  - Class: rviz_default_plugins/PointCloud2
+    Name: PointCloud2
+    Enabled: true
+    Topic:
+      Value: /occupancy_slam/optimized/points
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+    Queue Size: 5
+    Style: Points
+    Size (m): 0.12
+    Size (Pixels): 2
+    Decay Time: 0
+    Position Transformer: XYZ
+    Color Transformer: RGB8
+    Channel Name: z
+    Autocompute Intensity Bounds: false
+    Min Intensity: -1.0
+    Max Intensity: 12.0
+    Use rainbow: true
+    Invert Rainbow: false
+  - Class: rviz_default_plugins/Path
+    Name: Path
+    Enabled: false
+    Topic:
+      Value: /occupancy_slam/optimized/trajectory
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+    Color: 255; 135; 40
+    Alpha: 1.0
+    Buffer Length: 1
+    Line Style: Billboards
+    Line Width: 0.13
+    Pose Style: None
+    Offset:
+      X: 0
+      Y: 0
+      Z: 0
+  - Class: rviz_default_plugins/Grid
+    Name: Grid
+    Enabled: false
+    Cell Size: 1
+    Plane Cell Count: 100
+    Alpha: 0.2
+    Color: 120; 130; 145
+    Reference Frame: <Fixed Frame>
+  Tools:
+  - Class: rviz_default_plugins/Interact
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: rviz_default_plugins/Select
+  - Class: rviz_default_plugins/FocusCamera
+  - Class: rviz_default_plugins/Measure
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: Current View
+      Distance: 50.0
+      Pitch: 0.65
+      Yaw: 5.3
+      Focal Point:
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+      Target Frame: <Fixed Frame>
+      Near Clip Distance: 0.01
+    Saved: []
+Window Geometry:
+  Width: 1500
+  Height: 950
+  X: 250
+  Y: 180
+  Hide Left Dock: false
+  Hide Right Dock: true

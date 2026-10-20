@@ -1,0 +1,104 @@
+Panels:
+- Class: rviz_common/Displays
+  Name: Displays
+  Property Tree Widget:
+    Expanded:
+    - /Global Options1
+    - /Map1
+    - /Path1
+    Splitter Ratio: 0.36
+- Class: rviz_common/Views
+  Name: Views
+Visualization Manager:
+  Class: ''
+  Enabled: true
+  Name: root
+  Global Options:
+    Fixed Frame: map
+    Background Color: 128; 128; 128
+    Frame Rate: 30
+  Displays:
+  - Class: occupancy_slam_rviz/GrayscaleMap
+    Name: Map
+    Enabled: true
+    Topic:
+      Value: /occupancy_slam/optimized/map_display
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+    Alpha: 1.0
+    Color Scheme: map
+    Draw Behind: true
+    Use Timestamp: false
+  - Class: rviz_default_plugins/Path
+    Name: Path
+    Enabled: false
+    Topic:
+      Value: /occupancy_slam/optimized/trajectory
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+    Color: 255; 135; 40
+    Alpha: 1.0
+    Buffer Length: 1
+    Line Style: Billboards
+    Line Width: 0.06
+    Pose Style: None
+    Offset:
+      X: 0
+      Y: 0
+      Z: 0.04
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Scan points
+    Enabled: false
+    Topic:
+      Value: /occupancy_slam/optimized/points
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+    Queue Size: 5
+    Style: Points
+    Size (Pixels): 2
+    Size (m): 0.03
+    Decay Time: 0
+    Position Transformer: XYZ
+    Color Transformer: FlatColor
+    Color: 255; 135; 40
+    Axis: Z
+    Use Fixed Frame: true
+    Autocompute Value Bounds: true
+  - Class: rviz_default_plugins/Grid
+    Name: Grid
+    Enabled: false
+    Cell Size: 1
+    Plane Cell Count: 100
+    Alpha: 0.2
+    Color: 120; 130; 145
+    Reference Frame: <Fixed Frame>
+  Tools:
+  - Class: rviz_default_plugins/Interact
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: rviz_default_plugins/Select
+  - Class: rviz_default_plugins/FocusCamera
+  - Class: rviz_default_plugins/Measure
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Scale: 30
+      Angle: 0.0
+      X: 0.0
+      Y: 0.0
+      Target Frame: <Fixed Frame>
+      Near Clip Distance: 0.01
+    Saved: []
+Window Geometry:
+  Width: 1500
+  Height: 950
+  X: 80
+  Y: 80
+  Hide Left Dock: false
+  Hide Right Dock: true

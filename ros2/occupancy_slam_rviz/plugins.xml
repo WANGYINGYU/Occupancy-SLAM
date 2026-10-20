@@ -1,0 +1,5 @@
+<library path="occupancy_slam_grayscale_map">
+  <class name="occupancy_slam_rviz/GrayscaleMap" type="occupancy_slam_rviz::GrayscaleMap" base_class_type="rviz_common::Display">
+    <description>Standard OccupancyGrid Map display with neutral gray unknown cells. Values, geometry, subscriptions and transforms are unchanged.</description>
+  </class>
+</library>

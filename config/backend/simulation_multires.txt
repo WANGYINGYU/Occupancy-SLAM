@@ -1,0 +1,42 @@
+# Engineering coarse-to-fine profile: original C++ 5x grid ratio, up to 8 coarse + 3 fine updates.
+# Exact MATLAB observations, fixed lattice and round/floor conventions; full N weight 10, selected N weight 1.
+# Same profile for all 41 initials; this is separate from the saved MATLAB single-grid reference.
+WeightO 0.0
+EvaluateGT false
+PosefromOdom false
+ModeOdom false
+ModeMulti true
+ModeKeyFrame false
+Scale 0.1
+DownTime 8
+DownRate 5
+SelectDistance 0.5
+SelectKernelSize 3
+KeyframeRate 10
+MaxIter 11
+MinMeanDeltaFirst 100
+MinMeanDeltaPoseFirst 0.0001
+MinDelta 100
+MinDeltaPose 0.0002
+WeightSmoothN 10
+MapSmoothingWeightFirst 1e-7
+MapSmoothingWeightSecond 1e-7
+NumBeam 1081
+MinAngle -2.35183119774
+MaxAngle 2.35183119774
+MaxRange 50
+MinRange 0
+ModeShowMap false
+ModeSparseSolver false
+SolverFirstMaxIter 2000
+SolverFirstTolerance 1e-8
+SolverSecondMaxIter 2000
+SolverSecondTolerance 1e-8
+FixedGrid true
+InitialMapRound true
+NormalizationRound false
+Sizei 500
+Sizej 500
+OriginX -25
+OriginY -25
+WeightSmoothNSecond 1

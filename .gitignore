@@ -1,1 +1,7 @@
 .DS_Store
+/build/
+/third_party/
+__pycache__/
+*.pyc
+/.runtime
+/.venv/

@@ -2,6 +2,8 @@
 // Created by Yingyu Wang on 18/4/2023.
 #include "MyStruct.h"
 #include "SubFuncs.h"
+#include <set>
+#include <sstream>
 
 
 
@@ -77,7 +79,6 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> FuncInitialiseGridMap(const Eigen::
     Eigen::MatrixXd Map = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
     Eigen::MatrixXd N = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
     int NumPose = Pose.size()/3;
-    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i,2));
         Eigen::Matrix2d Ri = rotation.toRotationMatrix();
@@ -174,7 +175,9 @@ void FuncSmoothN2(Eigen::MatrixXd& N, const Eigen::SparseMatrix<double>& HH, con
     Eigen::SparseMatrix<double> EE = (A1.transpose() * Val).sparseView();
     Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> solver;
     solver.compute(II);
+    if (solver.info()!=Eigen::Success) throw std::runtime_error("N smoothing factorization failed");
     Eigen::VectorXd DeltaN = solver.solve(EE);
+    if (solver.info()!=Eigen::Success || !DeltaN.allFinite()) throw std::runtime_error("N smoothing solve failed");
     N = (Eigen::Map<const Eigen::MatrixXd>(DeltaN.data(), ValParam.Sizej, ValParam.Sizei)).transpose();
 
 }
@@ -501,7 +504,7 @@ std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::Sparse
     return std::make_tuple(JP,JD,JO,IS,IO,ErrorS,ErrorO,SumError,MeanError);
 }
 
-std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& Odom, const Eigen::SparseMatrix<double>& JP, Eigen::SparseMatrix<double>& JD, const Eigen::SparseMatrix<double>& JO, const Eigen::VectorXd& ErrorS, const Eigen::VectorXd& ErrorO, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& IO, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam)
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& Odom, const Eigen::SparseMatrix<double>& JP, Eigen::SparseMatrix<double>& JD, const Eigen::SparseMatrix<double>& JO, const Eigen::VectorXd& ErrorS, const Eigen::VectorXd& ErrorO, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& IO, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam, occupancy::LinearReport* report)
 {
     Eigen::SparseMatrix<double> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
     Eigen::SparseMatrix<double> JOSlice = JO.block(0, 3, JO.rows(), JO.cols()-3);
@@ -527,15 +530,10 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
     Eigen::VectorXd EE = igl::cat(1,EP,EDEH);
 
     II.makeCompressed();
-    Eigen::initParallel();
-//    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-    Eigen::ConjugateGradient <Eigen::SparseMatrix<double>, Eigen::Upper|Eigen::Lower> solver;
-    int MaxNum = floor(sqrt(II.rows()));
-    if (MaxNum>200){MaxNum=200;}
-    solver.setMaxIterations(MaxNum);
-    solver.setTolerance(0.005);
-    solver.compute(II);
-    Eigen::VectorXd Delta = solver.solve(EE);
+    auto solved = occupancy::solveLinear(II, EE, ValParam.ModeSparseSolver,
+        ValParam.SolverFirstMaxIter, ValParam.SolverFirstTolerance);
+    Eigen::VectorXd Delta = std::move(solved.first);
+    if (report) *report = solved.second;
 
     Eigen::VectorXd DeltaP = Delta.head(JPSlice.cols());
     Eigen::VectorXd DeltaD = Delta.tail(Delta.size() - JPSlice.cols());
@@ -560,7 +558,6 @@ void FuncUpdate(Eigen::MatrixXd& Map, Eigen::MatrixXd& Pose, const Eigen::Vector
 void FuncUpdateMapN(Eigen::MatrixXd& N, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const ParamStruct& ValParam){
     N = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
     int NumPose = Pose.size()/3;
-    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i,2));
         Eigen::Matrix2d Ri = rotation.toRotationMatrix();
@@ -922,7 +919,6 @@ void FuncSelectScan(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& Pose, con
     igl::sparse(RowIdSelect,ColIdSelect,ValOne,ValParam.Sizei,ValParam.Sizej,MaskMap);
     Eigen::ArrayXi ArrMask = Eigen::Map<Eigen::ArrayXi>(MaskMap.toDense().data(), MaskMap.toDense().size());
     int NumPose = Pose.size() / 3;
-    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i,2));
         Eigen::Matrix2d Ri = rotation.toRotationMatrix();
@@ -958,7 +954,6 @@ void FuncInitialSelectMap(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::Matri
 
     Map = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
     N = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
-    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i, 2));
         Eigen::Matrix2d Ri = rotation.toRotationMatrix();
@@ -1054,8 +1049,12 @@ void FuncSelectMapConst(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXi&
         if (BoolFindBelow(i)==1){
             nCnt++;
             TemBelowCell = RowBelow(i) * ValParam.Sizej + ColIdSelectVar(i);
-            igl::find(ArraySortSelectId == TemBelowCell, Arrij2);
-            ij2 = Arrij2(0);
+            // Sorted variable IDs permit logarithmic lookup instead of a full scan per edge.
+            const auto found = std::lower_bound(ArraySortSelectId.data(),
+                ArraySortSelectId.data() + ArraySortSelectId.size(), TemBelowCell);
+            if (found == ArraySortSelectId.data() + ArraySortSelectId.size() || *found != TemBelowCell)
+                throw std::runtime_error("Selected map neighbor is missing");
+            ij2 = found - ArraySortSelectId.data();
             ID1.segment<2>(2 * nCnt - 2) = (nCnt - 1) * ID1.segment<2>(2 * nCnt - 2);
             ID2.segment<2>(2 * nCnt - 2) << ij0, ij2;
             Val.segment<2>(2 * nCnt - 2) << 1, -1;
@@ -1550,7 +1549,6 @@ void FuncSelectMapUpdate(Eigen::MatrixXd& SelectMap, Eigen::MatrixXd& Pose, cons
 
 void FuncUpdateSelectN(Eigen::MatrixXd& SelectN, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& SelectScanXY, const ParamStruct& ValParam){
     int NumPose = Pose.size() / 3;
-    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::Rotation2Dd rotation(Pose(i, 2));
         Eigen::Matrix2d Ri = rotation.toRotationMatrix();
@@ -1857,7 +1855,7 @@ Eigen::SparseMatrix<double> FuncGetI(const Eigen::VectorXd& ErrorS)
 }
 
 // no odom
-std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam)
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam, occupancy::LinearReport* report)
 {
     Eigen::SparseMatrix<double> JPSlice = JP.block(0, 3, JP.rows(), JP.cols()-3);
     Eigen::SparseMatrix<double> JDRow(JD);
@@ -1880,23 +1878,10 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> Fun
     Eigen::SparseMatrix<double> II = igl::cat(1, UW, WV);
     Eigen::VectorXd EE = igl::cat(1,EP,EDEH);
 
-    Eigen::initParallel();
-    II.makeCompressed();
-    Eigen::VectorXd Delta;
-    if (ValParam.ModeSparseSolver){
-        Eigen::ConjugateGradient <Eigen::SparseMatrix<double>, Eigen::Upper|Eigen::Lower> solver;
-        int MaxNum = floor(sqrt(II.rows()));
-        if (MaxNum > ValParam.SolverFirstMaxIter){MaxNum = ValParam.SolverFirstMaxIter;}
-        solver.setMaxIterations(MaxNum);
-        solver.setTolerance(ValParam.SolverFirstTolerance);
-        solver.compute(II);
-        Delta = solver.solve(EE);
-    }
-    else{
-        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-        solver.compute(II);
-        Delta = solver.solve(EE);
-    }
+    auto solved = occupancy::solveLinear(II, EE, ValParam.ModeSparseSolver,
+        ValParam.SolverFirstMaxIter, ValParam.SolverFirstTolerance);
+    Eigen::VectorXd Delta = std::move(solved.first);
+    if (report) *report = solved.second;
 
     Eigen::VectorXd DeltaP = Delta.head(JPSlice.cols());
     Eigen::VectorXd DeltaD = Delta.tail(Delta.size() - JPSlice.cols());
@@ -2276,28 +2261,6 @@ void FuncKeyFrameSelection(const Eigen::MatrixXd& Pose, Eigen::MatrixXd& PoseTem
 }
 
 
-void FuncShowMap(Eigen::MatrixXd& Map){
-    Eigen::MatrixXd ab = Map.array().exp().matrix();
-    Eigen::MatrixXd ExpMap = (1 - ab.array() / (ab.array() + 1)).matrix();
-    cv::Mat img = cv::Mat(ExpMap.cols(), ExpMap.rows(), CV_64F, ExpMap.data());
-    cv::imshow("Map", img);
-    cv::waitKey(1000);
-    cv::destroyWindow("Map");
-    cv::waitKey(1);
-}
-
-
-void FuncShowMapPress(Eigen::MatrixXd& Map){
-    Eigen::MatrixXd ab = Map.array().exp().matrix();
-    Eigen::MatrixXd ExpMap = (1 - ab.array() / (ab.array() + 1)).matrix();
-    cv::Mat img = cv::Mat(ExpMap.cols(), ExpMap.rows(), CV_64F, ExpMap.data());
-    cv::imshow("Map", img);
-    cv::waitKey(0);
-    cv::destroyWindow("Map");
-    cv::waitKey(1);
-}
-
-
 Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, ParamStruct& ValParam){
 
     int NumPose = Pose.size()/3;
@@ -2334,7 +2297,6 @@ Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const s
     double global_max_x = -std::numeric_limits<double>::infinity();
     double global_max_y = -std::numeric_limits<double>::infinity();
     std::vector<Eigen::MatrixXd> PointsGlobalProj(NumPose);
-    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::MatrixXd Si = PointsGlobal[i];
         Eigen::MatrixXd XY3 = ((Si.colwise()-Origin).array() / ValParam.Scale).floor().matrix();
@@ -2357,7 +2319,6 @@ Eigen::MatrixXd FuncInitialiseGridMapToShow(const Eigen::MatrixXd& Pose, const s
 
     Eigen::MatrixXd Map = Eigen::MatrixXd::Zero(ValParam.Sizei, ValParam.Sizej);
 
-    #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
         Eigen::ArrayXd Oddi = ScanOdd[i];
         Eigen::MatrixXd XY3 = PointsGlobalProj[i];
@@ -2440,83 +2401,97 @@ void FuncPosefromOdom(const Eigen::MatrixXd& Odom, Eigen::MatrixXd& Pose){
 void SetParametersFromFile(const std::string& fileName, ParamStruct& params) {
     std::ifstream configFile(fileName);
     if (!configFile.is_open()) {
-        std::cerr << "Failed to open config file: " << fileName << std::endl;
-        return;
+        throw std::runtime_error("Cannot open configuration: " + fileName);
     }
 
-    std::string paramName;
-    while (configFile >> paramName) {
+    std::string paramName, line; std::set<std::string> seen;
+    while (std::getline(configFile, line)) {
+        line = line.substr(0, line.find('#'));
+        std::istringstream row(line);
+        if (!(row >> paramName)) continue;
+        if (!seen.insert(paramName).second) throw std::runtime_error("Duplicate parameter: " + paramName);
         if (paramName == "WeightO") {
-            configFile >> params.WeightO;
+            row >> params.WeightO;
         } else if (paramName == "EvaluateGT") {
-            configFile >> std::boolalpha >> params.EvaluateGT;
+            row >> std::boolalpha >> params.EvaluateGT;
         } else if (paramName == "PosefromOdom") {
-            configFile >> std::boolalpha >> params.PosefromOdom;
+            row >> std::boolalpha >> params.PosefromOdom;
         } else if (paramName == "ModeOdom") {
-            configFile >> std::boolalpha >> params.ModeOdom;
+            row >> std::boolalpha >> params.ModeOdom;
         } else if (paramName == "ModeMulti") {
-            configFile >> std::boolalpha >> params.ModeMulti;
+            row >> std::boolalpha >> params.ModeMulti;
         } else if (paramName == "ModeKeyFrame") {
-            configFile >> std::boolalpha >> params.ModeKeyFrame;
+            row >> std::boolalpha >> params.ModeKeyFrame;
+        } else if (paramName == "FixedGrid") {
+            row >> std::boolalpha >> params.FixedGrid;
+        } else if (paramName == "InitialMapRound") {
+            row >> std::boolalpha >> params.InitialMapRound;
+        } else if (paramName == "NormalizationRound") {
+            row >> std::boolalpha >> params.NormalizationRound;
         } else if (paramName == "Sizei") {
-            configFile >> params.Sizei;
+            row >> params.Sizei;
         } else if (paramName == "Sizej") {
-            configFile >> params.Sizej;
+            row >> params.Sizej;
         } else if (paramName == "Scale") {
-            configFile >> params.Scale;
+            row >> params.Scale;
         } else if (paramName == "OriginX") {
-            configFile >> params.OriginX;
+            row >> params.OriginX;
         } else if (paramName == "OriginY") {
-            configFile >> params.OriginY;
+            row >> params.OriginY;
         } else if (paramName == "DownTime") {
-            configFile >> params.DownTime;
+            row >> params.DownTime;
         } else if (paramName == "DownRate") {
-            configFile >> params.DownRate;
+            row >> params.DownRate;
         } else if (paramName == "SelectDistance") {
-            configFile >> params.SelectDistance;
+            row >> params.SelectDistance;
         } else if (paramName == "SelectKernelSize") {
-            configFile >> params.SelectKernelSize;
+            row >> params.SelectKernelSize;
         } else if (paramName == "KeyframeRate") {
-            configFile >> params.KeyframeRate;
+            row >> params.KeyframeRate;
         } else if (paramName == "MaxIter") {
-            configFile >> params.MaxIter;
+            row >> params.MaxIter;
         } else if (paramName == "MinMeanDeltaFirst") {
-            configFile >> params.MinMeanDeltaFirst;
+            row >> params.MinMeanDeltaFirst;
         } else if (paramName == "MinMeanDeltaPoseFirst") {
-            configFile >> params.MinMeanDeltaPoseFirst;
+            row >> params.MinMeanDeltaPoseFirst;
         } else if (paramName == "MinDelta") {
-            configFile >> params.MinDelta;
+            row >> params.MinDelta;
         } else if (paramName == "MinDeltaPose") {
-            configFile >> params.MinDeltaPose;
+            row >> params.MinDeltaPose;
         } else if (paramName == "WeightSmoothN") {
-            configFile >> params.WeightSmoothN;
+            row >> params.WeightSmoothN;
+        } else if (paramName == "WeightSmoothNSecond") {
+            row >> params.WeightSmoothNSecond;
         } else if (paramName == "MapSmoothingWeightFirst") {
-            configFile >> params.MapSmoothingWeightFirst;
+            row >> params.MapSmoothingWeightFirst;
         } else if (paramName == "MapSmoothingWeightSecond") {
-            configFile >> params.MapSmoothingWeightSecond;
+            row >> params.MapSmoothingWeightSecond;
         } else if (paramName == "NumBeam") {
-            configFile >> params.NumBeam;
+            row >> params.NumBeam;
         } else if (paramName == "MinAngle") {
-            configFile >> params.MinAngle;
+            row >> params.MinAngle;
         } else if (paramName == "MaxAngle") {
-            configFile >> params.MaxAngle;
+            row >> params.MaxAngle;
         } else if (paramName == "MaxRange") {
-            configFile >> params.MaxRange;
+            row >> params.MaxRange;
         } else if (paramName == "MinRange") {
-            configFile >> params.MinRange;
+            row >> params.MinRange;
         } else if (paramName == "ModeShowMap") {
-            configFile >> std::boolalpha >> params.ModeShowMap;
+            row >> std::boolalpha >> params.ModeShowMap;
         } else if (paramName == "ModeSparseSolver") {
-            configFile >> std::boolalpha >> params.ModeSparseSolver;
+            row >> std::boolalpha >> params.ModeSparseSolver;
         } else if (paramName == "SolverFirstMaxIter") {
-            configFile >> params.SolverFirstMaxIter;
+            row >> params.SolverFirstMaxIter;
         } else if (paramName == "SolverFirstTolerance") {
-            configFile >> params.SolverFirstTolerance;
+            row >> params.SolverFirstTolerance;
         } else if (paramName == "SolverSecondMaxIter") {
-            configFile >> params.SolverSecondMaxIter;
+            row >> params.SolverSecondMaxIter;
         } else if (paramName == "SolverSecondTolerance") {
-            configFile >> params.SolverSecondTolerance;
-        }
+            row >> params.SolverSecondTolerance;
+        } else { throw std::runtime_error("Unknown parameter: " + paramName); }
+        if (row.fail()) throw std::runtime_error("Invalid value for parameter: " + paramName);
+        std::string extra;
+        if (row >> extra) throw std::runtime_error("Extra value for parameter: " + paramName);
     }
 
     configFile.close();

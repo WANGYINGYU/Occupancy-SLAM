@@ -9,11 +9,12 @@
 #include <vector>
 #include <tuple>
 
-#endif //FASTOCC_FUNCS_H
+
 
 struct ParamStruct{
     float WeightO;
     float WeightSmoothN;
+    double WeightSmoothNSecond = 1.;
     bool EvaluateGT;
     bool PosefromOdom;
     bool ModeOdom; // If exists odometry inputs
@@ -22,7 +23,10 @@ struct ParamStruct{
 
     int Sizei;
     int Sizej;
-    float Scale;
+    double Scale;
+    bool FixedGrid = false;
+    bool InitialMapRound = false;
+    bool NormalizationRound = true;
     double OriginX;
     double OriginY;
 
@@ -71,3 +75,6 @@ struct ParamStruct{
 };
 
 
+
+ParamStruct SetParam();
+#endif // FASTOCC_FUNCS_H

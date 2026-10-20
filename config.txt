@@ -25,7 +25,7 @@ MaxRange 30
 MinRange 0.023
 ModeShowMap false
 ModeSparseSolver true
-SolverFirstMaxIter 200
-SolverFirstTolerance 0.05
-SolverSecondMaxIter 20
-SolverSecondTolerance 0.01
+SolverFirstMaxIter 2000
+SolverFirstTolerance 1e-8
+SolverSecondMaxIter 2000
+SolverSecondTolerance 1e-8

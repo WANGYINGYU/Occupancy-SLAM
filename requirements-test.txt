@@ -1,0 +1,3 @@
+-r requirements-bag.txt
+Pillow>=10,<13
+matplotlib>=3.7,<4

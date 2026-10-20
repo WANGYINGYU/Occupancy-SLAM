@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>occupancy_slam_rviz</name>
+  <version>0.1.0</version>
+  <description>Standard RViz OccupancyGrid map with neutral gray unknown cells.</description>
+  <maintainer email="noreply@users.noreply.github.com">Occupancy-SLAM contributors</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rviz_default_plugins</depend>
+  <depend>pluginlib</depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

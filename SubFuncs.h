@@ -29,8 +29,9 @@
 #include <igl/unique_rows.h>
 #include <igl/ismember.h>
 
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
+#include "MyStruct.h"
+#include "occupancy/linear_solver.hpp"
+
 
 
 void loadFileData(const std::vector<std::string>& filenames, std::vector<std::vector<double>>& fileData, const ParamStruct& ValParam);
@@ -47,7 +48,7 @@ template<typename T>
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> FuncGradient(const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& M, const T& h);
 Eigen::Matrix2d FuncdR2D(const double& phi);
 std::tuple<Eigen::SparseMatrix<double>, Eigen::SparseMatrix<double>> FuncGetI(const Eigen::MatrixXd& Odom, const Eigen::VectorXd& ErrorS);
-std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& Odom, const Eigen::SparseMatrix<double>& JP, Eigen::SparseMatrix<double>& JD, const Eigen::SparseMatrix<double>& JO, const Eigen::VectorXd& ErrorS, const Eigen::VectorXd& ErrorO, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& IO, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam);
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& Odom, const Eigen::SparseMatrix<double>& JP, Eigen::SparseMatrix<double>& JD, const Eigen::SparseMatrix<double>& JO, const Eigen::VectorXd& ErrorS, const Eigen::VectorXd& ErrorO, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& IO, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam, occupancy::LinearReport* report = nullptr);
 void FuncUpdate(Eigen::MatrixXd& Map, Eigen::MatrixXd& Pose, const Eigen::VectorXd& DeltaP, const Eigen::VectorXd& DeltaD);
 void FuncUpdateMapN(Eigen::MatrixXd& N, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const ParamStruct& ValParam);
 void FuncLeastSquaresOdom(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd& Pose, const Eigen::MatrixXd& PoseGT, const Eigen::MatrixXd& Odom, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const std::vector<Eigen::ArrayXd>& LowScanXY, const std::vector<Eigen::ArrayXd>& LowScanOdd, const Eigen::SparseMatrix<double>& HH, ParamStruct& ValParam);
@@ -72,7 +73,7 @@ void FuncLeastSquares(Eigen::MatrixXd& Map, Eigen::MatrixXd& N, Eigen::MatrixXd&
                       const std::vector<Eigen::ArrayXd>& LowScanXY, const std::vector<Eigen::ArrayXd>& LowScanOdd, const Eigen::SparseMatrix<double>& HH, ParamStruct& ValParam);
 Eigen::SparseMatrix<double> FuncGetI(const Eigen::VectorXd& ErrorS);
 std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::VectorXd,double,double> FuncDiffJacobian(const Eigen::MatrixXd& Map, const Eigen::MatrixXd& N, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& ScanXY, const std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam);
-std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam);
+std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncDelta(const Eigen::MatrixXd& Map, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const ParamStruct& ValParam, occupancy::LinearReport* report = nullptr);
 std::tuple<Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::SparseMatrix<double>,Eigen::VectorXd,double,double> FuncDiffSelectJacobian(const Eigen::MatrixXd& SelectMap, const Eigen::MatrixXd& SelectN, const Eigen::MatrixXd& Pose, const std::vector<Eigen::ArrayXd>& SelectScanXY, const std::vector<Eigen::ArrayXd>& SelectScanOdd, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam);
 std::tuple<Eigen::VectorXd, Eigen::VectorXd, double, double, double, double> FuncSelectMapDelta(const Eigen::MatrixXd& SelectMap, const Eigen::SparseMatrix<double>& JP, const Eigen::SparseMatrix<double>& JD, const Eigen::VectorXd& ErrorS, const Eigen::SparseMatrix<double>& IS, const Eigen::SparseMatrix<double>& WeightHH, const Eigen::MatrixXi& IdSelectVar, const ParamStruct& ValParam);
 void FuncConvertObs(Eigen::MatrixXd& Range, std::vector<Eigen::ArrayXd>& ScanXY, std::vector<Eigen::ArrayXd>& ScanOdd, const ParamStruct& ValParam);

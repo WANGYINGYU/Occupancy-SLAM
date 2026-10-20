@@ -1,0 +1,3 @@
+-r requirements.txt
+scipy>=1.11,<2
+rosbags>=0.10,<0.12

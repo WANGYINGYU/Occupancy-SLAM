@@ -1,0 +1,19 @@
+# NC20 layout: odometry.txt + PCD/full0.pcd, full1.pcd, ...
+# Alternatively set poses and manifest (timestamp + PCD path).
+dataset: null
+poses: null
+manifest: null
+voxel: 0.5
+point_voxel: 0.3
+free_samples: 4
+min_range: 0.3
+max_range: 60.0
+start: 0
+stride: 1
+max_frames: 0
+iterations: 10
+linear_iterations: 500
+linear_tolerance: 0.000001
+max_vertices: 2000000
+max_observations: 20000000
+output: optimized

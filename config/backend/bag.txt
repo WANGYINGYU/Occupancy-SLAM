@@ -1,0 +1,8 @@
+Scale 0.15
+MaxIter 10
+WeightO 0.1
+WeightSmoothN 1
+MapSmoothingWeightFirst 1e-5
+ModeSparseSolver true
+SolverFirstMaxIter 500
+SolverFirstTolerance 0.001

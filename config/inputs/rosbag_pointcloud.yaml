@@ -1,0 +1,34 @@
+# PointCloud2 input; edit scan_topic and TF/frame settings for your bag.
+scan_topic: /points
+odom_source: auto
+odom_topic: /odom
+tf_topic: /tf
+tf_static_topic: /tf_static
+odom_frame: odom
+projection_frame: null       # Set a level frame with TF when the sensor is tilted.
+min_height: -0.2
+max_height: 0.2
+bins: 720
+min_range: 0.1
+max_range: 30.0
+tf_max_gap: 0.2
+icp_distance: 0.8
+beam_stride: 1
+scan_stride: 1
+start: 0
+max_scans: 0
+resolution: 0.15
+iterations: 10
+odom_weight: 0.1
+slam_config: ../slam_toolbox.yaml
+scan_timeout: 3.0
+startup_timeout: 30.0
+min_accepted_fraction: 0.8
+domain_id: 87
+output: pipeline
+
+backend_config: ../backend/bag.txt
+frontend_resolution: null # null preserves the slam_toolbox YAML resolution
+step_policy: legacy       # paper update; optional decrease checks frozen-N cost
+max_observations: 20000000
+display_resolution: 0.05

@@ -9,8 +9,9 @@ void FuncConvertObs(Eigen::MatrixXd& Range, std::vector<Eigen::ArrayXd>& ScanXY,
     int NumPose = Range.rows();
     #pragma omp parallel for
     for (int i = 0; i < NumPose; ++i) {
-        Eigen::ArrayXd ScanXYj;
-        Eigen::ArrayXd ScanOddj;
+        Eigen::Index count=0;
+        for(int j=0;j<ValParam.NumBeam;++j) if(std::isfinite(Range(i,j))&&Range(i,j)>ValParam.MinRange&&Range(i,j)<ValParam.MaxRange) count+=std::floor(Range(i,j)/ValParam.Scale);
+        Eigen::ArrayXd ScanXYj(2*count),ScanOddj(count);Eigen::Index offset=0;
         for (int j = 0; j < ValParam.NumBeam; ++j) {
             if (Range(i,j)>=ValParam.MaxRange || Range(i,j)<=ValParam.MinRange || std::isnan(Range(i,j)))
             {
@@ -37,11 +38,9 @@ void FuncConvertObs(Eigen::MatrixXd& Range, std::vector<Eigen::ArrayXd>& ScanXY,
                         ScanOddij(k) = ValParam.ValFree;
                     }
                 }
-                ScanXYj.conservativeResize(ScanXYj.size() + ScanXYij.size());
-                ScanXYj.tail(ScanXYij.size()) = ScanXYij;
-
-                ScanOddj.conservativeResize(ScanOddj.size() + ScanOddij.size());
-                ScanOddj.tail(ScanOddij.size()) = ScanOddij;
+                ScanXYj.segment(2*offset,ScanXYij.size())=ScanXYij;
+                ScanOddj.segment(offset,ScanOddij.size())=ScanOddij;
+                offset+=NumP;
             }
         }
         ScanXY[i] = ScanXYj;

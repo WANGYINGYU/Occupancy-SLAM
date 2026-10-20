@@ -1,0 +1,17 @@
+# Legacy text input. Change dataset and backend_config together for your scan geometry.
+dataset: ../../Data/Museum_b0
+backend_config: ../backend/museum_b0.txt
+# Explicit ranges/poses/odom/timestamps paths override dataset filenames.
+# ranges: /absolute/path/Range.txt
+# poses: /absolute/path/Pose.txt
+# odom: /absolute/path/Odom.txt
+pose_source: auto            # file | odom | auto (honors PosefromOdom in backend config)
+scan_period: 0.1             # Synthetic display timestamps only if timestamps.txt is absent.
+start: 0
+scan_stride: 1
+max_scans: 0
+output: pipeline
+
+step_policy: legacy
+max_observations: 20000000
+display_resolution: 0.05
